@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>TEASERPP</name>
+  <version>1.0.0</version>
+  <description>TEASER++</description>
+
+  <maintainer email="jnshi@mit.edu">Jingnan Shi</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>cmake</buildtool_depend>
+
+  <depend>eigen</depend>
+
+  <export>
+    <!-- Specify that this is not really a catkin package-->
+    <build_type>cmake</build_type>
+  </export>
+</package>

@@ -1,0 +1,4 @@
+Number of Points: 100
+Noise Sigma: 0.000
+Outlier Ratio: 0.900
+Noise Bound: 0.000010

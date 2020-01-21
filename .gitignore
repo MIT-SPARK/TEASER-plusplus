@@ -1,32 +1,32 @@
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
+/bazel-*
+BROWSE
+/build*
+*.bzlc
+.cache
+.classpath
+.clwb/
+/ci/bazel-*
+compile_commands.json
+cscope.*
+.deps
+/docs/landing_source/.bundle
+/generated
+.idea/
+.project
+*.pyc
+**/pyformat
+SOURCE_VERSION
+.settings/
+*.sw*
+tags
+TAGS
+/test/coverage/BUILD
+/tools/.aspell.en.pws
+.vimrc
+.vs
+.vscode
+.ccls-cache
+.clangd
+/cmake-*
+*.m~
+python/*.egg-info/
