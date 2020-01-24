@@ -46,12 +46,12 @@ if __name__ == "__main__":
     translation_inliers = solver.getTranslationInliers()
     translation_inliers_map = solver.getTranslationInliersMap()
 
-    print("Scale outliers (TIM pairs) are:")
-    print("Note: they should include the outlier points.")
-    for i in range(scale_inliers.shape[0]):
-        is_inlier = scale_inliers[i]
-        if not is_inlier:
-            print(scale_inliers_map[:, i])
+    print("=======================================")
+    print("Scale inliers (TIM pairs) are:")
+    print("Note: they should not include the outlier points.")
+    for i in range(len(scale_inliers)):
+        print(scale_inliers[i], end=',')
+    print("\n=======================================")
 
     print("Translation inliers are:", translation_inliers)
     print("Translation inliers map is:", translation_inliers_map)

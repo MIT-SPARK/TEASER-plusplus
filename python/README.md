@@ -15,7 +15,7 @@ You can use `pip` to install `teaserpp-python`, the module that contains all TEA
 ```shell script
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release -DTEASERPP_PYTHON_VERSION=3.6 ..
-make teaserpp-python -j4
+make teaserpp_python -j4
 ```
 You can replace `3.6` with the desired Python version you want to use TEASER++ with.
 
