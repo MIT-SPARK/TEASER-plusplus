@@ -315,8 +315,8 @@ public:
  * Solve registration problems robustly.
  *
  * For more information, please refer to:
- * H. Yang and L. Carlone, “A Polynomial-time Solution for Robust Registration with Extreme Outlier
- * Rates,” arXiv:1903.08588 [cs], Mar. 2019.
+ * H. Yang, J. Shi, and L. Carlone, “TEASER: Fast and Certifiable Point Cloud Registration,”
+ * arXiv:2001.07715 [cs, math], Jan. 2020.
  */
 class RobustRegistrationSolver {
 public:

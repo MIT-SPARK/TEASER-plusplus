@@ -34,9 +34,8 @@ function [s, R, t, time_taken] = teaser_solve(src, dst, varargin)
 % 
 %   For more information, please refer to [1]
 %
-%   [1] H. Yang and L. Carlone, “A Polynomial-time Solution for Robust 
-%   Registration with Extreme Outlier Rates,” arXiv:1903.08588 [cs], 
-%   Mar. 2019.
+%  [1] H. Yang, J. Shi, and L. Carlone, “TEASER: Fast and Certifiable Point Cloud Registration,”
+%  arXiv:2001.07715 [cs, math], Jan. 2020.
 %
 %  Copyright 2020, Massachusetts Institute of Technology,
 %  Cambridge, MA 02139

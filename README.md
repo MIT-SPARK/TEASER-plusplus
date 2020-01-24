@@ -2,15 +2,20 @@
 TEASER++ is a fast and robust point cloud registration framework written in C++. It can solve the rigid body transformation problem between two point clouds in 3D. TEASER++ also has bindings for MATLAB and Python, as well as integration with ROS for easy testing and visualization.   
 
 For more information, please refer to:
-- H. Yang, J. Shi and L. Carlone. TEASER: Fast and Certifiable Point-Cloud Registration. Unpublished.
+- H. Yang, J. Shi, and L. Carlone. TEASER: Fast and Certifiable Point-Cloud Registration. arXiv preprint [arXiv:2001.07715](https://arxiv.org/abs/2001.07715).
 
 If you find this library helpful or use it in your project, please consider citing:
 ```bibtex
- @unpublished{Yang2020-TEASER,
-   title = {TEASER: Fast and Certifiable Point-Cloud Registration},
-   author = {Yang, Heng and Shi, Jingnan and Carlone, Luca},
-   year = {2020},
- }
+@misc{Yang20-TEASER,
+    title={TEASER: Fast and Certifiable Point Cloud Registration},
+    author={Heng Yang and Jingnan Shi and Luca Carlone},
+    year={2020},
+    eprint={2001.07715},
+    archivePrefix={arXiv},
+    primaryClass={cs.RO},
+    url = {https://github.com/MIT-SPARK/TEASER-plusplus},
+    pdf = {https://arxiv.org/abs/2001.07715}
+}
 ```
 
 ## Dependencies
@@ -26,7 +31,7 @@ If you want to build MATLAB bindings, you also need:
 1. MATLAB 
 2. CMake >= 3.13
 
-TEASER++ uses the Parallel Maximum Clique (PMC) for maximum clique calculation. It will be downloaded automatically during CMake configuration. In addition, CMake will also download Google Test and pybind11 if necessary.
+TEASER++ uses the Parallel Maximum Clique ([paper](https://arxiv.org/abs/1302.6256), [code](https://github.com/ryanrossi/pmc)) for maximum clique calculation. It will be downloaded automatically during CMake configuration. In addition, CMake will also download Google Test and pybind11 if necessary.
 
 ## Getting Started
 ### CMake
@@ -37,7 +42,7 @@ cd build
 cmake ..
 make
 ```
-If you want to install relevant headers and binaries, run `make install` after the above commands (you may need to `sudo`).
+If you want to install relevant headers and shared libraries, run `make install` after the above commands (you may need to `sudo`).
 
 ### Available CMake Options
 
@@ -55,7 +60,7 @@ If you want to install relevant headers and binaries, run `make install` after t
 ### Run Tests
 You can run the tests by running `ctest` in the `build` directory. To generate the Doxygen documentation, run `make doc`, and you should be able to view the Doxygen files in `build/doc` folder. 
 
-By default, the library is built in debug mode. If you run the tests, some of the tests might time out. Try build the tests in release mode (`cmake -DCMAKE_BUILD_TYPE=Release ..`) and run them again.
+By default, the library is built in release mode. If you instead choose to build it in debug mode, some tests are likely to time out. 
 
 To run benchmarks (for speed & accuracy tests), you can execute the following command:
 ```shell
@@ -101,6 +106,10 @@ For a short example on how to use the MATLAB bindings for TEASER++, please refer
 For a short example on how to use the Python bindings for TEASER++, please refer to [this](python/README.md) document.
 
 To use TEASER++ in a ROS environment, simple clone the repo to your catkin workspace.
+
+## Related Publications
+- H. Yang and L. Carlone, “A Polynomial-time Solution for Robust Registration with Extreme Outlier Rates,” [arXiv:1903.08588](https://arxiv.org/abs/1903.08588) [cs], Mar. 2019.
+- H. Yang, P. Antonante, V. Tzoumas, and L. Carlone, “Graduated Non-Convexity for Robust Spatial Perception: From Non-Minimal Solvers to Global Outlier Rejection,” [arXiv:1909.08605](https://arxiv.org/abs/1909.08605) [cs, math], Sep. 2019.
 
 ## Known Issues
 - When using the MATLAB wrapper with MATLAB on terminal (`-nojvm` option enabled), you might encounter errors similar to this:

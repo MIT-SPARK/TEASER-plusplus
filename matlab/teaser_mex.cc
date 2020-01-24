@@ -78,7 +78,8 @@ const std::map<OUTPUT_PARAMS, mexTypeCheckFunction> OUTPUT_PARMS_MAP{
  * - t_est estimated translation vector (3-by-1 matrix)
  * - time_taken time it takes for the underlying TEASER++ library to compute a solution.
  *
- * [1] Yang et. al. A Polynomial-time Solution for Robust Registration with Extreme Outlier Rates
+ * [1] H. Yang, J. Shi, and L. Carlone, “TEASER: Fast and Certifiable Point Cloud Registration,”
+ * arXiv:2001.07715 [cs, math], Jan. 2020.
  *
  */
 void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
@@ -152,42 +153,41 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
     break;
   }
   }
-    teaser::RobustRegistrationSolver solver(params);
+  teaser::RobustRegistrationSolver solver(params);
 
-    mexPrintf("Start TEASER++ solver.\n");
-    mexEvalString("drawnow;");
+  mexPrintf("Start TEASER++ solver.\n");
+  mexEvalString("drawnow;");
 
-    // Start the timer
-    auto start = std::chrono::high_resolution_clock::now();
+  // Start the timer
+  auto start = std::chrono::high_resolution_clock::now();
 
-    // Solve
-    assert(src_eigen.size() != 0);
-    assert(dst_eigen.size() != 0);
-    solver.solve(src_eigen, dst_eigen);
+  // Solve
+  assert(src_eigen.size() != 0);
+  assert(dst_eigen.size() != 0);
+  solver.solve(src_eigen, dst_eigen);
 
-    // Stop the timer
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    double duration_in_milliseconds = static_cast<double>(duration.count()) / 1000.0;
+  // Stop the timer
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  double duration_in_milliseconds = static_cast<double>(duration.count()) / 1000.0;
 
-    auto solution = solver.getSolution();
+  auto solution = solver.getSolution();
 
-    mexPrintf("TEASER++ has found a solution in %f milliseconds.\n", duration_in_milliseconds);
-    mexEvalString("drawnow;");
+  mexPrintf("TEASER++ has found a solution in %f milliseconds.\n", duration_in_milliseconds);
+  mexEvalString("drawnow;");
 
-    // Populate outputs
-    plhs[toUType(OUTPUT_PARAMS::s_est)] = mxCreateDoubleScalar(solution.scale);
-    // Populate output R matrix
-    plhs[toUType(OUTPUT_PARAMS::R_est)] = mxCreateDoubleMatrix(3, 3, mxREAL);
-    Eigen::Map<Eigen::Matrix3d> R_map(mxGetPr(plhs[toUType(OUTPUT_PARAMS::R_est)]), 3, 3);
-    R_map = solution.rotation;
+  // Populate outputs
+  plhs[toUType(OUTPUT_PARAMS::s_est)] = mxCreateDoubleScalar(solution.scale);
+  // Populate output R matrix
+  plhs[toUType(OUTPUT_PARAMS::R_est)] = mxCreateDoubleMatrix(3, 3, mxREAL);
+  Eigen::Map<Eigen::Matrix3d> R_map(mxGetPr(plhs[toUType(OUTPUT_PARAMS::R_est)]), 3, 3);
+  R_map = solution.rotation;
 
-    // Populate output T vector
-    plhs[toUType(OUTPUT_PARAMS::t_est)] = mxCreateDoubleMatrix(3, 1, mxREAL);
-    Eigen::Map<Eigen::Matrix<double, 3, 1>> t_map(mxGetPr(plhs[toUType(OUTPUT_PARAMS::t_est)]), 3,
-                                                  1);
-    t_map = solution.translation;
+  // Populate output T vector
+  plhs[toUType(OUTPUT_PARAMS::t_est)] = mxCreateDoubleMatrix(3, 1, mxREAL);
+  Eigen::Map<Eigen::Matrix<double, 3, 1>> t_map(mxGetPr(plhs[toUType(OUTPUT_PARAMS::t_est)]), 3, 1);
+  t_map = solution.translation;
 
-    // Populate time output
-    plhs[toUType(OUTPUT_PARAMS::time_taken)] = mxCreateDoubleScalar(duration_in_milliseconds);
-  }
+  // Populate time output
+  plhs[toUType(OUTPUT_PARAMS::time_taken)] = mxCreateDoubleScalar(duration_in_milliseconds);
+}
