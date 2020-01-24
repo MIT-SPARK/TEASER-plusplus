@@ -8,8 +8,9 @@ For a short conceptual introduction, check out our [video](https://www.youtube.c
 - [H. Yang](http://hankyang.mit.edu/), [J. Shi](http://jingnanshi.com/), and [L. Carlone](http://lucacarlone.mit.edu/), "TEASER: Fast and Certifiable Point-Cloud Registration,". [arXiv:2001.07715](https://arxiv.org/abs/2001.07715) [cs, math], Jan. 2020. ([pdf](https://arxiv.org/pdf/2001.07715.pdf))
 
 Other related publications from our group include:
-- [H. Yang](http://hankyang.mit.edu/) and [L. Carlone](http://lucacarlone.mit.edu/), “A Polynomial-time Solution for Robust Registration with Extreme Outlier Rates,” [arXiv:1903.08588](https://arxiv.org/abs/1903.08588) [cs], Mar. 2019. ([pdf](https://arxiv.org/pdf/1903.08588.pdf))
-- [H. Yang](http://hankyang.mit.edu/), [P. Antonante](http://www.mit.edu/~antonap/), [V. Tzoumas](https://vasileiostzoumas.com/), and [L. Carlone](http://lucacarlone.mit.edu/), “Graduated Non-Convexity for Robust Spatial Perception: From Non-Minimal Solvers to Global Outlier Rejection,” [arXiv:1909.08605](https://arxiv.org/abs/1909.08605) [cs, math], Sep. 2019. ([pdf](https://arxiv.org/pdf/1909.08605))
+- [H. Yang](http://hankyang.mit.edu/) and [L. Carlone](http://lucacarlone.mit.edu/), “A Polynomial-time Solution for Robust Registration with Extreme Outlier Rates,” in Proceedings of Robotics: Science and Systems (RSS), 2019. ([pdf](https://arxiv.org/pdf/1903.08588.pdf))
+- [H. Yang](http://hankyang.mit.edu/) and [L. Carlone](http://lucacarlone.mit.edu/), “A quaternion-based certifiably optimal solution to the Wahba problem with outliers,” in Proceedings of the IEEE International Conference on Computer Vision (ICCV), 2019, pp. 1665–1674. ([pdf](https://arxiv.org/pdf/1905.12536.pdf))
+- [H. Yang](http://hankyang.mit.edu/), [P. Antonante](http://www.mit.edu/~antonap/), [V. Tzoumas](https://vasileiostzoumas.com/), and [L. Carlone](http://lucacarlone.mit.edu/), “Graduated Non-Convexity for Robust Spatial Perception: From Non-Minimal Solvers to Global Outlier Rejection,” IEEE Robotics and Automation Letters (RA-L), 2020. ([pdf](https://arxiv.org/pdf/1909.08605))
 
 If you find this library helpful or use it in your project, please consider citing:
 ```bibtex
@@ -115,10 +116,6 @@ For a short example on how to use the MATLAB bindings for TEASER++, please refer
 For a short example on how to use the Python bindings for TEASER++, please refer to [this](python/README.md) document.
 
 To use TEASER++ in a ROS environment, simple clone the repo to your catkin workspace.
-
-## Related Publications
-- H. Yang and L. Carlone, “A Polynomial-time Solution for Robust Registration with Extreme Outlier Rates,” [arXiv:1903.08588](https://arxiv.org/abs/1903.08588) [cs], Mar. 2019.
-- H. Yang, P. Antonante, V. Tzoumas, and L. Carlone, “Graduated Non-Convexity for Robust Spatial Perception: From Non-Minimal Solvers to Global Outlier Rejection,” [arXiv:1909.08605](https://arxiv.org/abs/1909.08605) [cs, math], Sep. 2019.
 
 ## Known Issues
 - When using the MATLAB wrapper with MATLAB on terminal (`-nojvm` option enabled), you might encounter errors similar to this:
