@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(TEASERPP VERSION 1.0.0)
+project(teaserpp VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -114,8 +114,8 @@ if (BUILD_PYTHON_BINDINGS)
 endif ()
 
 # export targets
-export(TARGETS ${TEASERPP_EXPORTED_TARGETS} FILE TEASERPP-exports.cmake)
+export(TARGETS ${TEASERPP_EXPORTED_TARGETS} FILE teaserpp-exports.cmake)
 
-install(FILES cmake/TEASERPPConfig.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TEASERPP
+install(FILES cmake/teaserppConfig.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/teaserpp
 )
