@@ -51,7 +51,7 @@ dst[:, 9] += 15
 solver_params = teaserpp_python.RobustRegistrationSolver.Params()
 solver_params.cbar2 = 1
 solver_params.noise_bound = 0.01
-solver_params.estimate_scaling = False
+solver_params.estimate_scaling = True 
 solver_params.rotation_estimation_algorithm = (
     teaserpp_python.RobustRegistrationSolver.ROTATION_ESTIMATION_ALGORITHM.GNC_TLS
 )
