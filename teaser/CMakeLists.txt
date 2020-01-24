@@ -33,12 +33,12 @@ find_package(OpenMP REQUIRED)
 target_link_libraries(teaser_registration PUBLIC OpenMP::OpenMP_CXX)
 
 install(TARGETS teaser_registration
-    EXPORT TEASERPP-export
+    EXPORT teaserpp-export
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 list(APPEND TEASERPP_EXPORTED_TARGETS teaser_registration pmc)
-add_library(TEASERPP::teaser_registration ALIAS teaser_registration)
+add_library(teaserpp::teaser_registration ALIAS teaser_registration)
 
 # teaser_features library
 if (BUILD_TEASER_FPFH)
@@ -61,13 +61,13 @@ if (BUILD_TEASER_FPFH)
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
     install(TARGETS teaser_features 
-        EXPORT TEASERPP-export
+        EXPORT teaserpp-export
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
 
     list(APPEND TEASERPP_EXPORTED_TARGETS teaser_features)
-    add_library(TEASERPP::teaser_features ALIAS teaser_features)
+    add_library(teaserpp::teaser_features ALIAS teaser_features)
 endif ()
 
 # march=native flag
@@ -80,10 +80,10 @@ endif ()
 set(TEASERPP_EXPORTED_TARGETS "${TEASERPP_EXPORTED_TARGETS}" PARENT_SCOPE)
 
 # installation
-install(EXPORT TEASERPP-export 
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TEASERPP
-    NAMESPACE TEASERPP::
-    FILE TEASERPPTargets.cmake
+install(EXPORT teaserpp-export 
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/teaserpp
+    NAMESPACE teaserpp::
+    FILE teaserppTargets.cmake
 )
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
