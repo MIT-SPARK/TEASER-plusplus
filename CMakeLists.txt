@@ -80,7 +80,7 @@ target_include_directories(tinyply PUBLIC
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/tinyply-src/source>)
 
 # Building Targets
-set(TEASER_ROOT ${CMAKE_CURRENT_LIST_DIR})
+set(TEASERPP_ROOT ${CMAKE_CURRENT_LIST_DIR})
 add_subdirectory(teaser)
 
 if (BUILD_TESTS)
