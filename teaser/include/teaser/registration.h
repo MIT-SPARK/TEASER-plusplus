@@ -28,6 +28,7 @@ namespace teaser {
  * Struct to hold solution to a registration problem
  */
 struct RegistrationSolution {
+  bool valid = true;
   double scale;
   Eigen::Vector3d translation;
   Eigen::Matrix3d rotation;
