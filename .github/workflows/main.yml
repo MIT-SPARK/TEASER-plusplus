@@ -1,0 +1,40 @@
+name: build 
+
+on: 
+  push:
+    branches: 
+    - master
+  pull_request:
+    branches:
+    - master
+
+jobs:
+
+  build-debug:
+    name: CMake Debug Build
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: install-eigen
+      run: sudo apt install libeigen3-dev
+    - name: configure
+      run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug ..
+    - name: build
+      run: cmake --build build
+
+  build-release:
+    name: CMake Release Build
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: install-eigen
+      run: sudo apt install libeigen3-dev
+    - name: configure
+      run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release ..
+    - name: build
+      run: cmake --build build
+    - name: test
+      run: cd build && ctest all
+
