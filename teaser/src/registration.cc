@@ -462,6 +462,12 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
   std::copy(max_clique_.begin(), max_clique_.end(), std::ostream_iterator<int>(std::cout, " "));
   std::cout << std::endl;
 #endif
+  // Abort if max clique size <= 1
+  if (max_clique_.size() <= 1) {
+    TEASER_DEBUG_INFO_MSG("Clique size too small. Abort.");
+    solution_.valid = false;
+    return solution_;
+  }
 
   // Calculate new measurements & TIMs based on max clique inliers
   Eigen::Matrix<double, 3, Eigen::Dynamic> pruned_src(3, max_clique_.size());
@@ -518,6 +524,9 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
 
   // Find the final inliers
   translation_inliers_ = utils::maskVector<int>(translation_inliers_mask_, rotation_inliers_);
+
+  // Update validity flag
+  solution_.valid = true;
 
   return solution_;
 }
