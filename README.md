@@ -1,5 +1,5 @@
 # TEASER++
-![](https://github.com/MIT-SPARK/TEASER-plusplus/workflows/build/badge.svg)
+[<img src="https://github.com/MIT-SPARK/TEASER-plusplus/workflows/build/badge.svg">](https://github.com/MIT-SPARK/TEASER-plusplus/actions)
 
 TEASER++ is a fast and robust point cloud registration framework written in C++. It can solve the rigid body transformation problem between two point clouds in 3D. TEASER++ also has bindings for MATLAB and Python, as well as integration with ROS for easy testing and visualization.   
 
