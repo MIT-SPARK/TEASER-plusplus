@@ -4,9 +4,11 @@ on:
   push:
     branches: 
     - master
+    - develop
   pull_request:
     branches:
     - master
+    - develop
 
 jobs:
 
@@ -16,7 +18,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: eigen
+    - name: install-eigen
       run: sudo apt install libeigen3-dev
     - name: configure
       run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug ..
@@ -29,12 +31,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: eigen
+    - name: install-eigen
       run: sudo apt install libeigen3-dev
     - name: configure
       run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release ..
     - name: build
       run: cmake --build build
     - name: test
-      run: cd build && OMP_NUM_THREADS=12 ctest all
+      run: cd build && ctest all
 
