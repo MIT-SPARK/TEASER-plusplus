@@ -1,0 +1,31 @@
+name: build 
+
+on: [push, pull_request]
+    branches: 
+      - master
+
+jobs:
+  build-debug:
+    name: CMake Debug Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: confiure
+      run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug ..
+    - name: build
+      run: cmake --build build
+
+  build-release:
+    name: CMake Release Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: confiure
+      run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release ..
+    - name: build
+      run: cmake --build build
+    - name: test
+      run: cd build && OMP_NUM_THREADS=12 ctest all
+
