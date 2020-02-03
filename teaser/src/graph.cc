@@ -62,7 +62,7 @@ vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
   assert(in.lb != 0);
   if (in.lb == 0) {
     // This means that max clique has a size of one
-    TEASER_DEBUG_ERROR_MSG("Max clique lb equals to zero. Abort.");
+    TEASER_DEBUG_ERROR_MSG("Max clique lower bound equals to zero. Abort.");
     return C;
   }
 
