@@ -9,24 +9,33 @@ on:
     - master
 
 jobs:
+  install-dependency:
+    name: Install dependencies
+    runs-on: ubuntu-18.04
+    steps:
+    - name: eigen
+      run: sudo apt install libeigen3-dev
+
   build-debug:
     name: CMake Debug Build
-    runs-on: ubuntu-latest
+    needs: install-dependency
+    runs-on: ubuntu-18.04
 
     steps:
     - uses: actions/checkout@v2
-    - name: confiure
+    - name: configure
       run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug ..
     - name: build
       run: cmake --build build
 
   build-release:
     name: CMake Release Build
-    runs-on: ubuntu-latest
+    needs: install-dependency
+    runs-on: ubuntu-18.04
 
     steps:
     - uses: actions/checkout@v2
-    - name: confiure
+    - name: configure
       run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release ..
     - name: build
       run: cmake --build build
