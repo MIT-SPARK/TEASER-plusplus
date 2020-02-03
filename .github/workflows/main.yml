@@ -9,20 +9,15 @@ on:
     - master
 
 jobs:
-  install-dependency:
-    name: Install dependencies
-    runs-on: ubuntu-18.04
-    steps:
-    - name: eigen
-      run: sudo apt install libeigen3-dev
 
   build-debug:
     name: CMake Debug Build
-    needs: install-dependency
     runs-on: ubuntu-18.04
 
     steps:
     - uses: actions/checkout@v2
+    - name: eigen
+      run: sudo apt install libeigen3-dev
     - name: configure
       run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug ..
     - name: build
@@ -30,11 +25,12 @@ jobs:
 
   build-release:
     name: CMake Release Build
-    needs: install-dependency
     runs-on: ubuntu-18.04
 
     steps:
     - uses: actions/checkout@v2
+    - name: eigen
+      run: sudo apt install libeigen3-dev
     - name: configure
       run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release ..
     - name: build
