@@ -99,14 +99,15 @@ cmake_minimum_required(VERSION 3.10)
 project(teaserpp_example)
 
 set (CMAKE_CXX_STANDARD 14)
- 
+
+find_package(Eigen3 REQUIRED) 
 find_package(teaserpp REQUIRED)
 
 # Change this line to include your own executable file
 add_executable(cpp_example cpp_example.cpp)
 
-# Link to teaserpp library
-target_link_libraries(cpp_example teaserpp::teaser_registration)
+# Link to teaserpp & Eigen3 
+target_link_libraries(cpp_example Eigen3::Eigen teaserpp::teaser_registration)
 ```
 
 Here's a short C++ snippet that you may find helpful for integrating TEASER++ in your code:
