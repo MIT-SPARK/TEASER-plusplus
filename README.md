@@ -16,7 +16,7 @@ Other related publications from our group include:
 
 If you find this library helpful or use it in your project, please consider citing:
 ```bibtex
-@article{Yang20-TEASER,
+@article{Yang20arXiv-TEASER,
     title={TEASER: Fast and Certifiable Point Cloud Registration},
     author={Yang, Heng and Shi, Jingnan and Carlone, Luca},
     year={2020},
