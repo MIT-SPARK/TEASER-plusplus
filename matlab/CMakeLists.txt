@@ -12,7 +12,7 @@ if (Matlab_FOUND)
             SRC teaser_mex.cc
             LINK_TO Eigen3::Eigen teaser_registration
     )
-
+    set_target_properties(teaser_mex PROPERTIES COMPILE_FLAGS "-fvisibility=default")
     # copy MATLAB .m files to binary directory
     file(COPY .
             DESTINATION .
