@@ -1,0 +1,12 @@
+# TEASER++ Examples
+
+This folder contains examples demostrating using TEASER++ in C++/Python.
+
+The following directories contain C++ examples:
+- `./cpp_ply`: Loading `.ply` files using PCL  
+- `./cpp_fpfh`: Using FPFH feature detector with PCL 
+
+The following directories contain Python examples:
+- `./python_ply`: Loading `.ply` files using Open3D 
+- `./python_fpfh`: Using FPFH feature detector with Open3D
+- `./python_3dsmooth`: Using 3DSmoothNet feature detector 
