@@ -92,6 +92,7 @@ PYBIND11_MODULE(teaserpp_python, m) {
                      &teaser::RobustRegistrationSolver::Params::rotation_gnc_factor)
       .def_readwrite("rotation_max_iterations",
                      &teaser::RobustRegistrationSolver::Params::rotation_max_iterations)
+      .def_readwrite("use_max_clique", &teaser::RobustRegistrationSolver::Params::use_max_clique)
       .def_readwrite("rotation_cost_threshold",
                      &teaser::RobustRegistrationSolver::Params::rotation_cost_threshold)
       .def_readwrite("max_clique_exact_solution",
