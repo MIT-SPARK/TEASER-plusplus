@@ -372,3 +372,70 @@ TEST(RegistrationTest, OutlierDetection) {
     EXPECT_EQ(expected_inliers[i], final_inliers[i]);
   }
 }
+
+TEST(RegistrationTest, NoMaxClique) {
+  // Random point cloud
+  int N = 20;
+  Eigen::Matrix<double, 3, Eigen::Dynamic> src =
+      Eigen::Matrix<double, 3, Eigen::Dynamic>::Random(3, N);
+  Eigen::Matrix<double, 4, Eigen::Dynamic> src_h;
+  src_h.resize(4, src.cols());
+  src_h.topRows(3) = src;
+  src_h.bottomRows(1) = Eigen::Matrix<double, 1, Eigen::Dynamic>::Ones(N);
+
+  // An arbitrary transformation matrix
+  Eigen::Matrix4d T;
+  // clang-format off
+  T << 9.96926560e-01,  6.68735757e-02, -4.06664421e-02, -1.15576939e-01,
+      -6.61289946e-02, 9.97617877e-01,  1.94008687e-02, -3.87705398e-02,
+      4.18675510e-02, -1.66517807e-02,  9.98977765e-01, 1.14874890e-01,
+      0,              0,                0,              1;
+  // clang-format on
+
+  // Apply transformation
+  Eigen::Matrix<double, 4, Eigen::Dynamic> tgt_h = T * src_h;
+  Eigen::Matrix<double, 3, Eigen::Dynamic> tgt = tgt_h.topRows(3);
+
+  // Pick some points to be outliers
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<> dis1(1, 5); // num outliers
+  std::uniform_int_distribution<> dis2(0, tgt.cols()-1); // pos of outliers
+  std::uniform_int_distribution<> dis3(5, 10); // random translation
+  int N_OUTLIERS = dis1(gen);
+  std::vector<bool> expected_outlier_mask(tgt.cols(), false);
+  for (int i = 0; i < N_OUTLIERS; ++i) {
+    int c_outlier_idx = dis2(gen);
+    assert(c_outlier_idx < expected_outlier_mask.size());
+    expected_outlier_mask[c_outlier_idx] = true;
+    tgt.col(c_outlier_idx).array() += dis3(gen); // random translation
+  }
+  std::vector<int> expected_inliers;
+  for (int i = 0; i < expected_outlier_mask.size(); ++i) {
+    if (!expected_outlier_mask[i]) {
+      expected_inliers.push_back(i);
+    }
+  }
+  std::sort(expected_inliers.begin(), expected_inliers.end());
+
+  // Prepare solver parameters
+  teaser::RobustRegistrationSolver::Params params;
+  params.noise_bound = 0.01;
+  params.cbar2 = 1;
+  params.estimate_scaling = false;
+  params.rotation_max_iterations = 100;
+  params.rotation_gnc_factor = 1.4;
+  params.rotation_estimation_algorithm =
+      teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS;
+  params.rotation_cost_threshold = 0.005;
+  params.use_max_clique = false;
+
+  // Solve with TEASER++
+  teaser::RobustRegistrationSolver solver(params);
+  solver.solve(src, tgt);
+
+  auto solution  = solver.getSolution();
+  EXPECT_LE(teaser::test::getAngularError(T.topLeftCorner(3,3), solution.rotation),
+            0.2);
+  EXPECT_LE((T.topRightCorner(3,1) - solution.translation).norm(), 0.1);
+}

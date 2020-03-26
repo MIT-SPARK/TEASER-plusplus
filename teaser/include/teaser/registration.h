@@ -395,6 +395,11 @@ public:
     double rotation_cost_threshold = 1e-6;
 
     /**
+     * Set this to true to enable max clique inlier selection, false to skip it.
+     */
+    bool use_max_clique = true;
+
+    /**
      * Set this to false to enable heuristic only max clique finding.
      */
     bool max_clique_exact_solution = true;

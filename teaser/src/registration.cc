@@ -451,22 +451,29 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
   // Calculate Maximum Clique
   // Note: the max_clique_ vector holds the indices of original measurements that are within the
   // max clique of the built inlier graph.
-  teaser::MaxCliqueSolver::Params clique_params;
-  clique_params.solve_exactly = params_.max_clique_exact_solution;
-  clique_params.time_limit = params_.max_clique_time_limit;
-  teaser::MaxCliqueSolver clique_solver(clique_params);
-  max_clique_ = clique_solver.findMaxClique(inlier_graph_);
-  std::sort(max_clique_.begin(), max_clique_.end());
-  TEASER_DEBUG_INFO_MSG("Max Clique of scale estimation inliers: ");
+  if (params_.use_max_clique) {
+    teaser::MaxCliqueSolver::Params clique_params;
+    clique_params.solve_exactly = params_.max_clique_exact_solution;
+    clique_params.time_limit = params_.max_clique_time_limit;
+    teaser::MaxCliqueSolver clique_solver(clique_params);
+    max_clique_ = clique_solver.findMaxClique(inlier_graph_);
+    std::sort(max_clique_.begin(), max_clique_.end());
+    TEASER_DEBUG_INFO_MSG("Max Clique of scale estimation inliers: ");
 #ifndef NDEBUG
-  std::copy(max_clique_.begin(), max_clique_.end(), std::ostream_iterator<int>(std::cout, " "));
-  std::cout << std::endl;
+    std::copy(max_clique_.begin(), max_clique_.end(), std::ostream_iterator<int>(std::cout, " "));
+    std::cout << std::endl;
 #endif
-  // Abort if max clique size <= 1
-  if (max_clique_.size() <= 1) {
-    TEASER_DEBUG_INFO_MSG("Clique size too small. Abort.");
-    solution_.valid = false;
-    return solution_;
+    // Abort if max clique size <= 1
+    if (max_clique_.size() <= 1) {
+      TEASER_DEBUG_INFO_MSG("Clique size too small. Abort.");
+      solution_.valid = false;
+      return solution_;
+    }
+  } else {
+    max_clique_.reserve(src.cols());
+    for (size_t i = 0; i < src.cols(); ++i) {
+      max_clique_.push_back(i);
+    }
   }
 
   // Calculate new measurements & TIMs based on max clique inliers
