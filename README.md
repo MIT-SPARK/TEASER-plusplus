@@ -30,9 +30,8 @@ If you find this library helpful or use it in your projects, please cite:
 
 If you are interested in more works from us, please visit our lab page [here](http://web.mit.edu/sparklab/).
 
-## Getting Started
-### TL;DR
-#### Minimal C++ example
+## TL;DR
+### Minimal C++ example
 Run the following script to show a minimal C++ example:
 ```shell script
 sudo apt install cmake libeigen3-dev libboost-all-dev
@@ -78,7 +77,7 @@ Number of correspondences: 1889
 Number of outliers: 1700
 Time taken (s): 0.786677
 ```
-#### Minimal Python 3 example
+### Minimal Python 3 example
 Run the following script to show a minimal Python 3 example (needs Anaconda installed):
 ```shell script
 sudo apt install cmake libeigen3-dev libboost-all-dev
@@ -92,7 +91,42 @@ cd python && pip install .
 cd ../.. && cd examples/python_ply 
 python python_ply.py
 ```
+You should see output similar to this:
+```shell script
+==================================================
+        TEASER++ Python registration example      
+==================================================
+*** [pmc heuristic: thread 1]   current max clique = 563,  time = 0.00185895 sec
+...
+*** [pmc: thread 2]   current max clique = 605,  time = 0.618481 sec
+-----------------------------------------------------------------------
+=====================================
+          TEASER++ Results           
+=====================================
+Expected rotation: 
+[[ 0.99692656  0.06687358 -0.04066644]
+ [-0.06612899  0.99761788  0.01940087]
+ [ 0.04186755 -0.01665178  0.99897777]]
+Estimated rotation: 
+[[ 9.96883589e-01  7.88648224e-02 -1.85738207e-03]
+ [-7.88858464e-02  9.96487579e-01 -2.80985536e-02]
+ [-3.65129272e-04  2.81575081e-02  9.99603432e-01]]
+Error (deg): 
+0.06284342361637997
+Expected translation: 
+[-0.11557694 -0.03877054  0.11487489]
+Estimated translation: 
+[-0.11652176 -0.0373522   0.111885  ]
+Error (m): 
+0.0034414811018018978
+Number of correspondences:  1889
+Number of outliers:  1700
+Time taken (s):  0.9492652416229248
+```
 
+### Reproduce the Banner Picture Above 
+
+## Getting Started
 ### Supported Platforms
 TEASER++ has been tested on Ubuntu 18.04 with g++-7/9 and clang++-7/8/9.  
 
