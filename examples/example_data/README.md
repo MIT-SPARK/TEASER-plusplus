@@ -1,0 +1,1 @@
+`bun_zipper.ply` is taken from the [Stanford 3D Scanning Repository](https://graphics.stanford.edu/data/3Dscanrep/).
