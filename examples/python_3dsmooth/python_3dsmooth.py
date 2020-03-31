@@ -170,17 +170,17 @@ def draw_registration_result(target_corrs_points, source_corrs_points, frag1, fr
             gt_vis_list.extend(gt_spheres)
 
         # ground truth alignment
-        print("Now showing ground truth alignment")
+        print("Now showing ground truth alignment ...")
         o3d.visualization.draw_geometries(gt_vis_list)
         
         # TEASER++ alignment
-        print("Now showing TEASER++ alignment")
+        print("Now showing TEASER++ alignment ...")
         tpp_inlier_spheres = create_spheres(target_inlier_points, radius=0.04)
         vis_list.extend(tpp_inlier_spheres)
         o3d.visualization.draw_geometries(vis_list)
 
         # together
-        print("Now showing GT & TEASER++ alignments")
+        print("Now showing GT & TEASER++ alignments ...")
         total_vis_list = vis_list
         total_vis_list.extend(gt_vis_list) 
         o3d.visualization.draw_geometries(total_vis_list)
@@ -327,6 +327,8 @@ def pair_eval_helper(scene_path, desc_path, gt_mat, frag1_idx, frag2_idx):
         print("Max clique & gt inliers intersection:", gt_clique_intersection) 
         print("Max clique & gt inliers intersection len:", len(gt_clique_intersection))
 
+    return est_mat
+
 if __name__ == "__main__":
     print("==================================================")
     print("        TEASER++ Python registration example      ")
@@ -339,6 +341,11 @@ if __name__ == "__main__":
 
     # load ground truth transformation
     gt_mat = bench_utils.load_gt_transformation(pair[0], pair[1], gt_path)
-    pair_eval_helper(
+    est_mat = pair_eval_helper(
         scene_path, desc_path, gt_mat, pair[0], pair[1]
     )
+
+    # compute errors
+    rot_error, trans_error = bench_utils.compute_transformation_diff(est_mat, gt_mat)
+    print("Rotation error (deg): ", rot_error)
+    print("Translation error (m): ", trans_error)
