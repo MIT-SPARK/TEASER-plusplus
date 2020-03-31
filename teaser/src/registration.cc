@@ -400,7 +400,7 @@ teaser::RobustRegistrationSolver::computeTIMs(const Eigen::Matrix<double, 3, Eig
 
 teaser::RegistrationSolution teaser::RobustRegistrationSolver::solve(
     const teaser::PointCloud& src_cloud, const teaser::PointCloud& dst_cloud,
-    const std::vector<std::tuple<unsigned int, unsigned int>> correspondences) {
+    const std::vector<std::pair<int, int>> correspondences) {
   assert(src_cloud.size() == dst_cloud.size());
 
   Eigen::Matrix<double, 3, Eigen::Dynamic> src(3, src_cloud.size());
