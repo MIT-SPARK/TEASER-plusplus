@@ -21,10 +21,10 @@ GT_COLOR = [1,1,0]
 SPHERE_COLOR = [0,1,0.1]
 SPHERE_COLOR_2 = [0.5,1,0.1]
 
-def custom_draw_geometry_load_option(pcds):
+def custom_draw_geometry_load_option(pcds, width=640, height=480):
 
     vis = o3d.visualization.Visualizer()
-    vis.create_window()
+    vis.create_window(width=width, height=height)
     for pcd in pcds:
         vis.add_geometry(pcd)
     vis.get_render_option().load_from_json("./render_option.json")
@@ -170,20 +170,20 @@ def draw_registration_result(target_corrs_points, source_corrs_points, frag1, fr
             gt_vis_list.extend(gt_spheres)
 
         # ground truth alignment
-        print("Now showing ground truth alignment ...")
-        o3d.visualization.draw_geometries(gt_vis_list)
+        #print("Now showing ground truth alignment ...")
+        #custom_draw_geometry_load_option(gt_vis_list)
         
         # TEASER++ alignment
         print("Now showing TEASER++ alignment ...")
         tpp_inlier_spheres = create_spheres(target_inlier_points, radius=0.04)
         vis_list.extend(tpp_inlier_spheres)
-        o3d.visualization.draw_geometries(vis_list)
+        custom_draw_geometry_load_option(vis_list, width=680, height=480)
 
         # together
-        print("Now showing GT & TEASER++ alignments ...")
+        #print("Now showing GT & TEASER++ alignments ...")
         total_vis_list = vis_list
         total_vis_list.extend(gt_vis_list) 
-        o3d.visualization.draw_geometries(total_vis_list)
+        #custom_draw_geometry_load_option(total_vis_list)
 
 def find_mutually_nn_keypoints(ref_key, test_key, ref, test):
     """
@@ -242,7 +242,6 @@ def execute_teaser_global_registration(source, target):
     max_clique = teaserpp_solver.getTranslationInliersMap()
     print("Max clique size:", len(max_clique))
     final_inliers = teaserpp_solver.getTranslationInliers()
-    print("Time (s) for TEASER:", end-start)
     return est_mat, max_clique, end - start
 
 def pair_eval_helper(scene_path, desc_path, gt_mat, frag1_idx, frag2_idx):
@@ -327,6 +326,10 @@ def pair_eval_helper(scene_path, desc_path, gt_mat, frag1_idx, frag2_idx):
         print("Max clique & gt inliers intersection:", gt_clique_intersection) 
         print("Max clique & gt inliers intersection len:", len(gt_clique_intersection))
 
+    print("==================================================")
+    print("Number of points: ", frag2_pc_keypoints.shape[0])
+    print("Number of matched correspondences: ", ref_matched_key.shape[1])
+    print("Time (s) for TEASER:", time)
     return est_mat
 
 if __name__ == "__main__":
