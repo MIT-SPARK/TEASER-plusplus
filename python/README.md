@@ -1,16 +1,19 @@
-#Python Bindings of TEASER++ 
+# Python Bindings of TEASER++ 
+
 This short document will show you how to use TEASER++'s Python bindings to solver 3D registration problems.
 
 ## Introduction
-The TEASER++ Python binding `teaserpp-python` uses pybind11 to allow for minimal-effort interoperability between C++ and Python. To use TEASER++ in Python, the following C++ constructs are exposed: 
+
+The TEASER++ Python binding `teaserpp-python` uses [pybind11](https://github.com/pybind/pybind11) to allow for minimal-effort interoperability between C++ and Python. To use TEASER++ in Python, the following C++ constructs are exposed: 
 - `teaser::RobustRegistrationSolver`: the main solver class for solving registration problems with TEASER++
 - `teaser::RobustRegistrationSolver::Params`: a struct for holding the initialization parameters for TEASER++
 - `teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM`: an enum for specifying what kind rotation estimation algorithm to use
 - `teaser::RegistrationSolution`: a struct holding the solution to a registration problem
 
-Please refer to the C++ source code for more detailed documentations.
+Please refer to the C++ source code for more detailed documentation.
 
 ## Installation
+
 You can use `pip` to install `teaserpp-python`, the module that contains all TEASER++ bindings. First, make sure you have compiled `teaserpp-python`. If not, you can use the following commands:
 ```shell script
 mkdir build && cd build
@@ -26,8 +29,11 @@ pip install .
 ```
 If you are using virtual environments or Anaconda, make sure to activate your environment before compiling and during `pip install`. Make sure the targeted Python interpreter is the one in your desired environment, or otherwise there might be segmentation faults.
 
-## An Example
+## Examples
 
+Please refer to [`examples/`](../examples) for more detailed Python examples. 
+
+For your convenience, here is a short Python script showing TEASER++ registrationn in Python:
 ```python
 import numpy as np
 import teaserpp_python
