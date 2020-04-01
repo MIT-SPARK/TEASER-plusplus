@@ -169,7 +169,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
   // Stop the timer
   auto stop = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-  double duration_in_milliseconds = static_cast<double>(duration.count()) / 1000.0;
+  double duration_in_seconds = static_cast<double>(duration.count()) / 1000000.0;
 
   auto solution = solver.getSolution();
 
@@ -189,5 +189,5 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
   t_map = solution.translation;
 
   // Populate time output
-  plhs[toUType(OUTPUT_PARAMS::time_taken)] = mxCreateDoubleScalar(duration_in_milliseconds);
+  plhs[toUType(OUTPUT_PARAMS::time_taken)] = mxCreateDoubleScalar(duration_in_seconds);
 }
