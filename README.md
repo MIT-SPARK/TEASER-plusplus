@@ -128,7 +128,7 @@ Run the following script:
 ```shell script
 sudo apt install cmake libeigen3-dev libboost-all-dev
 conda create -n teaser_test python=3.6 numpy
-conda activate teaser_test
+conda activate teaser_3dsmooth
 conda install -c open3d-admin open3d=0.9.0.0
 conda install -c anaconda networkx 
 conda install scikit-learn 
