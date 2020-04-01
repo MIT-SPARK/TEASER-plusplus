@@ -1,14 +1,11 @@
 import os
 import copy
 import time
-import math
 import line_mesh
-import networkx as nx
 import numpy as np
 import open3d as o3d
 from sklearn.neighbors import KDTree
 from timeit import default_timer as timer
-from collections import defaultdict
 
 import bench_utils
 import teaserpp_python

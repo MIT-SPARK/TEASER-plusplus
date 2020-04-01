@@ -2,10 +2,7 @@ import os
 import open3d as o3d
 import numpy as np
 import copy
-import networkx as nx
 import math
-import csv
-import pickle
 
 NOISE_BOUND = 0.05
 FRAG1_COLOR =[0, 0.651, 0.929]
