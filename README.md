@@ -139,7 +139,9 @@ cd python && pip install .
 cd ../.. && cd examples/python_3dsmooth
 python python_3dsmooth.py
 ```
-You should be able to see Open3D windows showing registration results!
+You should be able to see Open3D windows showing registration results:
+
+![TEASER++ 3DSmooth](examples/python_3dsmooth/3dsmooth_example.gif)
 
 ## Getting Started
 ### Supported Platforms
