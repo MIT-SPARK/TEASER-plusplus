@@ -81,8 +81,8 @@ Run the following script to show a minimal Python 3 example (needs Anaconda inst
 ```shell script
 sudo apt install cmake libeigen3-dev libboost-all-dev
 conda create -n teaser_test python=3.6 numpy
-conda install -c open3d-admin open3d=0.9.0.0
 conda activate teaser_test
+conda install -c open3d-admin open3d=0.9.0.0
 git clone https://github.com/MIT-SPARK/TEASER-plusplus.git
 cd TEASER-plusplus && mkdir build && cd build
 cmake -DTEASERPP_PYTHON_VERSION=3.6 .. && make teaserpp_python
@@ -123,7 +123,23 @@ Number of outliers:  1700
 Time taken (s):  0.9492652416229248
 ```
 
-### Reproduce the Banner Picture Above 
+### Reproduce the GIF Above 
+Run the following script:
+```shell script
+sudo apt install cmake libeigen3-dev libboost-all-dev
+conda create -n teaser_test python=3.6 numpy
+conda activate teaser_test
+conda install -c open3d-admin open3d=0.9.0.0
+conda install -c anaconda networkx 
+conda install scikit-learn 
+git clone https://github.com/MIT-SPARK/TEASER-plusplus.git
+cd TEASER-plusplus && mkdir build && cd build
+cmake -DTEASERPP_PYTHON_VERSION=3.6 .. && make teaserpp_python
+cd python && pip install .
+cd ../.. && cd examples/python_3dsmooth
+python python_3dsmooth.py
+```
+You should be able to see Open3D windows showing registration results!
 
 ## Getting Started
 ### Supported Platforms
