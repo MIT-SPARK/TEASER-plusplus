@@ -1,6 +1,6 @@
 # TEASER++: fast & certifiable 3D registration 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [<img src="https://github.com/MIT-SPARK/TEASER-plusplus/workflows/build/badge.svg">](https://github.com/MIT-SPARK/TEASER-plusplus/actions)
-
 ![TEASER++ 3DSmooth](examples/python_3dsmooth/3dsmooth_example.gif)
 
 TEASER++ is a fast and certifiably-robust point cloud registration library written in C++, with Python and MATLAB bindings.
