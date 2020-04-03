@@ -435,7 +435,7 @@ public:
    */
   RegistrationSolution
   solve(const teaser::PointCloud& src_cloud, const teaser::PointCloud& dst_cloud,
-        const std::vector<std::tuple<unsigned int, unsigned int>> correspondences);
+        const std::vector<std::pair<int, int>> correspondences);
 
   /**
    * Solve for scale, translation and rotation. Assumes v2 is v1 after transformation.

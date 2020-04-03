@@ -18,7 +18,6 @@ option(BUILD_TEASER_FPFH "Build TEASER++ wrappers for PCL FPFH estimation." OFF)
 option(BUILD_MATLAB_BINDINGS "Build MATLAB bindings" OFF)
 option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
 option(BUILD_DOC "Build documentation" ON)
-option(BUILD_WITH_MKL "Build Eigen with MKL." OFF)
 option(BUILD_WITH_MARCH_NATIVE "Build with flag march=native" OFF)
 option(ENABLE_DIAGNOSTIC_PRINT "Enable printing of diagnostic messages" OFF)
 
@@ -35,11 +34,6 @@ endif ()
 # Find dependencies
 # Eigen3
 find_package(Eigen3 3.3 QUIET REQUIRED NO_MODULE)
-
-# MKL
-if (BUILD_WITH_MKL)
-    add_definitions(-DEIGEN_USE_MKL_ALL)
-endif ()
 
 if (BUILD_TEASER_FPFH)
     # Boost
