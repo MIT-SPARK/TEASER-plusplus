@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(teaserpp_example)
+project(teaser_cpp_fpfh)
 
 set (CMAKE_CXX_STANDARD 14)
 
@@ -9,10 +9,10 @@ find_package(Boost 1.58 REQUIRED)
 find_package(PCL 1.9 REQUIRED COMPONENTS common features kdtree)
 
 # Change this line to include your own executable file
-add_executable(cpp_fpfh cpp_fpfh.cc)
+add_executable(teaser_cpp_fpfh teaser_cpp_fpfh.cc)
 
 # Link to teaserpp & Eigen3
-target_link_libraries(cpp_fpfh Eigen3::Eigen teaserpp::teaser_registration teaserpp::teaser_features
+target_link_libraries(teaser_cpp_fpfh Eigen3::Eigen teaserpp::teaser_registration teaserpp::teaser_features
         teaserpp::teaser_io ${PCL_LIBRARIES})
 
 # Copy the data files to build directory
