@@ -9,6 +9,14 @@ target_include_directories(teaser_io PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
+install(TARGETS teaser_io
+        EXPORT teaserpp-export
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        )
+list(APPEND TEASERPP_EXPORTED_TARGETS teaser_io tinyply)
+add_library(teaserpp::teaser_io ALIAS teaser_io)
+
 # teaser_registration library
 add_library(teaser_registration SHARED
         src/registration.cc
@@ -18,12 +26,6 @@ target_link_libraries(teaser_registration
         PUBLIC Eigen3::Eigen
         PRIVATE pmc
         )
-if (BUILD_WITH_MKL AND MKL_FOUND)
-    target_link_libraries(teaser_registration
-            PRIVATE ${MKL_LIBRARIES}
-            )
-    target_include_directories(teaser_registration PUBLIC ${MKL_INCLUDE_DIR})
-endif ()
 target_include_directories(teaser_registration PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

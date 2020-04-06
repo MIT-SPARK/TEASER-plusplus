@@ -69,5 +69,5 @@ parse(params, varargin{:});
         params.Results.NoiseBound, params.Results.EstimateScaling, ...
         params.Results.RotationEstimationAlgorithm, params.Results.RotationGNCFactor, ...
         params.Results.RotationMaxIterations, params.Results.RotationCostThreshold);
-
+time_taken = time_taken / 1000;
 end
