@@ -427,7 +427,7 @@ public:
      * graph will be directly fed to the GNC rotation solver.
      *
      */
-    double kcore_heuristic_threshold = 1;
+    double kcore_heuristic_threshold = 0.5;
 
     /**
      * \deprecated Use inlier_selection_mode instead
