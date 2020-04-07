@@ -79,6 +79,14 @@ PYBIND11_MODULE(teaserpp_python, m) {
       .value("GNC_TLS", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS)
       .value("FGR", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::FGR);
 
+  // Python bound for teaser::RobustRegistrationSolver::ROTATION_ESTIMATE_ALGORITHM
+  py::enum_<teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE>(solver,
+                                                                     "INLIER_SELECTION_MODE")
+      .value("PMC_EXACT", teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_EXACT)
+      .value("PMC_HEU", teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_HEU)
+      .value("KCORE_HEU", teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::KCORE_HEU)
+      .value("NONE", teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::NONE);
+
   // Python bound for teaser::RobustRegistrationSolver::Params
   py::class_<teaser::RobustRegistrationSolver::Params>(solver, "Params")
       .def(py::init<>())
@@ -92,9 +100,13 @@ PYBIND11_MODULE(teaserpp_python, m) {
                      &teaser::RobustRegistrationSolver::Params::rotation_gnc_factor)
       .def_readwrite("rotation_max_iterations",
                      &teaser::RobustRegistrationSolver::Params::rotation_max_iterations)
-      .def_readwrite("use_max_clique", &teaser::RobustRegistrationSolver::Params::use_max_clique)
+      .def_readwrite("inlier_selection_mode",
+                     &teaser::RobustRegistrationSolver::Params::inlier_selection_mode)
+      .def_readwrite("kcore_heuristic_threshold",
+                     &teaser::RobustRegistrationSolver::Params::kcore_heuristic_threshold)
       .def_readwrite("rotation_cost_threshold",
                      &teaser::RobustRegistrationSolver::Params::rotation_cost_threshold)
+      .def_readwrite("use_max_clique", &teaser::RobustRegistrationSolver::Params::use_max_clique)
       .def_readwrite("max_clique_exact_solution",
                      &teaser::RobustRegistrationSolver::Params::max_clique_exact_solution)
       .def_readwrite("max_clique_time_limit",
