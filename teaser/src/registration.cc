@@ -259,8 +259,8 @@ void teaser::FastGlobalRegistrationSolver::solveForRotation(
     // update cost
     Eigen::Matrix<double, 3, Eigen::Dynamic> diff = (dst - (*rotation) * src).array().square();
     cost_ = ((scaled_mu * diff.colwise().sum()).array() /
-            (scaled_mu + diff.colwise().sum().array()).array())
-               .sum();
+             (scaled_mu + diff.colwise().sum().array()).array())
+                .sum();
 
     // additional termination conditions
     if (cost_ < params_.cost_threshold || mu < min_mu) {
@@ -398,9 +398,10 @@ teaser::RobustRegistrationSolver::computeTIMs(const Eigen::Matrix<double, 3, Eig
   return vtilde;
 }
 
-teaser::RegistrationSolution teaser::RobustRegistrationSolver::solve(
-    const teaser::PointCloud& src_cloud, const teaser::PointCloud& dst_cloud,
-    const std::vector<std::pair<int, int>> correspondences) {
+teaser::RegistrationSolution
+teaser::RobustRegistrationSolver::solve(const teaser::PointCloud& src_cloud,
+                                        const teaser::PointCloud& dst_cloud,
+                                        const std::vector<std::pair<int, int>> correspondences) {
   assert(src_cloud.size() == dst_cloud.size());
 
   Eigen::Matrix<double, 3, Eigen::Dynamic> src(3, src_cloud.size());
@@ -418,6 +419,19 @@ teaser::RegistrationSolution
 teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
                                         const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst) {
   assert(scale_solver_ && rotation_solver_ && translation_solver_);
+
+  // Handle deprecated params
+  if (!params_.use_max_clique) {
+    TEASER_DEBUG_INFO_MSG(
+        "Using deprecated param field use_max_clique. Switch to inlier_selection_mode instead.");
+    params_.inlier_selection_mode = INLIER_SELECTION_MODE::NONE;
+  }
+  if (!params_.max_clique_exact_solution) {
+    TEASER_DEBUG_INFO_MSG("Using deprecated param field max_clique_exact_solution. Switch to "
+                          "inlier_selection_mode instead.");
+    params_.inlier_selection_mode = INLIER_SELECTION_MODE::PMC_HEU;
+  }
+
   /**
    * Steps to estimate T/R/s
    *
@@ -441,7 +455,7 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
   // Calculate Maximum Clique
   // Note: the max_clique_ vector holds the indices of original measurements that are within the
   // max clique of the built inlier graph.
-  if (params_.use_max_clique) {
+  if (params_.inlier_selection_mode != INLIER_SELECTION_MODE::NONE) {
 
     // Create inlier graph: A graph with (indices of) original measurements as vertices, and edges
     // only when the TIM between two measurements are inliers. Note: src_tims_map_ is the same as
@@ -454,8 +468,17 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
     }
 
     teaser::MaxCliqueSolver::Params clique_params;
-    clique_params.solve_exactly = params_.max_clique_exact_solution;
+
+    if (params_.inlier_selection_mode == INLIER_SELECTION_MODE::PMC_EXACT) {
+      clique_params.solver_mode = teaser::MaxCliqueSolver::CLIQUE_SOLVER_MODE::PMC_EXACT;
+    } else if (params_.inlier_selection_mode == INLIER_SELECTION_MODE::PMC_HEU) {
+      clique_params.solver_mode = teaser::MaxCliqueSolver::CLIQUE_SOLVER_MODE::PMC_HEU;
+    } else {
+      clique_params.solver_mode = teaser::MaxCliqueSolver::CLIQUE_SOLVER_MODE::KCORE_HEU;
+    }
     clique_params.time_limit = params_.max_clique_time_limit;
+    clique_params.kcore_heuristic_threshold = params_.kcore_heuristic_threshold;
+
     teaser::MaxCliqueSolver clique_solver(clique_params);
     max_clique_ = clique_solver.findMaxClique(inlier_graph_);
     std::sort(max_clique_.begin(), max_clique_.end());
@@ -498,7 +521,7 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
       const auto& root = i;
       int leaf;
       if (i != src.cols() - 1) {
-        leaf = i+1;
+        leaf = i + 1;
       } else {
         leaf = 0;
       }
