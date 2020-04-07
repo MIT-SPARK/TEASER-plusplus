@@ -58,19 +58,23 @@ vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
   G.compute_cores();
   auto max_core = G.get_max_core();
 
+  TEASER_DEBUG_INFO_MSG("Max core number: " << max_core);
+  TEASER_DEBUG_INFO_MSG("Num vertices: " << vertices.size());
+
   // check for k-core heuristic threshold
   // check whether threshold equals 1 to short circuit the comparison
   if (params_.solver_mode == CLIQUE_SOLVER_MODE::KCORE_HEU &&
       params_.kcore_heuristic_threshold != 1 &&
       max_core > static_cast<int>(params_.kcore_heuristic_threshold *
-                                  static_cast<double>(vertices.size()))) {
-
+                                  static_cast<double>(all_vertices.size()))) {
+    TEASER_DEBUG_INFO_MSG("Using K-core heuristic finder.");
     // remove all nodes with core number less than max core number
     // k_cores is a vector saving the core number of each vertex
     auto k_cores = G.get_kcores();
-    for (int i = 0; i < k_cores->size(); ++i) {
+    for (int i = 1; i < k_cores->size(); ++i) {
+      // Note: k_core has size equals to num vertices + 1
       if ((*k_cores)[i] >= max_core) {
-        C.push_back(i);
+        C.push_back(i-1);
       }
     }
     return C;
