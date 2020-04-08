@@ -398,13 +398,12 @@ teaser::RobustRegistrationSolver::computeTIMs(const Eigen::Matrix<double, 3, Eig
   return vtilde;
 }
 
-teaser::RegistrationSolution teaser::RobustRegistrationSolver::solve(
-    const teaser::PointCloud& src_cloud, const teaser::PointCloud& dst_cloud,
-    const std::vector<std::pair<int, int>> correspondences) {
-  assert(src_cloud.size() == dst_cloud.size());
-
-  Eigen::Matrix<double, 3, Eigen::Dynamic> src(3, src_cloud.size());
-  Eigen::Matrix<double, 3, Eigen::Dynamic> dst(3, dst_cloud.size());
+teaser::RegistrationSolution
+teaser::RobustRegistrationSolver::solve(const teaser::PointCloud& src_cloud,
+                                        const teaser::PointCloud& dst_cloud,
+                                        const std::vector<std::pair<int, int>> correspondences) {
+  Eigen::Matrix<double, 3, Eigen::Dynamic> src(3, correspondences.size());
+  Eigen::Matrix<double, 3, Eigen::Dynamic> dst(3, correspondences.size());
   for (size_t i = 0; i < correspondences.size(); ++i) {
     auto src_idx = std::get<0>(correspondences[i]);
     auto dst_idx = std::get<1>(correspondences[i]);
