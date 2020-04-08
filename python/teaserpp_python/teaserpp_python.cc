@@ -120,10 +120,29 @@ PYBIND11_MODULE(teaserpp_python, m) {
                 ? "FGR"
                 : "GNC-TLS";
 
+        std::string inlier_selection_alg;
+        if (a.inlier_selection_mode ==
+            teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_EXACT) {
+          inlier_selection_alg = "PMC_EXACT";
+        }
+        if (a.inlier_selection_mode ==
+            teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_HEU) {
+          inlier_selection_alg = "PMC_HEU";
+        }
+        if (a.inlier_selection_mode ==
+            teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::KCORE_HEU) {
+          inlier_selection_alg = "KCORE_HEU";
+        }
+        if (a.inlier_selection_mode ==
+            teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::NONE) {
+          inlier_selection_alg = "NONE";
+        }
+
         print_string << "<Params with noise_bound=" << a.noise_bound << "\n"
                      << "cbar2=" << a.cbar2 << "\n"
                      << "estimate_sccaling=" << a.estimate_scaling << "\n"
                      << "rotation_estimation_algorithm=" << rot_alg << "\n"
+                     << "inlier_selection_mode=" << inlier_selection_alg << "\n"
                      << ">";
         return print_string.str();
       });
