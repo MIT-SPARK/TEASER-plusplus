@@ -341,6 +341,21 @@ public:
   };
 
   /**
+   * Enum representing the type of graph-based inlier selection algorithm to use
+   *
+   * PMC_EXACT: Use PMC to find exact clique from the inlier graph
+   * PMC_HEU: Use PMC's heuristic finder to find approximate max clique
+   * KCORE_HEU: Use k-core heuristic to select inliers
+   * NONE: No inlier selection
+   */
+  enum class INLIER_SELECTION_MODE {
+    PMC_EXACT = 0,
+    PMC_HEU = 1,
+    KCORE_HEU = 2,
+    NONE = 3,
+  };
+
+  /**
    * A struct representing params for initializing the RobustRegistrationSolver
    *
    * Note: the default values needed to be changed accordingly for best performance.
@@ -395,6 +410,33 @@ public:
     double rotation_cost_threshold = 1e-6;
 
     /**
+     * \brief Type of the inlier selection
+     */
+    INLIER_SELECTION_MODE inlier_selection_mode = INLIER_SELECTION_MODE::PMC_EXACT;
+
+    /**
+     * \brief The threshold ratio for determining whether to skip max clique and go straightly to
+     * GNC rotation estimation. Set this to 1 to always use exact max clique selection, 0 to always
+     * skip exact max clique selection.
+     *
+     * \attention Note that the use_max_clique option takes precedence. In other words, if
+     * use_max_clique is set to false, then kcore_heuristic_threshold will be ignored. If
+     * use_max_clique is set to true, then the following will happen: if the max core number of the
+     * inlier graph is lower than the kcore_heuristic_threshold as a percentage of the total nodes
+     * in the inlier graph, then the code will preceed to call the max clique finder. Otherwise, the
+     * graph will be directly fed to the GNC rotation solver.
+     *
+     */
+    double kcore_heuristic_threshold = 0.5;
+
+    /**
+     * \deprecated Use inlier_selection_mode instead
+     * Set this to true to enable max clique inlier selection, false to skip it.
+     */
+    bool use_max_clique = true;
+
+    /**
+     * \deprecated Use inlier_selection_mode instead
      * Set this to false to enable heuristic only max clique finding.
      */
     bool max_clique_exact_solution = true;
@@ -433,9 +475,9 @@ public:
    * @param correspondences A vector of tuples representing the correspondences between pairs of
    * points in the two clouds
    */
-  RegistrationSolution
-  solve(const teaser::PointCloud& src_cloud, const teaser::PointCloud& dst_cloud,
-        const std::vector<std::pair<int, int>> correspondences);
+  RegistrationSolution solve(const teaser::PointCloud& src_cloud,
+                             const teaser::PointCloud& dst_cloud,
+                             const std::vector<std::pair<int, int>> correspondences);
 
   /**
    * Solve for scale, translation and rotation. Assumes v2 is v1 after transformation.

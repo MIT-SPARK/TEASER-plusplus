@@ -26,6 +26,8 @@ enum class INPUT_PARAMS : int {
   rotation_gnc_factor = 6,
   rotation_max_iterations = 7,
   rotation_cost_threshold = 8,
+  inlier_selection_algorithm = 9,
+  kcore_heuristic_threshold = 10,
 };
 
 enum class OUTPUT_PARAMS : int {
@@ -46,6 +48,8 @@ const std::map<INPUT_PARAMS, mexTypeCheckFunction> INPUT_PARMS_MAP{
     {INPUT_PARAMS::rotation_gnc_factor, &isRealDoubleScalar},
     {INPUT_PARAMS::rotation_max_iterations, &isRealDoubleScalar},
     {INPUT_PARAMS::rotation_cost_threshold, &isRealDoubleScalar},
+    {INPUT_PARAMS::inlier_selection_algorithm, &isRealDoubleScalar},
+    {INPUT_PARAMS::kcore_heuristic_threshold, &isRealDoubleScalar},
 };
 const std::map<OUTPUT_PARAMS, mexTypeCheckFunction> OUTPUT_PARMS_MAP{
     {OUTPUT_PARAMS::s_est, &isRealDoubleScalar},
@@ -71,6 +75,16 @@ const std::map<OUTPUT_PARAMS, mexTypeCheckFunction> OUTPUT_PARMS_MAP{
  * - rotation_estimation_algorithm: a number indicating the rotation estimation method used;
  *                                  if it's 0: GNC-TLS
  *                                  if it's 1: FGR
+ * - inlier_selection_algorithm: a number indicating the  method used;
+ *                                  0: PMC_EXACT
+ *                                  1: PMC_HEU
+ *                                  2: KCORE_HEU
+ *                                  3: NONE
+ * - kcore_heuristic_threshold: threshold for k-core heuristic. If the inlier graph has a max core
+ *                              number greater than kcore_heuristic_threshold * number of vertices,
+ *                              then the nodes with core number == max core number are directly
+ *                              returned. If not, then the algorithm will proceed to use PMC to find
+ *                              an exact clique.
  *
  * Output:
  * - s_est estimated scale (scalar)
@@ -123,6 +137,10 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
       static_cast<size_t>(*mxGetPr(prhs[toUType(INPUT_PARAMS::rotation_max_iterations)]));
   auto rotation_cost_threshold =
       static_cast<double>(*mxGetPr(prhs[toUType(INPUT_PARAMS::rotation_cost_threshold)]));
+  auto inlier_selection_algorithm =
+      static_cast<int>(*mxGetPr(prhs[toUType(INPUT_PARAMS::inlier_selection_algorithm)]));
+  auto kcore_heuristic_threshold =
+      static_cast<double>(*mxGetPr(prhs[toUType(INPUT_PARAMS::kcore_heuristic_threshold)]));
 
   // Prepare the TEASER++ solver for solving registration problem
   teaser::RobustRegistrationSolver::Params params;
@@ -132,6 +150,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
   params.rotation_max_iterations = rotation_max_iterations;
   params.rotation_gnc_factor = rotation_gnc_factor;
   params.rotation_cost_threshold = rotation_cost_threshold;
+  params.kcore_heuristic_threshold = kcore_heuristic_threshold;
 
   switch (rotation_estimation_method) {
   case 0: { // GNC-TLS method
@@ -153,6 +172,38 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
     break;
   }
   }
+
+  switch (inlier_selection_algorithm) {
+  case 0: { // PMC_EXACT method
+    mexPrintf("Use PMC_EXACT for inlier selection.\n");
+    params.inlier_selection_mode =
+        teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_EXACT;
+    break;
+  }
+  case 1: { // PMC_HEU method
+    mexPrintf("Use PMC_HEU for inlier selection.\n");
+    params.inlier_selection_mode = teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_HEU;
+    break;
+  }
+  case 2: { // KCORE_HEU method
+    mexPrintf("Use KCORE_HEU for inlier selection.\n");
+    params.inlier_selection_mode =
+        teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::KCORE_HEU;
+    break;
+  }
+  case 3: { // NONE
+    mexPrintf("No inlier selection step after scale pruning.\n");
+    params.inlier_selection_mode = teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::NONE;
+    break;
+  }
+  default: {
+    mexPrintf("Unknown inlier selection algorithm given. Use PMC_EXACT instead.\n");
+    params.inlier_selection_mode =
+        teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_EXACT;
+    break;
+  }
+  }
+
   teaser::RobustRegistrationSolver solver(params);
 
   mexPrintf("Start TEASER++ solver.\n");

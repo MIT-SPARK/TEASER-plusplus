@@ -212,13 +212,36 @@ class MaxCliqueSolver {
 public:
 
   /**
+   * Enum representing the solver algorithm to use
+   */
+  enum class CLIQUE_SOLVER_MODE {
+    PMC_EXACT = 0,
+    PMC_HEU = 1,
+    KCORE_HEU = 2,
+  };
+
+  /**
    * Parameter struct for MaxCliqueSolver
    */
   struct Params {
+
     /**
+     * Algorithm used for finding max clique.
+     */
+    CLIQUE_SOLVER_MODE solver_mode = CLIQUE_SOLVER_MODE::PMC_EXACT;
+
+    /**
+     * \deprecated Use solver_mode instead
      * Set this to false to enable heuristic-only max clique finding.
      */
     bool solve_exactly = true;
+
+    /**
+     * The threshold ratio for determining whether to skip max clique and go straightly to
+     * GNC rotation estimation. Set this to 1 to always use exact max clique selection, 0 to always
+     * skip exact max clique selection.
+     */
+    double kcore_heuristic_threshold = 1;
 
     /**
      * Time limit on running the solver.
@@ -228,7 +251,7 @@ public:
 
   MaxCliqueSolver() = default;
 
-  MaxCliqueSolver(Params params) : params_(params) {};
+  MaxCliqueSolver(Params params) : params_(params){};
 
   /**
    * Find the maximum clique within the graph provided. By maximum clique, it means the clique of

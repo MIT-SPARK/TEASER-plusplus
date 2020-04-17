@@ -259,8 +259,8 @@ void teaser::FastGlobalRegistrationSolver::solveForRotation(
     // update cost
     Eigen::Matrix<double, 3, Eigen::Dynamic> diff = (dst - (*rotation) * src).array().square();
     cost_ = ((scaled_mu * diff.colwise().sum()).array() /
-            (scaled_mu + diff.colwise().sum().array()).array())
-               .sum();
+             (scaled_mu + diff.colwise().sum().array()).array())
+                .sum();
 
     // additional termination conditions
     if (cost_ < params_.cost_threshold || mu < min_mu) {
@@ -417,6 +417,19 @@ teaser::RegistrationSolution
 teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
                                         const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst) {
   assert(scale_solver_ && rotation_solver_ && translation_solver_);
+
+  // Handle deprecated params
+  if (!params_.use_max_clique) {
+    TEASER_DEBUG_INFO_MSG(
+        "Using deprecated param field use_max_clique. Switch to inlier_selection_mode instead.");
+    params_.inlier_selection_mode = INLIER_SELECTION_MODE::NONE;
+  }
+  if (!params_.max_clique_exact_solution) {
+    TEASER_DEBUG_INFO_MSG("Using deprecated param field max_clique_exact_solution. Switch to "
+                          "inlier_selection_mode instead.");
+    params_.inlier_selection_mode = INLIER_SELECTION_MODE::PMC_HEU;
+  }
+
   /**
    * Steps to estimate T/R/s
    *
@@ -437,54 +450,83 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
   solveForScale(src_tims_, dst_tims_);
   TEASER_DEBUG_INFO_MSG("Scale estimation complete.");
 
-  // Create inlier graph: A graph with (indices of) original measurements as vertices, and edges
-  // only when the TIM between two measurements are inliers. Note: src_tims_map_ is the same as
-  // dst_tim_map_
-  inlier_graph_.populateVertices(src.cols());
-  for (size_t i = 0; i < scale_inliers_mask_.cols(); ++i) {
-    if (scale_inliers_mask_(0, i)) {
-      inlier_graph_.addEdge(src_tims_map_(0, i), src_tims_map_(1, i));
-    }
-  }
-
   // Calculate Maximum Clique
   // Note: the max_clique_ vector holds the indices of original measurements that are within the
   // max clique of the built inlier graph.
-  teaser::MaxCliqueSolver::Params clique_params;
-  clique_params.solve_exactly = params_.max_clique_exact_solution;
-  clique_params.time_limit = params_.max_clique_time_limit;
-  teaser::MaxCliqueSolver clique_solver(clique_params);
-  max_clique_ = clique_solver.findMaxClique(inlier_graph_);
-  std::sort(max_clique_.begin(), max_clique_.end());
-  TEASER_DEBUG_INFO_MSG("Max Clique of scale estimation inliers: ");
-#ifndef NDEBUG
-  std::copy(max_clique_.begin(), max_clique_.end(), std::ostream_iterator<int>(std::cout, " "));
-  std::cout << std::endl;
-#endif
-  // Abort if max clique size <= 1
-  if (max_clique_.size() <= 1) {
-    TEASER_DEBUG_INFO_MSG("Clique size too small. Abort.");
-    solution_.valid = false;
-    return solution_;
-  }
+  if (params_.inlier_selection_mode != INLIER_SELECTION_MODE::NONE) {
 
-  // Calculate new measurements & TIMs based on max clique inliers
-  Eigen::Matrix<double, 3, Eigen::Dynamic> pruned_src(3, max_clique_.size());
-  Eigen::Matrix<double, 3, Eigen::Dynamic> pruned_dst(3, max_clique_.size());
-  pruned_src_tims_.resize(3, max_clique_.size());
-  pruned_dst_tims_.resize(3, max_clique_.size());
-  for (size_t i = 0; i < max_clique_.size(); ++i) {
-    const auto& root = max_clique_[i];
-    int leaf;
-    if (i != max_clique_.size() - 1) {
-      leaf = max_clique_[i + 1];
-    } else {
-      leaf = max_clique_[0];
+    // Create inlier graph: A graph with (indices of) original measurements as vertices, and edges
+    // only when the TIM between two measurements are inliers. Note: src_tims_map_ is the same as
+    // dst_tim_map_
+    inlier_graph_.populateVertices(src.cols());
+    for (size_t i = 0; i < scale_inliers_mask_.cols(); ++i) {
+      if (scale_inliers_mask_(0, i)) {
+        inlier_graph_.addEdge(src_tims_map_(0, i), src_tims_map_(1, i));
+      }
     }
-    pruned_src.col(i) = src.col(root);
-    pruned_dst.col(i) = dst.col(root);
-    pruned_src_tims_.col(i) = src.col(leaf) - src.col(root);
-    pruned_dst_tims_.col(i) = dst.col(leaf) - dst.col(root);
+
+    teaser::MaxCliqueSolver::Params clique_params;
+
+    if (params_.inlier_selection_mode == INLIER_SELECTION_MODE::PMC_EXACT) {
+      clique_params.solver_mode = teaser::MaxCliqueSolver::CLIQUE_SOLVER_MODE::PMC_EXACT;
+    } else if (params_.inlier_selection_mode == INLIER_SELECTION_MODE::PMC_HEU) {
+      clique_params.solver_mode = teaser::MaxCliqueSolver::CLIQUE_SOLVER_MODE::PMC_HEU;
+    } else {
+      clique_params.solver_mode = teaser::MaxCliqueSolver::CLIQUE_SOLVER_MODE::KCORE_HEU;
+    }
+    clique_params.time_limit = params_.max_clique_time_limit;
+    clique_params.kcore_heuristic_threshold = params_.kcore_heuristic_threshold;
+
+    teaser::MaxCliqueSolver clique_solver(clique_params);
+    max_clique_ = clique_solver.findMaxClique(inlier_graph_);
+    std::sort(max_clique_.begin(), max_clique_.end());
+    TEASER_DEBUG_INFO_MSG("Max Clique of scale estimation inliers: ");
+#ifndef NDEBUG
+    std::copy(max_clique_.begin(), max_clique_.end(), std::ostream_iterator<int>(std::cout, " "));
+    std::cout << std::endl;
+#endif
+    // Abort if max clique size <= 1
+    if (max_clique_.size() <= 1) {
+      TEASER_DEBUG_INFO_MSG("Clique size too small. Abort.");
+      solution_.valid = false;
+      return solution_;
+    }
+
+    // Calculate new measurements & TIMs based on max clique inliers
+    Eigen::Matrix<double, 3, Eigen::Dynamic> pruned_src(3, max_clique_.size());
+    Eigen::Matrix<double, 3, Eigen::Dynamic> pruned_dst(3, max_clique_.size());
+    pruned_src_tims_.resize(3, max_clique_.size());
+    pruned_dst_tims_.resize(3, max_clique_.size());
+    for (size_t i = 0; i < max_clique_.size(); ++i) {
+      const auto& root = max_clique_[i];
+      int leaf;
+      if (i != max_clique_.size() - 1) {
+        leaf = max_clique_[i + 1];
+      } else {
+        leaf = max_clique_[0];
+      }
+      pruned_src.col(i) = src.col(root);
+      pruned_dst.col(i) = dst.col(root);
+      pruned_src_tims_.col(i) = src.col(leaf) - src.col(root);
+      pruned_dst_tims_.col(i) = dst.col(leaf) - dst.col(root);
+    }
+
+  } else {
+    max_clique_.reserve(src.cols());
+    pruned_src_tims_.resize(3, src.cols());
+    pruned_dst_tims_.resize(3, dst.cols());
+    for (size_t i = 0; i < src.cols(); ++i) {
+      const auto& root = i;
+      int leaf;
+      if (i != src.cols() - 1) {
+        leaf = i + 1;
+      } else {
+        leaf = 0;
+      }
+      pruned_src_tims_.col(i) = src.col(leaf) - src.col(root);
+      pruned_dst_tims_.col(i) = dst.col(leaf) - dst.col(root);
+      max_clique_.push_back(i);
+    }
   }
 
   // Remove scaling for rotation estimation
