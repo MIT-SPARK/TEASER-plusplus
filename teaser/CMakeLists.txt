@@ -33,7 +33,7 @@ target_include_directories(teaser_registration PUBLIC
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
-    target_link_libraries(teaser_registration PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(teaser_registration PRIVATE OpenMP::OpenMP_CXX)
 endif()
 
 install(TARGETS teaser_registration
