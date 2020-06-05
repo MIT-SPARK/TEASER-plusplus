@@ -31,8 +31,10 @@ target_include_directories(teaser_registration PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-find_package(OpenMP REQUIRED)
-target_link_libraries(teaser_registration PUBLIC OpenMP::OpenMP_CXX)
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(teaser_registration PRIVATE OpenMP::OpenMP_CXX)
+endif()
 
 install(TARGETS teaser_registration
     EXPORT teaserpp-export
