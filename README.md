@@ -295,3 +295,6 @@ To use TEASER++ in a ROS environment, simple clone the repo to your catkin works
 Other publications related to TEASER include:
 - [H. Yang](http://hankyang.mit.edu/) and [L. Carlone](http://lucacarlone.mit.edu/), “A quaternion-based certifiably optimal solution to the Wahba problem with outliers,” in Proceedings of the IEEE International Conference on Computer Vision (ICCV), 2019, pp. 1665–1674. ([pdf](https://arxiv.org/pdf/1905.12536.pdf))
 - [H. Yang](http://hankyang.mit.edu/), [P. Antonante](http://www.mit.edu/~antonap/), [V. Tzoumas](https://vasileiostzoumas.com/), and [L. Carlone](http://lucacarlone.mit.edu/), “Graduated Non-Convexity for Robust Spatial Perception: From Non-Minimal Solvers to Global Outlier Rejection,” IEEE Robotics and Automation Letters (RA-L), 2020. ([pdf](https://arxiv.org/pdf/1909.08605))
+
+## Acknowledgements
+This work was partially funded by ARL DCIST CRA W911NF-17-2-0181, ONR RAIDER N00014-18-1-2828, Lincoln Laboratory “Resilient Perception in Degraded Environments”, and the Google Daydream Research Program.
