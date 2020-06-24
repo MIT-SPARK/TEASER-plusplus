@@ -323,7 +323,8 @@ void teaser::ScaleInliersSelector::solveForScale(
   Eigen::Matrix<bool, 1, Eigen::Dynamic> inliers_reverse =
       (raw_scales_reverse.array() - *scale).array().abs() <= alphas_reverse.array();
 
-  *inliers = inliers_forward && inliers_reverse;
+  // element-wise AND using component-wise product (Eigen 3.2 compatible)
+  *inliers = inliers_forward.cwiseProduct(inliers_reverse);
 }
 
 void teaser::TLSTranslationSolver::solveForTranslation(
@@ -348,7 +349,9 @@ void teaser::TLSTranslationSolver::solveForTranslation(
   Eigen::Matrix<bool, 1, Eigen::Dynamic> inliers_temp(1, N);
   for (size_t i = 0; i < raw_translation.rows(); ++i) {
     tls_estimator_.estimate(raw_translation.row(i), alphas, &((*translation)(i)), &inliers_temp);
-    *inliers = *inliers && inliers_temp; // a point is an inlier iff. x,y,z are all inliers
+    // element-wise AND using component-wise product (Eigen 3.2 compatible)
+    // a point is an inlier iff. x,y,z are all inliers
+    *inliers = (*inliers).cwiseProduct(inliers_temp);
   }
 }
 
