@@ -19,6 +19,7 @@ add_library(teaserpp::teaser_io ALIAS teaser_io)
 
 # teaser_registration library
 add_library(teaser_registration SHARED
+        src/certification.cc
         src/registration.cc
         src/graph.cc
         )
