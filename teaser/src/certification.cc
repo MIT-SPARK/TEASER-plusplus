@@ -48,7 +48,7 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
           0.5 * (src.col(i).transpose() * xi) * Eigen::Matrix3d::Identity() +
           0.5 * xi_hatmap * src_i_hatmap + 0.5 * xi * src.col(i).transpose() -
           0.75 * xi.squaredNorm() * Eigen::Matrix3d::Identity() -
-          0.25 * cbar2 * Eigen::Matrix3d::Identity();
+          0.25 * cbar2_ * Eigen::Matrix3d::Identity();
 
       // compute the vector part
       current_block.topLeftCorner<3, 1>() = -1.5 * xi_hatmap * src.col(i);
@@ -59,7 +59,7 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
       Eigen::Matrix<double, 3, 3> phi_hatmap = teaser::hatmap(phi);
 
       // compute lambda_i, (4,4) entry
-      current_block(3, 3) = -0.25 * phi.squaredNorm() - 0.75 * cbar2;
+      current_block(3, 3) = -0.25 * phi.squaredNorm() - 0.75 * cbar2_;
 
       // compute E_ii, top-left 3-by-3 block
       current_block.topLeftCorner<3, 3>() =
@@ -67,7 +67,7 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
           0.5 * (src.col(i).transpose() * phi) * Eigen::Matrix3d::Identity() +
           0.5 * phi_hatmap * src_i_hatmap + 0.5 * phi * src.col(i) -
           0.25 * phi.squaredNorm() * Eigen::Matrix3d::Identity() -
-          0.25 * cbar2 * Eigen::Matrix3d::Identity();
+          0.25 * cbar2_ * Eigen::Matrix3d::Identity();
 
       // compute x_i
       current_block.topLeftCorner<3, 1>() = -0.5 * phi_hatmap * src.col(i);
