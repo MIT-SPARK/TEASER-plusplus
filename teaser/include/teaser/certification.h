@@ -52,17 +52,36 @@ public:
    */
   DRSCertifier(double noise_bound, double cbar2) : noise_bound_(noise_bound), cbar2_(cbar2){};
 
-private:
+  /**
+   * Generate an initial guess (see Appendix U of [1]).
+   *
+   * The initial guess satisfies:
+   * 1. KKT complementary slackness
+   * 2. diagonal blocks of (Q - Lambda_guess) is PSD (except the first diagonal block)
+   *
+   * @param R [in] rotation matrix
+   * @param theta_prepended [in] a binary (1 & -1) vector indicating inliers vs. outliers
+   * @param src [in]
+   * @param dst [in]
+   * @param lambda_guess [out]
+   */
+  void getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
+                      const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended,
+                      const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                      const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
+                      Eigen::SparseMatrix<double>* lambda_guess);
+
   /**
    * Calculate the inverse of the linear projection matrix A mentioned in Theorem 35 of our TEASER
    * paper [1].
    *
-   * @param theta [in] a binary vector indicating inliers vs. outliers, with 1 prepended
+   * @param theta_prepended [in] a binary (1 & -1) vector indicating inliers vs. outliers, with 1 prepended
    * @param A_inv [out] inverse of A
    */
-  void getLinearProjection(const Eigen::Matrix<bool, 1, Eigen::Dynamic>& theta,
+  void getLinearProjection(const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended,
                            Eigen::SparseMatrix<double>* A_inv);
 
+private:
   /**
    * Bounds on the noise for the measurements
    */
