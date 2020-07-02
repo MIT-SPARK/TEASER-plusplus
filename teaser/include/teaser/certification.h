@@ -53,6 +53,18 @@ public:
   DRSCertifier(double noise_bound, double cbar2) : noise_bound_(noise_bound), cbar2_(cbar2){};
 
   /**
+   * Given an arbitrary matrix W, project W to the correct dual structure
+    (1) off-diagonal blocks must be skew-symmetric
+    (2) diagonal blocks must satisfy W_00 = - sum(W_ii)
+    (3) W_dual must also satisfy complementary slackness (because M_init satisfies complementary
+   slackness) This projection is optimal in the sense of minimum Frobenious norm
+   */
+  void getOptimalDualProjection(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& W,
+                                const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended,
+                                const Eigen::SparseMatrix<double>& A_inv,
+                                Eigen::MatrixXd* W_dual);
+
+  /**
    * Generate an initial guess (see Appendix U of [1]).
    *
    * The initial guess satisfies:
@@ -75,7 +87,8 @@ public:
    * Calculate the inverse of the linear projection matrix A mentioned in Theorem 35 of our TEASER
    * paper [1].
    *
-   * @param theta_prepended [in] a binary (1 & -1) vector indicating inliers vs. outliers, with 1 prepended
+   * @param theta_prepended [in] a binary (1 & -1) vector indicating inliers vs. outliers, with 1
+   * prepended
    * @param A_inv [out] inverse of A
    */
   void getLinearProjection(const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended,
