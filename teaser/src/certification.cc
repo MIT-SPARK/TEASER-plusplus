@@ -12,8 +12,7 @@
 void teaser::DRSCertifier::getOptimalDualProjection(
     const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& W,
     const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended,
-    const Eigen::SparseMatrix<double>& A_inv,
-    Eigen::MatrixXd* W_dual) {
+    const Eigen::SparseMatrix<double>& A_inv, Eigen::MatrixXd* W_dual) {
   // prepare some variables
   int Npm = W.rows();
   int N = Npm / 4 - 1;
@@ -85,47 +84,54 @@ void teaser::DRSCertifier::getOptimalDualProjection(
     int row_idx_start = i * 4;
     W_i = W.block(row_idx_start, 0, 4, W.cols());
 
-    for (size_t j = i+1; j < N+1; ++j) {
-      int col_idx_start = j*4;
+    for (size_t j = i + 1; j < N + 1; ++j) {
+      int col_idx_start = j * 4;
 
       // take W_ij and break into top-left 3x3 and vectors
-      W_ij = W_i.block(0, col_idx_start, 4,4);
+      W_ij = W_i.block(0, col_idx_start, 4, 4);
       y_dual_ij = (b_W_dual.row(count)).transpose();
 
       // assemble W_dual_ij
-      W_dual_ij = (W_ij - W_ij.transpose())/2;
-      W_dual_ij.block<3,1>(0,3) = y_dual_ij;
-      W_dual_ij.block<1,3>(3, 0) = -y_dual_ij.transpose();
+      W_dual_ij = (W_ij - W_ij.transpose()) / 2;
+      W_dual_ij.block<3, 1>(0, 3) = y_dual_ij;
+      W_dual_ij.block<1, 3>(3, 0) = -y_dual_ij.transpose();
 
       // assign W_dual_ij to W_dual_i
       W_dual_i.block<4, 4>(0, col_idx_start) = W_dual_ij;
 
-      count +=1;
+      count += 1;
     }
     W_dual->block(row_idx_start, 0, 4, Npm) = W_dual_i;
   }
   *W_dual = *W_dual + W_dual->transpose();
 
   // Project the diagonal blocks
+  Eigen::Matrix4d W_ii;
   Eigen::Matrix4d W_diag_mean = Eigen::Matrix4d::Zero();
   Eigen::Matrix3d W_diag_sum_33 = Eigen::Matrix3d::Zero();
-  for (size_t i = 0; i < N+1; ++i) {
-
+  for (size_t i = 0; i < N + 1; ++i) {
+    int idx_start = i * 4;
+    Eigen::Vector4d W_dual_row_sum_last_column;
+    // sum 4 rows
+    getBlockRowSum(*W_dual, i, theta_prepended, &W_dual_row_sum_last_column);
+    W_ii = W.block<4, 4>(idx_start, idx_start);
+    // modify W_ii's last column/row to satisfy complementary slackness
+    W_ii.block<4, 1>(0, 3) = -theta_prepended(i) * W_dual_row_sum_last_column;
+    W_ii.block<1, 4>(3, 0) = -theta_prepended(i) * W_dual_row_sum_last_column.transpose();
+    (*W_dual).block<4, 4>(idx_start, idx_start) = W_ii;
+    W_diag_sum_33 += W_ii.topLeftCorner<3, 3>();
   }
-  //for i = 1:N+1
-  //    idx = blkIdxGroups{i};
-  //    W_dual_row_sum_last_column = get_block_row_sum_last_column(W_dual,i,theta);
-  //    W_ii = W(idx,idx);
-  //    % modify W_ii's last column/row to satisfy complementary slackness
-  //    W_ii(:,4) = -theta(i) * W_dual_row_sum_last_column;
-  //    W_ii(4,:) = -theta(i) * W_dual_row_sum_last_column';
-  //
-  //    W_dual(idx,idx) = W_ii;
-  //
-  //    W_diag_sum_33 = W_diag_sum_33 + W_ii(1:3,1:3);
-  //end
-  //W_diag_mean(1:3,1:3) = W_diag_sum_33 / (N+1);
-  //W_dual = W_dual - kron(speye(N+1),W_diag_mean);
+  W_diag_mean.topLeftCorner<3, 3>() = W_diag_sum_33 / (N + 1);
+
+  // update diagonal blocks
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> temp_A((N + 1) * W_diag_mean.rows(),
+                                                               (N + 1) * W_diag_mean.cols());
+  temp_A.setZero();
+  for (int i = 0; i < N + 1; i++) {
+    temp_A.block(i * W_diag_mean.rows(), i * W_diag_mean.cols(), W_diag_mean.rows(),
+                 W_diag_mean.cols()) = W_diag_mean;
+  }
+  *W_dual -= temp_A;
 }
 
 void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
@@ -163,8 +169,7 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
 
       // compute the top-left 3-by-3 block
       current_block.topLeftCorner<3, 3>() =
-          src_i_hatmap * src_i_hatmap -
-          0.5 * (src.col(i)).dot(xi) * Eigen::Matrix3d::Identity() +
+          src_i_hatmap * src_i_hatmap - 0.5 * (src.col(i)).dot(xi) * Eigen::Matrix3d::Identity() +
           0.5 * xi_hatmap * src_i_hatmap + 0.5 * xi * src.col(i).transpose() -
           0.75 * xi.squaredNorm() * Eigen::Matrix3d::Identity() -
           0.25 * cbar2_ * Eigen::Matrix3d::Identity();
@@ -182,8 +187,7 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
 
       // compute E_ii, top-left 3-by-3 block
       current_block.topLeftCorner<3, 3>() =
-          src_i_hatmap * src_i_hatmap -
-          0.5 * (src.col(i)).dot(phi) * Eigen::Matrix3d::Identity() +
+          src_i_hatmap * src_i_hatmap - 0.5 * (src.col(i)).dot(phi) * Eigen::Matrix3d::Identity() +
           0.5 * phi_hatmap * src_i_hatmap + 0.5 * phi * src.col(i).transpose() -
           0.25 * phi.squaredNorm() * Eigen::Matrix3d::Identity() -
           0.25 * cbar2_ * Eigen::Matrix3d::Identity();
@@ -291,4 +295,21 @@ void teaser::DRSCertifier::getLinearProjection(
     sparse_triplets.emplace_back(i, i, x);
   }
   A_inv->setFromTriplets(sparse_triplets.begin(), sparse_triplets.end());
+}
+
+void teaser::DRSCertifier::getBlockRowSum(const Eigen::MatrixXd& A, const int& row,
+                                          const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta,
+                                          Eigen::Vector4d* output) {
+  // unit = sparse(4,1); unit(end) = 1;
+  // vector = kron(theta,unit); % vector of size 4N+4 by 1
+  // entireRow = A(blkIndices(row,4),:); % entireRow of size 4 by 4N+4
+  // row_sum_last_column = entireRow * vector; % last column sum has size 4 by 1;
+  Eigen::Matrix<double, 4, 1> unit = Eigen::Matrix<double, 4, 1>::Zero();
+  unit(3, 0) = 1;
+  Eigen::Matrix<double, Eigen::Dynamic, 1> vector =
+      vectorKron<double, Eigen::Dynamic, 4>(theta.transpose(), unit);
+  int start_idx = row;
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> entire_row =
+      A.block(start_idx, 0, 4, A.cols());
+  *output = entire_row * vector;
 }

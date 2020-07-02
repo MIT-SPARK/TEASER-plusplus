@@ -61,8 +61,7 @@ public:
    */
   void getOptimalDualProjection(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& W,
                                 const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended,
-                                const Eigen::SparseMatrix<double>& A_inv,
-                                Eigen::MatrixXd* W_dual);
+                                const Eigen::SparseMatrix<double>& A_inv, Eigen::MatrixXd* W_dual);
 
   /**
    * Generate an initial guess (see Appendix U of [1]).
@@ -95,6 +94,17 @@ public:
                            Eigen::SparseMatrix<double>* A_inv);
 
 private:
+  /**
+   * Calculate the sum of a block (4-by-N) along the columns
+   * @param A [in]
+   * @param row [in]
+   * @param theta [in]
+   * @param output [out]
+   */
+  void getBlockRowSum(const Eigen::MatrixXd& A, const int& row,
+                      const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta,
+                      Eigen::Vector4d* output);
+
   /**
    * Bounds on the noise for the measurements
    */
