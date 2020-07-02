@@ -122,8 +122,7 @@ TEST(LinalgTest, VectorKronDynamicSize) {
     exp.setOnes();
 
     // compute the actual result
-    Eigen::VectorXd act;
-    teaser::vectorKron<double>(v1, v2, &act);
+    Eigen::VectorXd act = teaser::vectorKron<double, 3, 3>(v1, v2);
     ASSERT_TRUE(act.isApprox(exp));
   }
   {
@@ -136,8 +135,7 @@ TEST(LinalgTest, VectorKronDynamicSize) {
     exp << 3,2,12,8;
 
     // compute the actual result
-    Eigen::VectorXd act;
-    teaser::vectorKron<double>(v1, v2, &act);
+    Eigen::VectorXd act = teaser::vectorKron<double, 2, 2>(v1, v2);
     ASSERT_TRUE(act.isApprox(exp));
   }
   {
@@ -150,8 +148,7 @@ TEST(LinalgTest, VectorKronDynamicSize) {
     exp << 3,-1,9,-10,-9,3,-27,30,9,-3,27,-30;
 
     // compute the actual result
-    Eigen::VectorXd act;
-    teaser::vectorKron<double>(v1, v2, &act);
+    Eigen::VectorXd act = teaser::vectorKron<double, 3, 4>(v1, v2);
     ASSERT_TRUE(act.isApprox(exp));
   }
   {
@@ -164,8 +161,7 @@ TEST(LinalgTest, VectorKronDynamicSize) {
     exp.setZero();
 
     // compute the actual result
-    Eigen::VectorXd act;
-    teaser::vectorKron<double>(v1, v2, &act);
+    Eigen::VectorXd act = teaser::vectorKron<double, 3, 4>(v1, v2);
     ASSERT_TRUE(act.isApprox(exp));
   }
 }
