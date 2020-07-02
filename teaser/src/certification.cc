@@ -7,7 +7,126 @@
  */
 
 #include "teaser/certification.h"
-#include "teaser/geometry.h"
+#include "teaser/linalg.h"
+
+void teaser::DRSCertifier::getOptimalDualProjection(
+    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& W,
+    const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended,
+    const Eigen::SparseMatrix<double>& A_inv,
+    Eigen::MatrixXd* W_dual) {
+  // prepare some variables
+  int Npm = W.rows();
+  int N = Npm / 4 - 1;
+  assert(theta_prepended.cols() == N + 1);
+
+  // first project the off-diagonal blocks
+  int nr_off_diag_blks = A_inv.rows();
+
+  // Compute b_W
+  Eigen::Matrix<double, Eigen::Dynamic, 3> b_W(nr_off_diag_blks, 3);
+  b_W.setZero();
+
+  int count = 0;
+  for (size_t i = 0; i < N; ++i) {
+    // prepare indices
+    int row_idx_start = i * 4;
+    int row_idx_end = i * 4 + 3;
+    for (size_t j = i + 1; j < N + 1; ++j) {
+      // prepare indices
+      int col_idx_start = j * 4;
+      int col_idx_end = i * 4 + 3;
+
+      // current theta value calculation
+      double theta_ij = theta_prepended.col(i) * theta_prepended.col(j);
+
+      // [-theta_ij 1]
+      Eigen::Matrix<double, 1, 2> temp_A;
+      temp_A << -theta_ij, 1;
+
+      // [-1 theta_ij]
+      Eigen::Matrix<double, 1, 2> temp_B;
+      temp_A << -1, theta_ij;
+
+      // W([row_idx(4) col_idx(4)],row_idx(1:3))
+      Eigen::Matrix<double, 1, 3> temp_C = W.block<1, 3>(row_idx_end, row_idx_start);
+      Eigen::Matrix<double, 1, 3> temp_D = W.block<1, 3>(col_idx_end, row_idx_start);
+      Eigen::Matrix<double, 2, 3> temp_CD;
+      temp_CD << temp_C, temp_D;
+
+      // W([row_idx(4) col_idx(4)], col_idx(1:3))
+      Eigen::Matrix<double, 1, 3> temp_E = W.block<1, 3>(row_idx_end, col_idx_start);
+      Eigen::Matrix<double, 1, 3> temp_F = W.block<1, 3>(col_idx_end, col_idx_start);
+      Eigen::Matrix<double, 2, 3> temp_EF;
+      temp_EF << temp_E, temp_F;
+
+      // calculate the current row for b_W with the temporary variables
+      Eigen::Matrix<double, 1, 3> y_b_Wt = temp_A * temp_CD + temp_B * temp_EF;
+
+      // update b_W
+      b_W.row(count) = y_b_Wt;
+      count += 1;
+    }
+  }
+  Eigen::Matrix<double, Eigen::Dynamic, 3> b_W_dual = A_inv * b_W;
+
+  // Compute W_dual
+  W_dual->setZero();
+  W_dual->resize(Npm, Npm);
+  count = 0;
+  // declare matrices to prevent reallocation
+  Eigen::Matrix4d W_ij = Eigen::Matrix4d::Zero();
+  Eigen::Matrix4d W_dual_ij = Eigen::Matrix4d::Zero();
+  Eigen::Matrix<double, 3, 1> y_dual_ij = Eigen::Matrix<double, 3, 1>::Zero();
+  Eigen::Matrix<double, 4, Eigen::Dynamic> W_i(4, W.cols());
+  Eigen::Matrix<double, 4, Eigen::Dynamic> W_dual_i(4, Npm);
+  W_i.setZero();
+  W_dual_i.setZero();
+  for (size_t i = 0; i < N; ++i) {
+    int row_idx_start = i * 4;
+    W_i = W.block(row_idx_start, 0, 4, W.cols());
+
+    for (size_t j = i+1; j < N+1; ++j) {
+      int col_idx_start = j*4;
+
+      // take W_ij and break into top-left 3x3 and vectors
+      W_ij = W_i.block(0, col_idx_start, 4,4);
+      y_dual_ij = (b_W_dual.row(count)).transpose();
+
+      // assemble W_dual_ij
+      W_dual_ij = (W_ij - W_ij.transpose())/2;
+      W_dual_ij.block<3,1>(0,3) = y_dual_ij;
+      W_dual_ij.block<1,3>(3, 0) = -y_dual_ij.transpose();
+
+      // assign W_dual_ij to W_dual_i
+      W_dual_i.block<4, 4>(0, col_idx_start) = W_dual_ij;
+
+      count +=1;
+    }
+    W_dual->block(row_idx_start, 0, 4, Npm) = W_dual_i;
+  }
+  *W_dual = *W_dual + W_dual->transpose();
+
+  // Project the diagonal blocks
+  Eigen::Matrix4d W_diag_mean = Eigen::Matrix4d::Zero();
+  Eigen::Matrix3d W_diag_sum_33 = Eigen::Matrix3d::Zero();
+  for (size_t i = 0; i < N+1; ++i) {
+
+  }
+  //for i = 1:N+1
+  //    idx = blkIdxGroups{i};
+  //    W_dual_row_sum_last_column = get_block_row_sum_last_column(W_dual,i,theta);
+  //    W_ii = W(idx,idx);
+  //    % modify W_ii's last column/row to satisfy complementary slackness
+  //    W_ii(:,4) = -theta(i) * W_dual_row_sum_last_column;
+  //    W_ii(4,:) = -theta(i) * W_dual_row_sum_last_column';
+  //
+  //    W_dual(idx,idx) = W_ii;
+  //
+  //    W_diag_sum_33 = W_diag_sum_33 + W_ii(1:3,1:3);
+  //end
+  //W_diag_mean(1:3,1:3) = W_diag_sum_33 / (N+1);
+  //W_dual = W_dual - kron(speye(N+1),W_diag_mean);
+}
 
 void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
                                           const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta,
@@ -19,7 +138,7 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
 
   // prepare the lambda sparse matrix output
   lambda_guess->resize(Npm, Npm);
-  lambda_guess->reserve(Npm * (Npm-1) * 2);
+  lambda_guess->reserve(Npm * (Npm - 1) * 2);
   lambda_guess->setZero();
 
   // 4-by-4 Eigen matrix to store the top left 4-by-4 block
@@ -40,12 +159,12 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
       Eigen::Matrix<double, 3, 3> xi_hatmap = teaser::hatmap(xi);
 
       // compute the (4,4) entry of the current block, obtained from KKT complementary slackness
-      current_block(3, 3) = -0.75 * xi.squaredNorm() - 0.25 * cbar2;
+      current_block(3, 3) = -0.75 * xi.squaredNorm() - 0.25 * cbar2_;
 
       // compute the top-left 3-by-3 block
       current_block.topLeftCorner<3, 3>() =
           src_i_hatmap * src_i_hatmap -
-          0.5 * (src.col(i).transpose() * xi) * Eigen::Matrix3d::Identity() +
+          0.5 * (src.col(i)).dot(xi) * Eigen::Matrix3d::Identity() +
           0.5 * xi_hatmap * src_i_hatmap + 0.5 * xi * src.col(i).transpose() -
           0.75 * xi.squaredNorm() * Eigen::Matrix3d::Identity() -
           0.25 * cbar2_ * Eigen::Matrix3d::Identity();
@@ -64,8 +183,8 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
       // compute E_ii, top-left 3-by-3 block
       current_block.topLeftCorner<3, 3>() =
           src_i_hatmap * src_i_hatmap -
-          0.5 * (src.col(i).transpose() * phi) * Eigen::Matrix3d::Identity() +
-          0.5 * phi_hatmap * src_i_hatmap + 0.5 * phi * src.col(i) -
+          0.5 * (src.col(i)).dot(phi) * Eigen::Matrix3d::Identity() +
+          0.5 * phi_hatmap * src_i_hatmap + 0.5 * phi * src.col(i).transpose() -
           0.25 * phi.squaredNorm() * Eigen::Matrix3d::Identity() -
           0.25 * cbar2_ * Eigen::Matrix3d::Identity();
 
