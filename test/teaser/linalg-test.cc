@@ -15,6 +15,44 @@
 
 #include "teaser/linalg.h"
 
+TEST(LinalgTest, HatMap) {
+  {
+    // all zeros
+    Eigen::Matrix<double, 3, 1> v1;
+    v1 << 0,0,0;
+    Eigen::Matrix3d exp;
+    exp.setZero();
+    const auto act = teaser::hatmap(v1);
+    ASSERT_TRUE(act.isApprox(exp));
+  }
+  {
+    // non-zero cases
+    Eigen::Matrix<double, 3, 1> v1;
+    v1 << 1,2,3;
+    Eigen::Matrix3d exp;
+    // clang-format off
+    exp << 0, -3, 2,
+           3,  0,-1,
+          -2,  1, 0;
+    // clang-format on
+    const auto act = teaser::hatmap(v1);
+    ASSERT_TRUE(act.isApprox(exp));
+  }
+  {
+    // negative
+    Eigen::Matrix<double, 3, 1> v1;
+    v1 << 0,2,-3;
+    Eigen::Matrix3d exp;
+    // clang-format off
+    exp << 0,   3, 2,
+           -3,  0, 0,
+           -2,  0, 0;
+    // clang-format on
+    const auto act = teaser::hatmap(v1);
+    ASSERT_TRUE(act.isApprox(exp));
+  }
+}
+
 TEST(LinalgTest, VectorKronFixedSize) {
   {
     // a simple case
