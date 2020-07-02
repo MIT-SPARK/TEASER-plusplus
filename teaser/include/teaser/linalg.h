@@ -11,6 +11,21 @@
 namespace teaser {
 
 /**
+ * Return the hat map of the provided vector (a skew symmetric matrix).
+ * @param u 3-by-1 vector
+ * @param x 3-by-3 skew symmetric matrix
+ */
+Eigen::Matrix<double,3,3> hatmap(const Eigen::Matrix<double, 3, 1>& u) {
+  Eigen::Matrix<double, 3, 3> x;
+  // clang-format off
+  x << 0,           -u(2),  u(1),
+      u(2),   0,          -u(0),
+      -u(1),  u(0),  0;
+  // clang-format on
+  return x;
+}
+
+/**
  * Vector-vector kronecker product function
  * @tparam NumT
  * @tparam N size of the first vector
