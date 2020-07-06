@@ -40,7 +40,35 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
   Eigen::VectorXd x =
       teaser::vectorKron<double, Eigen::Dynamic, Eigen::Dynamic>(theta_prepended, q_solution_vec);
 
-  // TODO: finish the rest
+  // build the "rotation matrix" D_omega
+  Eigen::MatrixXd D_omega;
+  getBlockDiagOmega(Npm, q_solution, &D_omega);
+  Eigen::MatrixXd Q_bar = D_omega.transpose() * (Q_cost * D_omega);
+  Eigen::VectorXd x_bar = D_omega.transpose() * x;
+  Eigen::MatrixXd J_bar(Npm, Npm);
+  J_bar.block<4,4>(0,0) = Eigen::Matrix4d::Identity();
+
+  // verify optimality in the "rotated" space using projection
+  // this is the cost of the primal, when strong duality holds, mu is also the cost of the dual
+  double mu = x.transpose().dot(Q_cost * x);
+
+  // get initial guess
+  Eigen::SparseMatrix<double> lambda_bar_init;
+  getLambdaGuess(R_solution, theta_prepended, src, dst, &lambda_bar_init);
+
+  // this initial guess lives in the affine subspace
+  Eigen::MatrixXd M =  Q_bar - mu * J_bar - lambda_bar_init;
+
+  // flag to indicate whether we exceeded iterations or reach the desired sub-optim gap
+  bool exceeded_maxiters = false;
+
+  // vector to store suboptim trajectory
+  std::vector<double> suboptim_traj;
+
+  for (size_t iter = 0; iter < max_iterations_; ++iter) {
+    // TODO: Finish iteration
+  }
+
 }
 
 void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 1, Eigen::Dynamic>& v1,
@@ -50,13 +78,13 @@ void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 1, Eigen::Dynami
   int Npm = 4 + 4 * N;
 
   // coefficient matrix that maps vec(qq\tran) to vec(R)
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> P(9, 16);
+  Eigen::Matrix<double, 9, 16> P(9, 16);
   // clang-format off
   P << 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1,
        0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0,
        0, 0, 1, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, -1, 0, 0,
        0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, -1, 0, 0, -1, 0,
-      -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1,
+       -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1,
        0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0,
        0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0,
        0, 0, 0, -1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, 0,
@@ -106,6 +134,28 @@ void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 1, Eigen::Dynami
   }
 
   *Q = Q1 + Q2;
+}
+
+Eigen::Matrix4d teaser::DRSCertifier::getOmega1(const Eigen::Quaterniond& q) {
+  Eigen::Matrix4d omega1;
+  // clang-format off
+  omega1 << q.w(), -q.z(), q.y(), q.x(),
+            q.z(), q.w(), -q.z(), q.y(),
+            -q.y(), q.z(), q.w(), q.z(),
+            -q.z(), -q.y(), -q.z(), q.w();
+  // clang-format on
+  return omega1;
+}
+
+void teaser::DRSCertifier::getBlockDiagOmega(
+    int Npm, const Eigen::Quaterniond& q,
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>* D_omega) {
+  D_omega->resize(Npm, Npm);
+  D_omega->setZero();
+  for (size_t i = 0; i < Npm / 4; ++i) {
+    int start_idx = i * 4;
+    D_omega->block<4,4>(start_idx, start_idx) = getOmega1(q);
+  }
 }
 
 void teaser::DRSCertifier::getOptimalDualProjection(

@@ -73,6 +73,22 @@ public:
                               const Eigen::Matrix<bool, 1, Eigen::Dynamic>& theta) override;
 
   /**
+   * Get the Omega_1 matrix given a quaternion
+   * @param q an Eigen quaternion
+   * @param omega1 4-by-4 omega_1 matrix
+   */
+  Eigen::Matrix4d getOmega1(const Eigen::Quaterniond& q);
+
+  /**
+   * Get a 4-by-4 block diagonal matrix with each block represents omega_1
+   * @param q
+   * @param theta
+   * @param D_omega
+   */
+  void getBlockDiagOmega(int Npm, const Eigen::Quaterniond& q,
+                         Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>* D_omega);
+
+  /**
    * Get Q cost matrix (see Proposition 10 in [1])
    * @param v1 vectors under rotation
    * @param v2 vectors after rotation
