@@ -9,6 +9,105 @@
 #include "teaser/certification.h"
 #include "teaser/linalg.h"
 
+teaser::CertificationResult
+teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
+                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
+                              const Eigen::Matrix<bool, 1, Eigen::Dynamic>& theta) {
+  int N = src.cols();
+  int Npm = 4 + 4 * N;
+
+  // prepend theta with 1
+  Eigen::Matrix<double, 1, Eigen::Dynamic> theta_prepended;
+  theta_prepended << 1, theta.cast<double>();
+
+  // get the inverse map
+  Eigen::SparseMatrix<double> inverse_map;
+  getLinearProjection(theta_prepended, &inverse_map);
+
+  // recall data matrix from QUASAR
+  Eigen::MatrixXd Q_cost(Npm, Npm);
+  getQCost(src, dst, &Q_cost);
+
+  // convert the estimated rotation to quaternion
+  Eigen::Quaterniond q_solution(R_solution);
+  q_solution.normalize();
+  Eigen::VectorXd q_solution_vec(4, 1);
+  q_solution_vec << q_solution.x(), q_solution.y(), q_solution.z(), q_solution.w();
+
+  // this would have been the rank-1 decomposition of Z if Z were the globally
+  // optimal solution of the QUASAR SDP
+  Eigen::VectorXd x =
+      teaser::vectorKron<double, Eigen::Dynamic, Eigen::Dynamic>(theta_prepended, q_solution_vec);
+
+  // TODO: finish the rest
+}
+
+void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 1, Eigen::Dynamic>& v1,
+                                    const Eigen::Matrix<double, 1, Eigen::Dynamic>& v2,
+                                    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>* Q) {
+  int N = v1.cols();
+  int Npm = 4 + 4 * N;
+
+  // coefficient matrix that maps vec(qq\tran) to vec(R)
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> P(9, 16);
+  // clang-format off
+  P << 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1,
+       0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0,
+       0, 0, 1, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, -1, 0, 0,
+       0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, -1, 0, 0, -1, 0,
+      -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1,
+       0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0,
+       0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0,
+       0, 0, 0, -1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, 0,
+       -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1;
+  // clang-format on
+
+  // Some temporary vectors to save intermediate matrices
+  Eigen::Matrix3d temp_A;
+  Eigen::Matrix<double, 16, 1> temp_B;
+
+  // Q1 matrix
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Q1(Npm, Npm);
+  Q1.setZero();
+  for (size_t k = 0; k < N; ++k) {
+    int start_idx = k * 4 + 4;
+
+    //  P_k = reshape(P'*reshape(v2(:,k)*v1(:,k)',[9,1]),[4,4]);
+    temp_A = v2.col(k) * (v1.col(k).transpose());
+    Eigen::Map<Eigen::Matrix<double, 9, 1>> temp_map2vec(temp_A.data(), temp_A.size());
+    temp_B = P.transpose() * temp_map2vec;
+    Eigen::Map<Eigen::Matrix4d> P_k(temp_B.data(), temp_B.size());
+
+    //  ck = 0.5 * ( v1(:,k)'*v1(:,k)+v2(:,k)'*v2(:,k) - barc2 );
+    double ck = 0.5 * (v1.col(k).squaredNorm() + v2.col(k).squaredNorm() - cbar2_);
+    Q1.block<4, 4>(0, start_idx) =
+        Q1.block<4, 4>(0, start_idx) - 0.5 * P_k + ck / 2 * Eigen::Matrix4d::Identity();
+    Q1.block<4, 4>(start_idx, 0) =
+        Q1.block<4, 4>(start_idx, 0) - 0.5 * P_k + ck / 2 * Eigen::Matrix4d::Identity();
+  }
+
+  // Q2 matrix
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Q2(Npm, Npm);
+  Q2.setZero();
+  for (size_t k = 0; k < N; ++k) {
+    int start_idx = k * 4 + 4;
+
+    //  P_k = reshape(P'*reshape(v2(:,k)*v1(:,k)',[9,1]),[4,4]);
+    temp_A = v2.col(k) * (v1.col(k).transpose());
+    Eigen::Map<Eigen::Matrix<double, 9, 1>> temp_map2vec(temp_A.data(), temp_A.size());
+    temp_B = P.transpose() * temp_map2vec;
+    Eigen::Map<Eigen::Matrix4d> P_k(temp_B.data(), temp_B.size());
+
+    //  ck = 0.5 * ( v1(:,k)'*v1(:,k)+v2(:,k)'*v2(:,k) + barc2 );
+    double ck = 0.5 * (v1.col(k).squaredNorm() + v2.col(k).squaredNorm() + cbar2_);
+    Q2.block<4, 4>(start_idx, start_idx) =
+        Q2.block<4, 4>(start_idx, start_idx) - P_k + ck * Eigen::Matrix4d::Identity();
+  }
+
+  *Q = Q1 + Q2;
+}
+
 void teaser::DRSCertifier::getOptimalDualProjection(
     const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& W,
     const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended,

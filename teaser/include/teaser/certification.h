@@ -9,9 +9,15 @@
 #pragma once
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <Eigen/SparseCore>
 
 namespace teaser {
+
+struct CertificationResult {
+  double best_suboptimality = -1;
+  std::vector<double> suboptimality_traj;
+};
 
 /**
  * Abstract virtual class representing certification of registration results
@@ -28,10 +34,10 @@ public:
    * @param theta [in] a binary vector indicating inliers vs. outliers
    * @return  relative sub-optimality gap
    */
-  virtual double certify(const Eigen::Matrix<double, 3, 3>& rotation_solution,
-                         const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
-                         const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
-                         const Eigen::Matrix<bool, 1, Eigen::Dynamic>& theta) = 0;
+  virtual CertificationResult certify(const Eigen::Matrix3d& rotation_solution,
+                                      const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                                      const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
+                                      const Eigen::Matrix<bool, 1, Eigen::Dynamic>& theta) = 0;
 };
 
 /**
@@ -51,6 +57,29 @@ public:
    * @param cbar2 [in] maximal allowed residual^2 to noise bound^2 ratio, usually set to 1
    */
   DRSCertifier(double noise_bound, double cbar2) : noise_bound_(noise_bound), cbar2_(cbar2){};
+
+  /**
+   * Main certification function
+   *
+   * @param R_solution [in] a feasible rotation solution
+   * @param src [in] vectors under rotation
+   * @param dst [in] vectors after rotation
+   * @param theta [in] binary (1 vs. -1) vector indicating inliers vs. outliers
+   * @return  relative sub-optimality gap
+   */
+  CertificationResult certify(const Eigen::Matrix3d& R_solution,
+                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
+                              const Eigen::Matrix<bool, 1, Eigen::Dynamic>& theta) override;
+
+  /**
+   * Get Q cost matrix (see Proposition 10 in [1])
+   * @param v1 vectors under rotation
+   * @param v2 vectors after rotation
+   */
+  void getQCost(const Eigen::Matrix<double, 1, Eigen::Dynamic>& v1,
+                const Eigen::Matrix<double, 1, Eigen::Dynamic>& v2,
+                Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>* Q);
 
   /**
    * Given an arbitrary matrix W, project W to the correct dual structure
@@ -104,6 +133,20 @@ private:
   void getBlockRowSum(const Eigen::MatrixXd& A, const int& row,
                       const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta,
                       Eigen::Vector4d* output);
+  /**
+   * Suboptimality gap
+   */
+  double sub_optimality_;
+
+  /**
+   * Maximum iterations allowed
+   */
+  double max_iterations_;
+
+  /**
+   * Gamma value (refer to [1] for details)
+   */
+  double gamma_;
 
   /**
    * Bounds on the noise for the measurements
