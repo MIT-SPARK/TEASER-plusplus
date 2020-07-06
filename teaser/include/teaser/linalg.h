@@ -10,6 +10,9 @@
 
 #include <iostream>
 
+#include <Eigen/Core>
+#include <Eigen/Eigenvalues>
+
 namespace teaser {
 
 /**
@@ -52,7 +55,7 @@ void vectorKron(const Eigen::Matrix<NumT, N, 1>& v1, const Eigen::Matrix<NumT, M
  * @tparam NumT numerical type for Eigen matrices (double, float, etc.)
  * @param v1 [in] first vector
  * @param v2 [in] second vector
- * @return Reulst of kronecker product
+ * @return Result of kronecker product
  */
 template <typename NumT, int N, int M>
 Eigen::Matrix<NumT, Eigen::Dynamic, 1> vectorKron(const Eigen::Matrix<NumT, N, 1>& v1,
@@ -65,6 +68,56 @@ Eigen::Matrix<NumT, Eigen::Dynamic, 1> vectorKron(const Eigen::Matrix<NumT, N, 1
     }
   }
   return output;
+}
+
+/**
+ * Find the nearest (in Frobenius norm) Symmetric Positive Definite matrix to A
+ *
+ * See: https://www.sciencedirect.com/science/article/pii/0024379588902236
+ *
+ * @tparam NumT numerical type for Eigen matrices (double, float, etc.)
+ * @param A [in] input matrix
+ * @param nearestPSD [out] output neaest positive semi-definite matrix
+ * @param eig_threshold [in] optional threshold of determining the smallest eigen values
+ */
+template <typename NumT>
+void getNearestPSD(const Eigen::MatrixXd& A,
+                   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>* nearestPSD,
+                   double eig_threshold = 1e-10) {
+  assert(A.rows() == A.cols());
+  nearestPSD->resize(A.rows(), A.cols());
+
+  // symmetrize A into B
+  Eigen::MatrixXd B = (A + A.transpose()) / 2;
+
+  // eigendecomposition of B
+  Eigen::EigenSolver<Eigen::MatrixXd> eig_B(B);
+  Eigen::MatrixXd De = eig_B.eigenvalues();
+  Eigen::MatrixXd Ve = eig_B.eigenvectors();
+
+  // find indices of eigenvalues less than threshold
+  std::vector<double> eig_indices;
+  for (size_t i = 0; i < De.rows(); ++i) {
+    if (De(i, i) < eig_threshold) {
+      eig_indices.push_back(i);
+    }
+  }
+
+  // pick out the corresponding eigen vectors
+  Eigen::MatrixXd selected_eigenvecs(Ve.rows(), eig_indices.size());
+  Eigen::MatrixXd selected_diagonal_eigenvals(eig_indices.size(), eig_indices.size());
+  selected_diagonal_eigenvals.setZero();
+  for (size_t i = 0; i < eig_indices.size(); ++i) {
+    int index_of_eigval = eig_indices[i];
+    selected_eigenvecs.col(i) = Ve.col(index_of_eigval);
+    selected_diagonal_eigenvals(i, i) = De(index_of_eigval, index_of_eigval);
+  }
+
+  // compute the nearest PSD matrix
+  Eigen::MatrixXd H =
+      selected_eigenvecs * selected_diagonal_eigenvals.cwiseAbs() * selected_eigenvecs.transpose();
+  *nearestPSD = B + H;
+  *nearestPSD = (*nearestPSD + nearestPSD->transpose())/2;
 }
 
 } // namespace teaser
