@@ -73,6 +73,15 @@ public:
                               const Eigen::Matrix<bool, 1, Eigen::Dynamic>& theta) override;
 
   /**
+   * Compute sub-optimality gap
+   * @param M
+   * @param mu
+   * @param N
+   * @return
+   */
+  double computeSubOptimalityGap(const Eigen::MatrixXd& M, double mu, int N);
+
+  /**
    * Get the Omega_1 matrix given a quaternion
    * @param q an Eigen quaternion
    * @param omega1 4-by-4 omega_1 matrix

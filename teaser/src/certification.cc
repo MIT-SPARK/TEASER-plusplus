@@ -6,6 +6,8 @@
  * See LICENSE for the license information
  */
 
+#include <limits>
+
 #include "teaser/certification.h"
 #include "teaser/linalg.h"
 
@@ -46,7 +48,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
   Eigen::MatrixXd Q_bar = D_omega.transpose() * (Q_cost * D_omega);
   Eigen::VectorXd x_bar = D_omega.transpose() * x;
   Eigen::MatrixXd J_bar(Npm, Npm);
-  J_bar.block<4,4>(0,0) = Eigen::Matrix4d::Identity();
+  J_bar.block<4, 4>(0, 0) = Eigen::Matrix4d::Identity();
 
   // verify optimality in the "rotated" space using projection
   // this is the cost of the primal, when strong duality holds, mu is also the cost of the dual
@@ -57,18 +59,62 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
   getLambdaGuess(R_solution, theta_prepended, src, dst, &lambda_bar_init);
 
   // this initial guess lives in the affine subspace
-  Eigen::MatrixXd M =  Q_bar - mu * J_bar - lambda_bar_init;
+  // use 2 separate steps to limit slow evaluation on only the few non-zeros in the sparse matrix
+  Eigen::MatrixXd M_init = Q_bar - mu * J_bar;
+  M_init -= lambda_bar_init;
 
   // flag to indicate whether we exceeded iterations or reach the desired sub-optim gap
-  bool exceeded_maxiters = false;
+  bool exceeded_maxiters = true;
 
   // vector to store suboptim trajectory
   std::vector<double> suboptim_traj;
 
+  // current suboptimality gap
+  double current_suboptim = std::numeric_limits<double>::infinity();
+
+  // preallocate some matrices
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> M_PSD;
+  Eigen::MatrixXd M = M_init;
+  Eigen::MatrixXd temp_W(M.rows(), M.cols());
+  Eigen::MatrixXd W_dual(Npm, Npm);
+  Eigen::MatrixXd M_affine(Npm, Npm);
+
   for (size_t iter = 0; iter < max_iterations_; ++iter) {
-    // TODO: Finish iteration
+
+    // to nearest PSD
+    teaser::getNearestPSD<double>(M, &M_PSD);
+
+    // projection to affine space
+    temp_W = 2 * M_PSD - M - M_init;
+    getOptimalDualProjection(temp_W, theta_prepended, inverse_map, &W_dual);
+    M_affine = M_init + W_dual;
+
+    // compute suboptimality gap
+    current_suboptim = computeSubOptimalityGap(M_affine, mu, N);
+
+    // termination check and update trajectory
+    suboptim_traj.push_back(current_suboptim);
+    if (current_suboptim < sub_optimality_) {
+      exceeded_maxiters = false;
+      break;
+    }
+
+    // update M
+    M += gamma_ * (M_affine - M_PSD);
   }
 
+  // prepare results
+  CertificationResult cert_result;
+  cert_result.best_suboptimality = current_suboptim;
+  cert_result.suboptimality_traj = suboptim_traj;
+  return cert_result;
+}
+
+double teaser::DRSCertifier::computeSubOptimalityGap(const Eigen::MatrixXd& M, double mu, int N) {
+  Eigen::MatrixXd new_M = (M + M.transpose()) / 2;
+  Eigen::VectorXd eig_vals = new_M.eigenvalues().real();
+  double min_eig = eig_vals.minCoeff();
+  return (-min_eig * (N + 1)) / mu;
 }
 
 void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 3, Eigen::Dynamic>& v1,
@@ -156,7 +202,7 @@ void teaser::DRSCertifier::getBlockDiagOmega(
   D_omega->setZero();
   for (size_t i = 0; i < Npm / 4; ++i) {
     int start_idx = i * 4;
-    D_omega->block<4,4>(start_idx, start_idx) = getOmega1(q);
+    D_omega->block<4, 4>(start_idx, start_idx) = getOmega1(q);
   }
 }
 
