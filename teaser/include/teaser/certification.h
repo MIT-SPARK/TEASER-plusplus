@@ -93,8 +93,8 @@ public:
    * @param v1 vectors under rotation
    * @param v2 vectors after rotation
    */
-  void getQCost(const Eigen::Matrix<double, 1, Eigen::Dynamic>& v1,
-                const Eigen::Matrix<double, 1, Eigen::Dynamic>& v2,
+  void getQCost(const Eigen::Matrix<double, 3, Eigen::Dynamic>& v1,
+                const Eigen::Matrix<double, 3, Eigen::Dynamic>& v2,
                 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>* Q);
 
   /**

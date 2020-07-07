@@ -71,8 +71,8 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
 
 }
 
-void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 1, Eigen::Dynamic>& v1,
-                                    const Eigen::Matrix<double, 1, Eigen::Dynamic>& v2,
+void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 3, Eigen::Dynamic>& v1,
+                                    const Eigen::Matrix<double, 3, Eigen::Dynamic>& v2,
                                     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>* Q) {
   int N = v1.cols();
   int Npm = 4 + 4 * N;
@@ -94,6 +94,8 @@ void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 1, Eigen::Dynami
   // Some temporary vectors to save intermediate matrices
   Eigen::Matrix3d temp_A;
   Eigen::Matrix<double, 16, 1> temp_B;
+  Eigen::Matrix<double, 9, 1> temp_map2vec;
+  Eigen::Matrix4d P_k;
 
   // Q1 matrix
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Q1(Npm, Npm);
@@ -103,9 +105,9 @@ void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 1, Eigen::Dynami
 
     //  P_k = reshape(P'*reshape(v2(:,k)*v1(:,k)',[9,1]),[4,4]);
     temp_A = v2.col(k) * (v1.col(k).transpose());
-    Eigen::Map<Eigen::Matrix<double, 9, 1>> temp_map2vec(temp_A.data(), temp_A.size());
+    temp_map2vec = Eigen::Map<Eigen::Matrix<double, 9, 1>>(temp_A.data());
     temp_B = P.transpose() * temp_map2vec;
-    Eigen::Map<Eigen::Matrix4d> P_k(temp_B.data(), temp_B.size());
+    P_k = Eigen::Map<Eigen::Matrix4d>(temp_B.data());
 
     //  ck = 0.5 * ( v1(:,k)'*v1(:,k)+v2(:,k)'*v2(:,k) - barc2 );
     double ck = 0.5 * (v1.col(k).squaredNorm() + v2.col(k).squaredNorm() - cbar2_);
@@ -123,9 +125,9 @@ void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 1, Eigen::Dynami
 
     //  P_k = reshape(P'*reshape(v2(:,k)*v1(:,k)',[9,1]),[4,4]);
     temp_A = v2.col(k) * (v1.col(k).transpose());
-    Eigen::Map<Eigen::Matrix<double, 9, 1>> temp_map2vec(temp_A.data(), temp_A.size());
+    temp_map2vec = Eigen::Map<Eigen::Matrix<double, 9, 1>>(temp_A.data());
     temp_B = P.transpose() * temp_map2vec;
-    Eigen::Map<Eigen::Matrix4d> P_k(temp_B.data(), temp_B.size());
+    P_k = Eigen::Map<Eigen::Matrix4d>(temp_B.data());
 
     //  ck = 0.5 * ( v1(:,k)'*v1(:,k)+v2(:,k)'*v2(:,k) + barc2 );
     double ck = 0.5 * (v1.col(k).squaredNorm() + v2.col(k).squaredNorm() + cbar2_);
