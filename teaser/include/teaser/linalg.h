@@ -81,8 +81,8 @@ Eigen::Matrix<NumT, Eigen::Dynamic, 1> vectorKron(const Eigen::Matrix<NumT, N, 1
  * @param eig_threshold [in] optional threshold of determining the smallest eigen values
  */
 template <typename NumT>
-void getNearestPSD(const Eigen::MatrixXd& A,
-                   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>* nearestPSD,
+void getNearestPSD(const Eigen::Matrix<NumT, Eigen::Dynamic, Eigen::Dynamic>& A,
+                   Eigen::Matrix<NumT, Eigen::Dynamic, Eigen::Dynamic>* nearestPSD,
                    double eig_threshold = 1e-10) {
   assert(A.rows() == A.cols());
   nearestPSD->resize(A.rows(), A.cols());
@@ -92,13 +92,13 @@ void getNearestPSD(const Eigen::MatrixXd& A,
 
   // eigendecomposition of B
   Eigen::EigenSolver<Eigen::MatrixXd> eig_B(B);
-  Eigen::MatrixXd De = eig_B.eigenvalues();
-  Eigen::MatrixXd Ve = eig_B.eigenvectors();
+  Eigen::VectorXd De = eig_B.eigenvalues().real();
+  Eigen::MatrixXd Ve = eig_B.eigenvectors().real();
 
   // find indices of eigenvalues less than threshold
   std::vector<double> eig_indices;
   for (size_t i = 0; i < De.rows(); ++i) {
-    if (De(i, i) < eig_threshold) {
+    if (De(i) < eig_threshold) {
       eig_indices.push_back(i);
     }
   }
@@ -110,7 +110,7 @@ void getNearestPSD(const Eigen::MatrixXd& A,
   for (size_t i = 0; i < eig_indices.size(); ++i) {
     int index_of_eigval = eig_indices[i];
     selected_eigenvecs.col(i) = Ve.col(index_of_eigval);
-    selected_diagonal_eigenvals(i, i) = De(index_of_eigval, index_of_eigval);
+    selected_diagonal_eigenvals(i, i) = De(index_of_eigval);
   }
 
   // compute the nearest PSD matrix
