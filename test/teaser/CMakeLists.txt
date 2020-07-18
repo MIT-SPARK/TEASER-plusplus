@@ -12,6 +12,7 @@ set(TEST_SRCS
         translation-solver-test.cc
         registration-test.cc
         graph-test.cc
+        certification-test.cc
         linalg-test.cc)
 set(TEST_LINK_LIBRARIES
         Eigen3::Eigen
