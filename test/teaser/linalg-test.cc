@@ -168,8 +168,8 @@ TEST(LinalgTest, VectorKronDynamicSize) {
 
 TEST(LinalgTest, GetNearestPSDRandom) {
   // random psd matrix
-  size_t trials = 10;
-  int MAX_SIZE = 2000;
+  size_t trials = 5;
+  int MAX_SIZE = 500;
   int MIN_SIZE = 100;
   std::default_random_engine generator;
   std::uniform_int_distribution<int> size_distribution(MIN_SIZE, MAX_SIZE);
