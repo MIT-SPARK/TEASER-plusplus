@@ -122,19 +122,20 @@ void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 3, Eigen::Dynami
                                     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>* Q) {
   int N = v1.cols();
   int Npm = 4 + 4 * N;
+  double noise_bound_scaled = cbar2_ * std::pow(noise_bound_, 2);
 
   // coefficient matrix that maps vec(qq\tran) to vec(R)
   Eigen::Matrix<double, 9, 16> P(9, 16);
   // clang-format off
-  P << 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1,
-       0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0,
-       0, 0, 1, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, -1, 0, 0,
-       0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, -1, 0, 0, -1, 0,
-       -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1,
-       0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0,
-       0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0,
-       0, 0, 0, -1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, 0,
-       -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1;
+  P << 1,  0, 0, 0,  0, -1, 0, 0,  0, 0, -1, 0, 0,  0,  0, 1,
+       0,  1, 0, 0,  1,  0, 0, 0,  0, 0, 0,  1, 0,  0,  1, 0,
+       0,  0, 1, 0,  0,  0, 0, -1, 1, 0, 0,  0, 0,  -1, 0, 0,
+       0,  1, 0, 0,  1,  0, 0, 0,  0, 0, 0, -1, 0,  0, -1, 0,
+       -1, 0, 0, 0,  0,  1, 0, 0,  0, 0, -1, 0, 0,  0,  0, 1,
+       0,  0, 0, 1,  0,  0, 1, 0,  0, 1, 0,  0, 1,  0,  0, 0,
+       0,  0, 1, 0,  0,  0, 0, 1,  1, 0, 0,  0, 0,  1,  0, 0,
+       0,  0, 0, -1, 0,  0, 1, 0,  0, 1, 0,  0, -1, 0,  0, 0,
+       -1, 0, 0, 0,  0, -1, 0, 0,  0, 0, 1,  0, 0,  0,  0, 1;
   // clang-format on
 
   // Some temporary vectors to save intermediate matrices
@@ -156,7 +157,7 @@ void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 3, Eigen::Dynami
     P_k = Eigen::Map<Eigen::Matrix4d>(temp_B.data());
 
     //  ck = 0.5 * ( v1(:,k)'*v1(:,k)+v2(:,k)'*v2(:,k) - barc2 );
-    double ck = 0.5 * (v1.col(k).squaredNorm() + v2.col(k).squaredNorm() - cbar2_);
+    double ck = 0.5 * (v1.col(k).squaredNorm() + v2.col(k).squaredNorm() - noise_bound_scaled);
     Q1.block<4, 4>(0, start_idx) =
         Q1.block<4, 4>(0, start_idx) - 0.5 * P_k + ck / 2 * Eigen::Matrix4d::Identity();
     Q1.block<4, 4>(start_idx, 0) =
@@ -176,9 +177,10 @@ void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 3, Eigen::Dynami
     P_k = Eigen::Map<Eigen::Matrix4d>(temp_B.data());
 
     //  ck = 0.5 * ( v1(:,k)'*v1(:,k)+v2(:,k)'*v2(:,k) + barc2 );
-    double ck = 0.5 * (v1.col(k).squaredNorm() + v2.col(k).squaredNorm() + cbar2_);
+    double ck = 0.5 * (v1.col(k).squaredNorm() + v2.col(k).squaredNorm() + noise_bound_scaled);
     Q2.block<4, 4>(start_idx, start_idx) =
         Q2.block<4, 4>(start_idx, start_idx) - P_k + ck * Eigen::Matrix4d::Identity();
+    std::cout << Q2.block<4, 4>(start_idx, start_idx) << std::endl;
   }
 
   *Q = Q1 + Q2;
