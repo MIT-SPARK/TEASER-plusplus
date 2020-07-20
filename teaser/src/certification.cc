@@ -188,9 +188,9 @@ Eigen::Matrix4d teaser::DRSCertifier::getOmega1(const Eigen::Quaterniond& q) {
   Eigen::Matrix4d omega1;
   // clang-format off
   omega1 << q.w(), -q.z(), q.y(), q.x(),
-            q.z(), q.w(), -q.z(), q.y(),
-            -q.y(), q.z(), q.w(), q.z(),
-            -q.z(), -q.y(), -q.z(), q.w();
+            q.z(), q.w(), -q.x(), q.y(),
+            -q.y(), q.x(), q.w(), q.z(),
+            -q.x(), -q.y(), -q.z(), q.w();
   // clang-format on
   return omega1;
 }
