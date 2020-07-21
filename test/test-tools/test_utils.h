@@ -11,6 +11,7 @@
 #include <vector>
 #include <iostream>
 #include <cmath>
+#include <dirent.h>
 
 #include <Eigen/Core>
 
@@ -99,6 +100,33 @@ inline Eigen::Matrix<T, 3, Eigen::Dynamic> teaserPointCloudToEigenMatrix(PointCl
     mat.col(i) << cloud[i].x, cloud[i].y, cloud[i].z;
   }
   return mat;
+}
+
+/**
+ * Get immediate subdirectories' names as strings in a vector
+ * @param path path to the root directory
+ * @return a vector containing names of the immediate subdirectories
+ */
+inline std::vector<std::string> readSubdirs(std::string path) {
+  // output vector
+  std::vector<std::string> subdirs;
+
+  // open the root directory
+  DIR *root_dir = opendir(path.c_str());
+  if (root_dir == NULL)
+  {
+    std::cerr << "Could not open given directory: " << path << std::endl;
+    return subdirs;
+  }
+
+  struct dirent *root_dir_ptr;
+  while ((root_dir_ptr = readdir(root_dir)) != NULL) {
+    if (root_dir_ptr->d_type == DT_DIR) {
+      subdirs.emplace_back(root_dir_ptr->d_name);
+    }
+  }
+  closedir(root_dir);
+  return subdirs;
 }
 
 } // namespace test
