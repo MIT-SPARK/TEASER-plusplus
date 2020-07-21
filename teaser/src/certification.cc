@@ -340,6 +340,7 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
                                           Eigen::SparseMatrix<double>* lambda_guess) {
   int K = theta.cols();
   int Npm = 4 * K + 4;
+
   double noise_bound_scaled = cbar2_ * std::pow(noise_bound_, 2);
 
   // prepare the lambda sparse matrix output
@@ -375,15 +376,15 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
           0.25 * noise_bound_scaled * Eigen::Matrix3d::Identity();
 
       // compute the vector part
-      current_block.topLeftCorner<3, 1>() = -1.5 * xi_hatmap * src.col(i);
-      current_block.bottomLeftCorner<1, 3>() = (current_block.topLeftCorner<3, 1>()).transpose();
+      current_block.topRightCorner<3, 1>() = -1.5 * xi_hatmap * src.col(i);
+      current_block.bottomLeftCorner<1, 3>() = (current_block.topRightCorner<3, 1>()).transpose();
     } else {
       // residual
       Eigen::Matrix<double, 3, 1> phi = R.transpose() * (dst.col(i) - R * src.col(i));
       Eigen::Matrix<double, 3, 3> phi_hatmap = teaser::hatmap(phi);
 
       // compute lambda_i, (4,4) entry
-      current_block(3, 3) = -0.25 * phi.squaredNorm() - 0.75 * cbar2_;
+      current_block(3, 3) = -0.25 * phi.squaredNorm() - 0.75 * noise_bound_scaled;
 
       // compute E_ii, top-left 3-by-3 block
       current_block.topLeftCorner<3, 3>() =
@@ -393,8 +394,8 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
           0.25 * noise_bound_scaled * Eigen::Matrix3d::Identity();
 
       // compute x_i
-      current_block.topLeftCorner<3, 1>() = -0.5 * phi_hatmap * src.col(i);
-      current_block.bottomLeftCorner<1, 3>() = (current_block.topLeftCorner<3, 1>()).transpose();
+      current_block.topRightCorner<3, 1>() = -0.5 * phi_hatmap * src.col(i);
+      current_block.bottomLeftCorner<1, 3>() = (current_block.topRightCorner<3, 1>()).transpose();
     }
 
     // put the current block to the sparse triplets
@@ -403,7 +404,7 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
     // assume current block is column major
     for (size_t col = 0; col < 4; ++col) {
       for (size_t row = 0; row < 4; ++row) {
-        sparse_triplets.emplace_back(i * 4 + row, i * 4 + col, -current_block(row, col));
+        sparse_triplets.emplace_back((i+1) * 4 + row, (i+1) * 4 + col, -current_block(row, col));
       }
     }
 
