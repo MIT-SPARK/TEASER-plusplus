@@ -338,8 +338,9 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
                                           const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
                                           const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
                                           Eigen::SparseMatrix<double>* lambda_guess) {
-  int K = theta.size();
+  int K = theta.cols();
   int Npm = 4 * K + 4;
+  double noise_bound_scaled = cbar2_ * std::pow(noise_bound_, 2);
 
   // prepare the lambda sparse matrix output
   lambda_guess->resize(Npm, Npm);
@@ -358,20 +359,20 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
   for (size_t i = 0; i < K; ++i) {
     // hat maps for later usage
     Eigen::Matrix<double, 3, 3> src_i_hatmap = teaser::hatmap(src.col(i));
-    if (theta(1, i) > 0) {
+    if (theta(0, i) > 0) {
       // residual
       Eigen::Matrix<double, 3, 1> xi = R.transpose() * (dst.col(i) - R * src.col(i));
       Eigen::Matrix<double, 3, 3> xi_hatmap = teaser::hatmap(xi);
 
       // compute the (4,4) entry of the current block, obtained from KKT complementary slackness
-      current_block(3, 3) = -0.75 * xi.squaredNorm() - 0.25 * cbar2_;
+      current_block(3, 3) = -0.75 * xi.squaredNorm() - 0.25 * noise_bound_scaled;
 
       // compute the top-left 3-by-3 block
       current_block.topLeftCorner<3, 3>() =
           src_i_hatmap * src_i_hatmap - 0.5 * (src.col(i)).dot(xi) * Eigen::Matrix3d::Identity() +
           0.5 * xi_hatmap * src_i_hatmap + 0.5 * xi * src.col(i).transpose() -
           0.75 * xi.squaredNorm() * Eigen::Matrix3d::Identity() -
-          0.25 * cbar2_ * Eigen::Matrix3d::Identity();
+          0.25 * noise_bound_scaled * Eigen::Matrix3d::Identity();
 
       // compute the vector part
       current_block.topLeftCorner<3, 1>() = -1.5 * xi_hatmap * src.col(i);
@@ -389,7 +390,7 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
           src_i_hatmap * src_i_hatmap - 0.5 * (src.col(i)).dot(phi) * Eigen::Matrix3d::Identity() +
           0.5 * phi_hatmap * src_i_hatmap + 0.5 * phi * src.col(i).transpose() -
           0.25 * phi.squaredNorm() * Eigen::Matrix3d::Identity() -
-          0.25 * cbar2_ * Eigen::Matrix3d::Identity();
+          0.25 * noise_bound_scaled * Eigen::Matrix3d::Identity();
 
       // compute x_i
       current_block.topLeftCorner<3, 1>() = -0.5 * phi_hatmap * src.col(i);
