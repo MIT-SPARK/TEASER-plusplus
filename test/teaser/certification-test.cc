@@ -36,6 +36,7 @@ protected:
     Eigen::MatrixXd block_diag_omega;
     Eigen::MatrixXd Q_cost;
     Eigen::MatrixXd lambda_guess;
+    Eigen::MatrixXd A_inv;
   };
 
   struct CaseData {
@@ -82,7 +83,6 @@ protected:
       std::ifstream theta_source_file("./data/certification_test/case_1/theta_est.csv");
       data.inputs.theta_est =
           teaser::test::readFileToEigenMatrix<double, 1, Eigen::Dynamic>(theta_source_file);
-      std::cout << "Theta est: " << data.inputs.theta_est << std::endl;
 
       // omega: omega1 matrix
       std::ifstream omega_source_file("./data/certification_test/case_1/omega.csv");
@@ -107,6 +107,12 @@ protected:
       data.expected_outputs.lambda_guess =
           teaser::test::readFileToEigenMatrix<double, Eigen::Dynamic, Eigen::Dynamic>(
               lambda_guess_source_file);
+
+      // A_inv: inverse map from getLinearProjection
+      std::ifstream A_inv_source_file("./data/certification_test/case_1/A_inv.csv");
+      data.expected_outputs.A_inv =
+          teaser::test::readFileToEigenMatrix<double, Eigen::Dynamic, Eigen::Dynamic>(
+              A_inv_source_file);
 
       case_params_[c] = data;
     }
@@ -233,4 +239,28 @@ TEST_F(DRSCertifierTest, GetLambdaGuess) {
   }
 }
 
-TEST_F(DRSCertifierTest, GetLinearProjection) { ASSERT_TRUE(false); }
+TEST_F(DRSCertifierTest, GetLinearProjection) {
+  {
+    // Case 1: N = 10
+    const auto& case_data = case_params_["case_1"];
+
+    // construct the certifier
+    teaser::DRSCertifier certifier(noise_bound_, cbar2_);
+
+    Eigen::Matrix<double, 1, Eigen::Dynamic> theta_prepended(1, case_data.inputs.theta_est.cols()+1);
+    theta_prepended << 1, case_data.inputs.theta_est;
+    ASSERT_TRUE(theta_prepended.rows() == 1);
+    ASSERT_TRUE(theta_prepended.cols() > 0);
+
+    Eigen::SparseMatrix<double> actual_output;
+    certifier.getLinearProjection(theta_prepended, &actual_output);
+
+    if (!actual_output.isApprox(case_data.expected_outputs.A_inv)) {
+      std::cout << "Actual output: " << std::endl;
+      std::cout << actual_output << std::endl;
+      std::cout << "Expected output: " << std::endl;
+      std::cout << case_data.expected_outputs.A_inv << std::endl;
+    }
+    ASSERT_TRUE(actual_output.isApprox(case_data.expected_outputs.A_inv));
+  }
+}

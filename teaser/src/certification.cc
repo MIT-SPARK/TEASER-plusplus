@@ -429,9 +429,9 @@ void teaser::DRSCertifier::getLinearProjection(
   // number of off-diagonal entries in the inverse map
   int N0 = theta_prepended.cols() - 1;
 
-  int y = 1 / (2 * N0 + 6);
+  double y = 1.0 / (2 * static_cast<double>(N0) + 6);
   // number of diagonal entries in the inverse map
-  int x = (N0 + 1) * y;
+  double x = (static_cast<double>(N0) + 1.0) * y;
 
   int N = N0 + 1;
 
@@ -450,50 +450,54 @@ void teaser::DRSCertifier::getLinearProjection(
   int nrNZ_per_row_off_diag = 2 * (N0 - 1);
   int nrNZ_off_diag = nrNZ_per_row_off_diag * nr_vals;
   A_inv->resize(nr_vals, nr_vals);
-  A_inv->setZero();
+
+  // for holding the non zero entries
+  std::vector<Eigen::Triplet<double>> sparse_triplets;
+  sparse_triplets.reserve(nrNZ_off_diag+nr_vals*(nr_vals-1));
 
   // for creating columns in inv_A
-  std::vector<Eigen::Triplet<double>> sparse_triplets;
   for (size_t i = 0; i < N - 1; ++i) {
     for (size_t j = i + 1; j < N; ++j) {
-      int var_1_idx = mat2vec(i, j);
+      int var_j_idx = mat2vec(i, j);
 
       for (size_t p = 0; p < N; ++p) {
         if ((p != j) && (p != i)) {
-          int var_2_idx;
+          int var_i_idx;
           double entry_val;
           if (p < i) {
             // same row i, i,j upper triangular, i,p lower triangular
             // flip to upper-triangular
-            var_2_idx = mat2vec(p, i);
+            var_i_idx = mat2vec(p, i);
             entry_val = y * theta_prepended(j) * theta_prepended(p);
           } else {
-            var_2_idx = mat2vec(i, p);
+            var_i_idx = mat2vec(i, p);
             entry_val = -y * theta_prepended(j) * theta_prepended(p);
           }
-          sparse_triplets.emplace_back(var_2_idx, var_1_idx, entry_val);
+          sparse_triplets.emplace_back(var_i_idx, var_j_idx, entry_val);
         }
       }
       for (size_t p = 0; p < N; ++p) {
         if ((p != i) && (p != j)) {
-          int var_2_idx;
+          int var_i_idx;
           double entry_val;
           if (p < j) {
             // flip to upper-triangular
-            var_2_idx = mat2vec(p, j);
+            var_i_idx = mat2vec(p, j);
             entry_val = -y * theta_prepended(i) * theta_prepended(p);
           } else {
-            var_2_idx = mat2vec(j, p);
+            var_i_idx = mat2vec(j, p);
             entry_val = y * theta_prepended(i) * theta_prepended(p);
           }
-          sparse_triplets.emplace_back(var_2_idx, var_1_idx, entry_val);
+          sparse_triplets.emplace_back(var_i_idx, var_j_idx, entry_val);
         }
       }
     }
   }
   // create diagonal entries
+  // Note that when setting Eigen sparse matrix from a vector of triplets, duplicate entries will be
+  // summed up. Thus directly pushing these values to the end of the vector makes sense.
   for (size_t i = 0; i < nr_vals; ++i) {
-    sparse_triplets.emplace_back(i, i, x);
+    sparse_triplets.emplace_back(i,i,x);
   }
   A_inv->setFromTriplets(sparse_triplets.begin(), sparse_triplets.end());
 }
