@@ -180,7 +180,6 @@ void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 3, Eigen::Dynami
     double ck = 0.5 * (v1.col(k).squaredNorm() + v2.col(k).squaredNorm() + noise_bound_scaled);
     Q2.block<4, 4>(start_idx, start_idx) =
         Q2.block<4, 4>(start_idx, start_idx) - P_k + ck * Eigen::Matrix4d::Identity();
-    std::cout << Q2.block<4, 4>(start_idx, start_idx) << std::endl;
   }
 
   *Q = Q1 + Q2;

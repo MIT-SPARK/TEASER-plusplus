@@ -95,7 +95,7 @@ inline double getAngularError(Eigen::Matrix3d R_exp, Eigen::Matrix3d R_est) {
 
 template <class T>
 inline Eigen::Matrix<T, 3, Eigen::Dynamic> teaserPointCloudToEigenMatrix(PointCloud cloud) {
-  Eigen::Matrix<T,3,Eigen::Dynamic> mat(3, cloud.size());
+  Eigen::Matrix<T, 3, Eigen::Dynamic> mat(3, cloud.size());
   for (size_t i = 0; i < cloud.size(); ++i) {
     mat.col(i) << cloud[i].x, cloud[i].y, cloud[i].z;
   }
@@ -112,17 +112,19 @@ inline std::vector<std::string> readSubdirs(std::string path) {
   std::vector<std::string> subdirs;
 
   // open the root directory
-  DIR *root_dir = opendir(path.c_str());
-  if (root_dir == NULL)
-  {
+  DIR* root_dir = opendir(path.c_str());
+  if (root_dir == NULL) {
     std::cerr << "Could not open given directory: " << path << std::endl;
     return subdirs;
   }
 
-  struct dirent *root_dir_ptr;
+  struct dirent* root_dir_ptr;
   while ((root_dir_ptr = readdir(root_dir)) != NULL) {
     if (root_dir_ptr->d_type == DT_DIR) {
-      subdirs.emplace_back(root_dir_ptr->d_name);
+      if (std::strcmp(root_dir_ptr->d_name, ".") != 0 &
+          std::strcmp(root_dir_ptr->d_name, "..") != 0) {
+        subdirs.emplace_back(root_dir_ptr->d_name);
+      }
     }
   }
   closedir(root_dir);
@@ -130,4 +132,4 @@ inline std::vector<std::string> readSubdirs(std::string path) {
 }
 
 } // namespace test
-}
+} // namespace teaser
