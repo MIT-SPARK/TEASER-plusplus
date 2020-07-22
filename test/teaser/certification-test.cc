@@ -105,7 +105,7 @@ protected:
       // q_est: estimated quaternion
       std::ifstream q_source_file(case_dir + "/q_est.csv");
       auto q_mat = teaser::test::readFileToEigenFixedMatrix<double, 4, 1>(q_source_file);
-      Eigen::Quaternion<double> q(q_mat(0), q_mat(1), q_mat(2), q_mat(3));
+      Eigen::Quaternion<double> q(q_mat(3), q_mat(0), q_mat(1), q_mat(2));
       data.inputs.q_est = q;
 
       // R_est: estimated quaternion
