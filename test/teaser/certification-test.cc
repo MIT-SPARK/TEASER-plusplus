@@ -228,8 +228,10 @@ protected:
       Eigen::RowVectorXd suboptimality_traj_mat =
           teaser::test::readFileToEigenMatrix<double, 1, Eigen::Dynamic>(
               suboptimality_traj_source_file);
-      Eigen::RowVectorXd::Map(&(data.expected_outputs.certification_result.suboptimality_traj[0]),
-                              suboptimality_traj_mat.size()) = suboptimality_traj_mat;
+      for (size_t i = 0; i < suboptimality_traj_mat.cols(); ++i) {
+        data.expected_outputs.certification_result.suboptimality_traj.push_back(
+            suboptimality_traj_mat(i));
+      }
       data.expected_outputs.certification_result.best_suboptimality =
           suboptimality_traj_mat.minCoeff();
 
