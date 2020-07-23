@@ -38,8 +38,8 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
   int Npm = 4 + 4 * N;
 
   // prepend theta with 1
-  Eigen::Matrix<double, 1, Eigen::Dynamic> theta_prepended;
-  theta_prepended << 1, theta.cast<double>();
+  Eigen::Matrix<double, 1, Eigen::Dynamic> theta_prepended(1, theta.cols()+1);
+  theta_prepended << 1, theta;
 
   // get the inverse map
   Eigen::SparseMatrix<double> inverse_map;
@@ -74,7 +74,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
 
   // get initial guess
   Eigen::SparseMatrix<double> lambda_bar_init;
-  getLambdaGuess(R_solution, theta_prepended, src, dst, &lambda_bar_init);
+  getLambdaGuess(R_solution, theta, src, dst, &lambda_bar_init);
 
   // this initial guess lives in the affine subspace
   // use 2 separate steps to limit slow evaluation on only the few non-zeros in the sparse matrix
