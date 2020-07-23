@@ -10,6 +10,7 @@
 #include <fstream>
 #include <random>
 #include <unordered_map>
+#include <algorithm>
 
 #include <Eigen/Core>
 #include "gtest/gtest.h"
@@ -17,6 +18,11 @@
 
 #include "teaser/certification.h"
 #include "test_utils.h"
+
+/**
+ * Acceptable numerical error threshold for all certification tests
+ */
+const double ACCEPTABLE_ERROR = 1e-7;
 
 /**
  * Test fixture for loading data case by case
@@ -51,7 +57,8 @@ protected:
     Eigen::MatrixXd lambda_guess;
     Eigen::MatrixXd A_inv;
     Eigen::MatrixXd W_dual;
-    double suboptimality;
+    double suboptimality_1st_iter;
+    teaser::CertificationResult certification_result;
   };
 
   struct CaseData {
@@ -87,6 +94,33 @@ protected:
         *noise_bound = std::stod(value);
       }
     }
+  }
+
+  /**
+   * Helper function to compare two certification results
+   * @param actual_result
+   * @param expected_result
+   */
+  void compareCertificationResult(teaser::CertificationResult actual_result,
+                                  teaser::CertificationResult expected_result) {
+
+    EXPECT_EQ(actual_result.suboptimality_traj.size(), expected_result.suboptimality_traj.size())
+        << "Mismatch in suboptimality trajectory sizes.";
+
+    auto act_itr = actual_result.suboptimality_traj.begin();
+    auto act_end_itr = actual_result.suboptimality_traj.end();
+    auto exp_itr = expected_result.suboptimality_traj.begin();
+    auto exp_end_itr = expected_result.suboptimality_traj.end();
+    while (act_itr != act_end_itr && exp_itr != exp_end_itr &&
+           std::abs(*act_itr - *exp_itr) < ACCEPTABLE_ERROR) {
+      ++act_itr, ++exp_itr;
+    }
+    EXPECT_TRUE(act_itr == act_end_itr && exp_itr == exp_end_itr)
+        << "Mismatch between actual and expected suboptimality trajectory values.";
+
+    ASSERT_TRUE(std::abs(actual_result.best_suboptimality - expected_result.best_suboptimality) <
+                ACCEPTABLE_ERROR)
+        << "Incorrect best optimality gap.";
   }
 
   void SetUp() override {
@@ -184,8 +218,20 @@ protected:
 
       // suboptimality: calculated suboptimality after 1st iteration
       std::ifstream suboptimality_source_file(case_dir + "/suboptimality_1st_iter.csv");
-      data.expected_outputs.suboptimality =
+      data.expected_outputs.suboptimality_1st_iter =
           teaser::test::readFileToEigenFixedMatrix<double, 1, 1>(suboptimality_source_file)(0);
+
+      // certification_result: a struct holding certification results. Specifically:
+      // suboptimality_trajy: suboptimality gaps throughout all the iterations
+      // best_suboptimality: smallest suboptimality gap
+      std::ifstream suboptimality_traj_source_file(case_dir + "/suboptimality_traj.csv");
+      Eigen::RowVectorXd suboptimality_traj_mat =
+          teaser::test::readFileToEigenMatrix<double, 1, Eigen::Dynamic>(
+              suboptimality_traj_source_file);
+      Eigen::RowVectorXd::Map(&(data.expected_outputs.certification_result.suboptimality_traj[0]),
+                              suboptimality_traj_mat.size()) = suboptimality_traj_mat;
+      data.expected_outputs.certification_result.best_suboptimality =
+          suboptimality_traj_mat.minCoeff();
 
       case_params_[c] = data;
     }
@@ -313,7 +359,7 @@ TEST_F(DRSCertifierTest, GetOptimalDualProjection) {
     const auto& expected_output = case_data.expected_outputs.W_dual;
     for (size_t col = 0; col < expected_output.cols(); ++col) {
       for (size_t row = 0; row < expected_output.rows(); ++row) {
-        if (std::abs(actual_output(row, col) - expected_output(row, col)) > 1e-5) {
+        if (std::abs(actual_output(row, col) - expected_output(row, col)) > ACCEPTABLE_ERROR) {
           std::cout << "Row: " << row << " Col: " << col << " Value: " << actual_output(row, col)
                     << " Expected: " << expected_output(row, col) << std::endl;
         }
@@ -334,9 +380,9 @@ TEST_F(DRSCertifierTest, ComputeSubOptimalityGap) {
 
     double actual_output = certifier.computeSubOptimalityGap(
         case_data.inputs.M_affine, case_data.inputs.mu, case_data.inputs.v1.cols());
-    const auto& expected_output = case_data.expected_outputs.suboptimality;
+    const auto& expected_output = case_data.expected_outputs.suboptimality_1st_iter;
 
-    ASSERT_TRUE(std::abs(actual_output - expected_output) < 1e-7);
+    ASSERT_TRUE(std::abs(actual_output - expected_output) < ACCEPTABLE_ERROR);
   }
 }
 
@@ -347,5 +393,10 @@ TEST_F(DRSCertifierTest, Certify) {
 
     // construct the certifier
     teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
+
+    auto actual_output = certifier.certify(case_data.inputs.R_est, case_data.inputs.v1,
+                                           case_data.inputs.v2, case_data.inputs.theta_est);
+
+    compareCertificationResult(actual_output, case_data.expected_outputs.certification_result);
   }
 }
