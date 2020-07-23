@@ -23,6 +23,11 @@
  */
 class DRSCertifierTest : public ::testing::Test {
 protected:
+  /**
+   * Inputs for the DRSCertifier
+   *
+   * Note that some may be intermediate outputs from other functions.
+   */
   struct Inputs {
     double noise_bound;
     double cbar2;
@@ -32,8 +37,13 @@ protected:
     Eigen::Quaternion<double> q_est;
     Eigen::Matrix<double, 1, Eigen::Dynamic> theta_est;
     Eigen::MatrixXd W;
+    Eigen::MatrixXd M_affine;
+    double mu;
   };
 
+  /**
+   * Expected outputs for methods under the DRSCertifier
+   */
   struct ExpectedOutputs {
     Eigen::Matrix4d omega;
     Eigen::MatrixXd block_diag_omega;
@@ -41,6 +51,7 @@ protected:
     Eigen::MatrixXd lambda_guess;
     Eigen::MatrixXd A_inv;
     Eigen::MatrixXd W_dual;
+    double suboptimality;
   };
 
   struct CaseData {
@@ -85,21 +96,22 @@ protected:
     auto cases = teaser::test::readSubdirs(root_dir);
     for (const auto& c : cases) {
       std::string case_dir = root_dir + c;
-      std::cout << case_dir << std::endl;
 
       CaseData data;
 
-      // inputs
+      // Inputs:
       // scalar parameters
       loadScalarParameters(case_dir + "/parameters.txt", &(data.inputs.cbar2),
                            &(data.inputs.noise_bound));
 
       // v1: 3-by-N matrix
+      // These are the TIMs
       std::ifstream v1_source_file(case_dir + "/v1.csv");
       data.inputs.v1 =
           teaser::test::readFileToEigenMatrix<double, 3, Eigen::Dynamic>(v1_source_file);
 
       // v2: 3-by-N matrix
+      // These are the TIMs
       std::ifstream v2_source_file(case_dir + "/v2.csv");
       data.inputs.v2 =
           teaser::test::readFileToEigenMatrix<double, 3, Eigen::Dynamic>(v2_source_file);
@@ -124,6 +136,17 @@ protected:
       data.inputs.W = teaser::test::readFileToEigenMatrix<double, Eigen::Dynamic, Eigen::Dynamic>(
           W_source_file);
 
+      // M_affine: for calculating suboptimality
+      std::ifstream M_affine_source_file(case_dir + "/M_affine_1st_iter.csv");
+      data.inputs.M_affine =
+          teaser::test::readFileToEigenMatrix<double, Eigen::Dynamic, Eigen::Dynamic>(
+              M_affine_source_file);
+
+      // mu: for calculating suboptimality
+      std::ifstream mu_source_file(case_dir + "/mu.csv");
+      data.inputs.mu = teaser::test::readFileToEigenFixedMatrix<double, 1, 1>(mu_source_file)(0);
+
+      // Outputs:
       // omega: omega1 matrix
       std::ifstream omega_source_file(case_dir + "/omega.csv");
       data.expected_outputs.omega =
@@ -158,6 +181,11 @@ protected:
       data.expected_outputs.W_dual =
           teaser::test::readFileToEigenMatrix<double, Eigen::Dynamic, Eigen::Dynamic>(
               W_dual_source_file);
+
+      // suboptimality: calculated suboptimality after 1st iteration
+      std::ifstream suboptimality_source_file(case_dir + "/suboptimality_1st_iter.csv");
+      data.expected_outputs.suboptimality =
+          teaser::test::readFileToEigenFixedMatrix<double, 1, 1>(suboptimality_source_file)(0);
 
       case_params_[c] = data;
     }
@@ -293,5 +321,31 @@ TEST_F(DRSCertifierTest, GetOptimalDualProjection) {
     }
     ASSERT_TRUE(actual_output.isApprox(expected_output))
         << "Actual output: " << actual_output << "Expected output: " << expected_output;
+  }
+}
+
+TEST_F(DRSCertifierTest, ComputeSubOptimalityGap) {
+  {
+    // Case 1: N = 10
+    const auto& case_data = case_params_["case_1"];
+
+    // construct the certifier
+    teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
+
+    double actual_output = certifier.computeSubOptimalityGap(
+        case_data.inputs.M_affine, case_data.inputs.mu, case_data.inputs.v1.cols());
+    const auto& expected_output = case_data.expected_outputs.suboptimality;
+
+    ASSERT_TRUE(std::abs(actual_output - expected_output) < 1e-7);
+  }
+}
+
+TEST_F(DRSCertifierTest, Certify) {
+  {
+    // Case 1: N = 10
+    const auto& case_data = case_params_["case_1"];
+
+    // construct the certifier
+    teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
   }
 }
