@@ -231,7 +231,7 @@ void teaser::DRSCertifier::getOptimalDualProjection(
     for (size_t j = i + 1; j < N + 1; ++j) {
       // prepare indices
       int col_idx_start = j * 4;
-      int col_idx_end = i * 4 + 3;
+      int col_idx_end = j * 4 + 3;
 
       // current theta value calculation
       double theta_ij = theta_prepended.col(i) * theta_prepended.col(j);
@@ -242,7 +242,7 @@ void teaser::DRSCertifier::getOptimalDualProjection(
 
       // [-1 theta_ij]
       Eigen::Matrix<double, 1, 2> temp_B;
-      temp_A << -1, theta_ij;
+      temp_B << -1, theta_ij;
 
       // W([row_idx(4) col_idx(4)],row_idx(1:3))
       Eigen::Matrix<double, 1, 3> temp_C = W.block<1, 3>(row_idx_end, row_idx_start);
@@ -300,18 +300,24 @@ void teaser::DRSCertifier::getOptimalDualProjection(
       count += 1;
     }
     W_dual->block(row_idx_start, 0, 4, Npm) = W_dual_i;
+
+    // clear out temporary variables
+    //W_dual_i.setZero();
+    //W_i.setZero();
   }
-  *W_dual = *W_dual + W_dual->transpose();
+  Eigen::MatrixXd temp = W_dual->transpose();
+  *W_dual += temp;
 
   // Project the diagonal blocks
-  Eigen::Matrix4d W_ii;
+  Eigen::Matrix4d W_ii = Eigen::Matrix4d::Zero();
   Eigen::Matrix4d W_diag_mean = Eigen::Matrix4d::Zero();
   Eigen::Matrix3d W_diag_sum_33 = Eigen::Matrix3d::Zero();
   for (size_t i = 0; i < N + 1; ++i) {
     int idx_start = i * 4;
+    //Eigen::Vector4d W_dual_row_sum_last_column= W_dual->middleRows<4>(idx_start).rowwise().sum();
     Eigen::Vector4d W_dual_row_sum_last_column;
     // sum 4 rows
-    getBlockRowSum(*W_dual, i, theta_prepended, &W_dual_row_sum_last_column);
+    getBlockRowSum(*W_dual, idx_start, theta_prepended, &W_dual_row_sum_last_column);
     W_ii = W.block<4, 4>(idx_start, idx_start);
     // modify W_ii's last column/row to satisfy complementary slackness
     W_ii.block<4, 1>(0, 3) = -theta_prepended(i) * W_dual_row_sum_last_column;
@@ -512,8 +518,7 @@ void teaser::DRSCertifier::getBlockRowSum(const Eigen::MatrixXd& A, const int& r
   unit(3, 0) = 1;
   Eigen::Matrix<double, Eigen::Dynamic, 1> vector =
       vectorKron<double, Eigen::Dynamic, 4>(theta.transpose(), unit);
-  int start_idx = row;
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> entire_row =
-      A.block(start_idx, 0, 4, A.cols());
-  *output = entire_row * vector;
+  std::cout << "3rd row:  " << A.middleRows<4>(row).row(2) << std::endl;
+  std::cout << "last row: " << A.middleRows<4>(row).row(3) << std::endl;
+  *output = A.middleRows<4>(row) * vector;
 }

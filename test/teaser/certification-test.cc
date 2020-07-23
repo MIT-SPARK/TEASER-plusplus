@@ -31,6 +31,7 @@ protected:
     Eigen::Matrix3d R_est;
     Eigen::Quaternion<double> q_est;
     Eigen::Matrix<double, 1, Eigen::Dynamic> theta_est;
+    Eigen::MatrixXd W;
   };
 
   struct ExpectedOutputs {
@@ -39,6 +40,7 @@ protected:
     Eigen::MatrixXd Q_cost;
     Eigen::MatrixXd lambda_guess;
     Eigen::MatrixXd A_inv;
+    Eigen::MatrixXd W_dual;
   };
 
   struct CaseData {
@@ -117,6 +119,11 @@ protected:
       data.inputs.theta_est =
           teaser::test::readFileToEigenMatrix<double, 1, Eigen::Dynamic>(theta_source_file);
 
+      // W: inputs for optimal dual projection
+      std::ifstream W_source_file(case_dir + "/W_1st_iter.csv");
+      data.inputs.W = teaser::test::readFileToEigenMatrix<double, Eigen::Dynamic, Eigen::Dynamic>(
+          W_source_file);
+
       // omega: omega1 matrix
       std::ifstream omega_source_file(case_dir + "/omega.csv");
       data.expected_outputs.omega =
@@ -146,6 +153,12 @@ protected:
           teaser::test::readFileToEigenMatrix<double, Eigen::Dynamic, Eigen::Dynamic>(
               A_inv_source_file);
 
+      // W_dual: output from optimal dual projection
+      std::ifstream W_dual_source_file(case_dir + "/W_dual_1st_iter.csv");
+      data.expected_outputs.W_dual =
+          teaser::test::readFileToEigenMatrix<double, Eigen::Dynamic, Eigen::Dynamic>(
+              W_dual_source_file);
+
       case_params_[c] = data;
     }
   }
@@ -166,7 +179,7 @@ TEST_F(DRSCertifierTest, GetOmega1) {
     // perform the computation
     Eigen::Matrix4d actual_output = certifier.getOmega1(case_data.inputs.q_est);
     ASSERT_TRUE(actual_output.isApprox(expected_output))
-                << "Actual output: " << actual_output << "Expected output: " << expected_output;
+        << "Actual output: " << actual_output << "Expected output: " << expected_output;
   }
 }
 
@@ -241,6 +254,43 @@ TEST_F(DRSCertifierTest, GetLinearProjection) {
     certifier.getLinearProjection(theta_prepended, &actual_output);
 
     const auto& expected_output = case_data.expected_outputs.A_inv;
+    ASSERT_TRUE(actual_output.isApprox(expected_output))
+        << "Actual output: " << actual_output << "Expected output: " << expected_output;
+  }
+}
+
+TEST_F(DRSCertifierTest, GetOptimalDualProjection) {
+  {
+    // Case 1: N = 10
+    const auto& case_data = case_params_["case_1"];
+
+    // prepare parameters
+    // theta prepended
+    Eigen::Matrix<double, 1, Eigen::Dynamic> theta_prepended(1,
+                                                             case_data.inputs.theta_est.cols() + 1);
+    theta_prepended << 1, case_data.inputs.theta_est;
+    ASSERT_TRUE(theta_prepended.rows() == 1);
+    ASSERT_TRUE(theta_prepended.cols() > 0);
+
+    // A_inv
+    Eigen::SparseMatrix<double> A_inv_sparse = case_data.expected_outputs.A_inv.sparseView();
+
+    // construct the certifier
+    teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
+
+    Eigen::MatrixXd actual_output;
+    certifier.getOptimalDualProjection(case_data.inputs.W, theta_prepended, A_inv_sparse,
+                                       &actual_output);
+
+    const auto& expected_output = case_data.expected_outputs.W_dual;
+    for (size_t col = 0; col < expected_output.cols(); ++col) {
+      for (size_t row = 0; row < expected_output.rows(); ++row) {
+        if (std::abs(actual_output(row, col) - expected_output(row, col)) > 1e-5) {
+          std::cout << "Row: " << row << " Col: " << col << " Value: " << actual_output(row, col)
+                    << " Expected: " << expected_output(row, col) << std::endl;
+        }
+      }
+    }
     ASSERT_TRUE(actual_output.isApprox(expected_output))
         << "Actual output: " << actual_output << "Expected output: " << expected_output;
   }
