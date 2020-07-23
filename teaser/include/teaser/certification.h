@@ -160,18 +160,20 @@ private:
                       Eigen::Vector4d* output);
   /**
    * Suboptimality gap
+   *
+   * This is not a percentage. Multiply by 100 to get a percentage.
    */
-  double sub_optimality_;
+  double sub_optimality_ = 1e-3;
 
   /**
    * Maximum iterations allowed
    */
-  double max_iterations_;
+  double max_iterations_ = 2e2;
 
   /**
    * Gamma value (refer to [1] for details)
    */
-  double gamma_;
+  double gamma_ = 1.999999;
 
   /**
    * Bounds on the noise for the measurements
