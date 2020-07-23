@@ -12,54 +12,6 @@
 #include "teaser/certification.h"
 #include "teaser/linalg.h"
 
-inline std::vector<std::string> getNextLineAndSplitIntoTokens(std::istream& str) {
-  std::vector<std::string> result;
-  std::string line;
-  std::getline(str, line);
-
-  std::stringstream lineStream(line);
-  std::string cell;
-
-  while (std::getline(lineStream, cell, ',')) {
-    result.push_back(cell);
-  }
-  // This checks for a trailing comma with no data after it.
-  if (!lineStream && cell.empty()) {
-    // If there was a trailing comma then add an empty element.
-    result.push_back("");
-  }
-  return result;
-}
-
-/**
- * Read a (MATLAB generated) CSV file of a matrix into a Eigen matrix
- * @param objectFile
- * @return
- */
-template <class T, int R, int C>
-inline Eigen::Matrix<T, R, C> readFileToEigenMatrix(std::istream& objectFile) {
-  Eigen::Matrix<T, R, C> object_in;
-  size_t row = 0;
-  // parsing csv in a row major order
-  while (true) {
-    auto tokens = getNextLineAndSplitIntoTokens(objectFile);
-    if (tokens.size() <= 1) {
-      break;
-    }
-    if (object_in.rows() <= row) {
-      object_in.conservativeResize(row + 1, Eigen::NoChange);
-    }
-    if (object_in.cols() != tokens.size()) {
-      object_in.conservativeResize(Eigen::NoChange, tokens.size());
-    }
-    for (size_t col = 0; col < tokens.size(); ++col) {
-      object_in(row, col) = static_cast<T>(std::stod(tokens[col]));
-    }
-    row++;
-  }
-  return object_in;
-}
-
 teaser::CertificationResult
 teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
                               const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
@@ -363,7 +315,7 @@ void teaser::DRSCertifier::getOptimalDualProjection(
   Eigen::Matrix3d W_diag_sum_33 = Eigen::Matrix3d::Zero();
   for (size_t i = 0; i < N + 1; ++i) {
     int idx_start = i * 4;
-    //Eigen::Vector4d W_dual_row_sum_last_column= W_dual->middleRows<4>(idx_start).rowwise().sum();
+    // Eigen::Vector4d W_dual_row_sum_last_column= W_dual->middleRows<4>(idx_start).rowwise().sum();
     Eigen::Vector4d W_dual_row_sum_last_column;
     // sum 4 rows
     getBlockRowSum(*W_dual, idx_start, theta_prepended, &W_dual_row_sum_last_column);
@@ -458,7 +410,8 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
     // assume current block is column major
     for (size_t col = 0; col < 4; ++col) {
       for (size_t row = 0; row < 4; ++row) {
-        sparse_triplets.emplace_back((i+1) * 4 + row, (i+1) * 4 + col, -current_block(row, col));
+        sparse_triplets.emplace_back((i + 1) * 4 + row, (i + 1) * 4 + col,
+                                     -current_block(row, col));
       }
     }
 
@@ -507,7 +460,7 @@ void teaser::DRSCertifier::getLinearProjection(
 
   // for holding the non zero entries
   std::vector<Eigen::Triplet<double>> sparse_triplets;
-  sparse_triplets.reserve(nrNZ_off_diag+nr_vals*(nr_vals-1));
+  sparse_triplets.reserve(nrNZ_off_diag + nr_vals * (nr_vals - 1));
 
   // for creating columns in inv_A
   for (size_t i = 0; i < N - 1; ++i) {
@@ -551,7 +504,7 @@ void teaser::DRSCertifier::getLinearProjection(
   // Note that when setting Eigen sparse matrix from a vector of triplets, duplicate entries will be
   // summed up. Thus directly pushing these values to the end of the vector makes sense.
   for (size_t i = 0; i < nr_vals; ++i) {
-    sparse_triplets.emplace_back(i,i,x);
+    sparse_triplets.emplace_back(i, i, x);
   }
   A_inv->setFromTriplets(sparse_triplets.begin(), sparse_triplets.end());
 }
