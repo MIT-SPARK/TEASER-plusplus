@@ -7,9 +7,58 @@
  */
 
 #include <limits>
+#include <fstream>
 
 #include "teaser/certification.h"
 #include "teaser/linalg.h"
+
+inline std::vector<std::string> getNextLineAndSplitIntoTokens(std::istream& str) {
+  std::vector<std::string> result;
+  std::string line;
+  std::getline(str, line);
+
+  std::stringstream lineStream(line);
+  std::string cell;
+
+  while (std::getline(lineStream, cell, ',')) {
+    result.push_back(cell);
+  }
+  // This checks for a trailing comma with no data after it.
+  if (!lineStream && cell.empty()) {
+    // If there was a trailing comma then add an empty element.
+    result.push_back("");
+  }
+  return result;
+}
+
+/**
+ * Read a (MATLAB generated) CSV file of a matrix into a Eigen matrix
+ * @param objectFile
+ * @return
+ */
+template <class T, int R, int C>
+inline Eigen::Matrix<T, R, C> readFileToEigenMatrix(std::istream& objectFile) {
+  Eigen::Matrix<T, R, C> object_in;
+  size_t row = 0;
+  // parsing csv in a row major order
+  while (true) {
+    auto tokens = getNextLineAndSplitIntoTokens(objectFile);
+    if (tokens.size() <= 1) {
+      break;
+    }
+    if (object_in.rows() <= row) {
+      object_in.conservativeResize(row + 1, Eigen::NoChange);
+    }
+    if (object_in.cols() != tokens.size()) {
+      object_in.conservativeResize(Eigen::NoChange, tokens.size());
+    }
+    for (size_t col = 0; col < tokens.size(); ++col) {
+      object_in(row, col) = static_cast<T>(std::stod(tokens[col]));
+    }
+    row++;
+  }
+  return object_in;
+}
 
 teaser::CertificationResult
 teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
@@ -267,8 +316,8 @@ void teaser::DRSCertifier::getOptimalDualProjection(
   Eigen::Matrix<double, Eigen::Dynamic, 3> b_W_dual = A_inv * b_W;
 
   // Compute W_dual
-  W_dual->setZero();
   W_dual->resize(Npm, Npm);
+  W_dual->setZero();
   count = 0;
   // declare matrices to prevent reallocation
   Eigen::Matrix4d W_ij = Eigen::Matrix4d::Zero();
@@ -302,8 +351,8 @@ void teaser::DRSCertifier::getOptimalDualProjection(
     W_dual->block(row_idx_start, 0, 4, Npm) = W_dual_i;
 
     // clear out temporary variables
-    //W_dual_i.setZero();
-    //W_i.setZero();
+    W_dual_i.setZero();
+    W_i.setZero();
   }
   Eigen::MatrixXd temp = W_dual->transpose();
   *W_dual += temp;
@@ -518,7 +567,5 @@ void teaser::DRSCertifier::getBlockRowSum(const Eigen::MatrixXd& A, const int& r
   unit(3, 0) = 1;
   Eigen::Matrix<double, Eigen::Dynamic, 1> vector =
       vectorKron<double, Eigen::Dynamic, 4>(theta.transpose(), unit);
-  std::cout << "3rd row:  " << A.middleRows<4>(row).row(2) << std::endl;
-  std::cout << "last row: " << A.middleRows<4>(row).row(3) << std::endl;
   *output = A.middleRows<4>(row) * vector;
 }
