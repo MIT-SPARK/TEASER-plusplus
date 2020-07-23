@@ -64,13 +64,27 @@ public:
    * @param R_solution [in] a feasible rotation solution
    * @param src [in] vectors under rotation
    * @param dst [in] vectors after rotation
-   * @param theta [in] binary (1 vs. -1) vector indicating inliers vs. outliers
+   * @param theta [in] binary (1 vs. 0) vector indicating inliers vs. outliers
    * @return  relative sub-optimality gap
    */
   CertificationResult certify(const Eigen::Matrix3d& R_solution,
                               const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
                               const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
                               const Eigen::Matrix<bool, 1, Eigen::Dynamic>& theta) override;
+
+  /**
+   * Main certification function
+   *
+   * @param R_solution [in] a feasible rotation solution
+   * @param src [in] vectors under rotation
+   * @param dst [in] vectors after rotation
+   * @param theta [in] binary (1 vs. -1) vector indicating inliers vs. outliers
+   * @return  relative sub-optimality gap
+   */
+  CertificationResult certify(const Eigen::Matrix3d& R_solution,
+                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
+                              const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta);
 
   /**
    * Compute sub-optimality gap

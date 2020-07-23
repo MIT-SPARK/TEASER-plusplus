@@ -17,6 +17,23 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
                               const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
                               const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
                               const Eigen::Matrix<bool, 1, Eigen::Dynamic>& theta) {
+  // convert theta to a double Eigen matrix
+  Eigen::Matrix<double, 1, Eigen::Dynamic> theta_double;
+  for (size_t i = 0; i < theta.cols(); ++i) {
+    if (theta(i)) {
+      theta_double(i) = 1;
+    } else {
+      theta_double(i) = -1;
+    }
+  }
+  return certify(R_solution, src, dst, theta_double);
+}
+
+teaser::CertificationResult
+teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
+                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
+                              const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta) {
   int N = src.cols();
   int Npm = 4 + 4 * N;
 
