@@ -11,6 +11,7 @@
 #include <random>
 #include <unordered_map>
 #include <algorithm>
+#include <chrono>
 
 #include <Eigen/Core>
 #include "gtest/gtest.h"
@@ -239,14 +240,26 @@ protected:
     }
   }
 
+  /**
+   * Helper function to run a provided function over a dictionary of case data
+   * @tparam Functor
+   * @param functor
+   */
+  template <typename Functor>
+  void testThroughCases(Functor functor, const std::map<std::string, CaseData>& case_params) {
+    // get all case names
+    for (auto const& kv : case_params) {
+      const auto& case_name = kv.first;
+      functor(kv.second);
+    }
+  }
+
   // parameters per case
-  std::unordered_map<std::string, CaseData> case_params_;
+  std::map<std::string, CaseData> case_params_;
 };
 
 TEST_F(DRSCertifierTest, GetOmega1) {
-  {
-    // Case 1: N=10
-    const auto& case_data = case_params_["case_1"];
+  auto test_run = [](CaseData case_data) {
     const auto& expected_output = case_data.expected_outputs.omega;
 
     // construct the certifier
@@ -256,13 +269,14 @@ TEST_F(DRSCertifierTest, GetOmega1) {
     Eigen::Matrix4d actual_output = certifier.getOmega1(case_data.inputs.q_est);
     ASSERT_TRUE(actual_output.isApprox(expected_output))
         << "Actual output: " << actual_output << "Expected output: " << expected_output;
-  }
+  };
+
+  testThroughCases(test_run, case_params_);
 }
 
 TEST_F(DRSCertifierTest, GetBlockDiagOmega) {
-  {
+  auto test_run = [](CaseData case_data) {
     // Case 1: N=10
-    const auto& case_data = case_params_["case_1"];
     const auto& expected_output = case_data.expected_outputs.block_diag_omega;
 
     // construct the certifier
@@ -274,13 +288,13 @@ TEST_F(DRSCertifierTest, GetBlockDiagOmega) {
     certifier.getBlockDiagOmega(Npm, case_data.inputs.q_est, &actual_output);
     ASSERT_TRUE(actual_output.isApprox(expected_output))
         << "Actual output: " << actual_output << "Expected output: " << expected_output;
-  }
+  };
+
+  testThroughCases(test_run, case_params_);
 }
 
 TEST_F(DRSCertifierTest, GetQCost) {
-  {
-    // Case 1: N=10
-    const auto& case_data = case_params_["case_1"];
+  auto test_run = [](CaseData case_data) {
     const auto& expected_output = case_data.expected_outputs.Q_cost;
 
     // construct the certifier
@@ -291,13 +305,14 @@ TEST_F(DRSCertifierTest, GetQCost) {
     certifier.getQCost(case_data.inputs.v1, case_data.inputs.v2, &actual_output);
     ASSERT_TRUE(actual_output.isApprox(expected_output))
         << "Actual output: " << actual_output << "Expected output: " << expected_output;
-  }
+  };
+
+  testThroughCases(test_run, case_params_);
 }
 
 TEST_F(DRSCertifierTest, GetLambdaGuess) {
-  {
-    // Case 1: N=10
-    const auto& case_data = case_params_["case_1"];
+  auto test_run = [](CaseData case_data) {
+    const auto& expected_output = case_data.expected_outputs.lambda_guess;
 
     // construct the certifier
     teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
@@ -306,16 +321,16 @@ TEST_F(DRSCertifierTest, GetLambdaGuess) {
     certifier.getLambdaGuess(case_data.inputs.R_est, case_data.inputs.theta_est,
                              case_data.inputs.v1, case_data.inputs.v2, &actual_output);
 
-    const auto& expected_output = case_data.expected_outputs.lambda_guess;
     ASSERT_TRUE(actual_output.isApprox(expected_output))
         << "Actual output: " << actual_output << "Expected output: " << expected_output;
-  }
+  };
+
+  testThroughCases(test_run, case_params_);
 }
 
 TEST_F(DRSCertifierTest, GetLinearProjection) {
-  {
-    // Case 1: N = 10
-    const auto& case_data = case_params_["case_1"];
+  auto test_run = [](CaseData case_data) {
+    const auto& expected_output = case_data.expected_outputs.A_inv;
 
     // construct the certifier
     teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
@@ -329,17 +344,15 @@ TEST_F(DRSCertifierTest, GetLinearProjection) {
     Eigen::SparseMatrix<double> actual_output;
     certifier.getLinearProjection(theta_prepended, &actual_output);
 
-    const auto& expected_output = case_data.expected_outputs.A_inv;
     ASSERT_TRUE(actual_output.isApprox(expected_output))
         << "Actual output: " << actual_output << "Expected output: " << expected_output;
-  }
+  };
+
+  testThroughCases(test_run, case_params_);
 }
 
 TEST_F(DRSCertifierTest, GetOptimalDualProjection) {
-  {
-    // Case 1: N = 10
-    const auto& case_data = case_params_["case_1"];
-
+  auto test_run = [](CaseData case_data) {
     // prepare parameters
     // theta prepended
     Eigen::Matrix<double, 1, Eigen::Dynamic> theta_prepended(1,
@@ -369,14 +382,13 @@ TEST_F(DRSCertifierTest, GetOptimalDualProjection) {
     }
     ASSERT_TRUE(actual_output.isApprox(expected_output))
         << "Actual output: " << actual_output << "Expected output: " << expected_output;
-  }
+  };
+
+  testThroughCases(test_run, case_params_);
 }
 
 TEST_F(DRSCertifierTest, ComputeSubOptimalityGap) {
-  {
-    // Case 1: N = 10
-    const auto& case_data = case_params_["case_1"];
-
+  auto test_run = [](CaseData case_data) {
     // construct the certifier
     teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
 
@@ -385,20 +397,27 @@ TEST_F(DRSCertifierTest, ComputeSubOptimalityGap) {
     const auto& expected_output = case_data.expected_outputs.suboptimality_1st_iter;
 
     ASSERT_TRUE(std::abs(actual_output - expected_output) < ACCEPTABLE_ERROR);
-  }
+  };
+
+  testThroughCases(test_run, case_params_);
 }
 
 TEST_F(DRSCertifierTest, Certify) {
-  {
-    // Case 1: N = 10
-    const auto& case_data = case_params_["case_1"];
-
+  auto test_run = [&](CaseData case_data) {
     // construct the certifier
     teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
 
+    std::chrono::steady_clock clock;
+    auto t1 = clock.now();
     auto actual_output = certifier.certify(case_data.inputs.R_est, case_data.inputs.v1,
                                            case_data.inputs.v2, case_data.inputs.theta_est);
+    auto t2 = clock.now();
+    std::chrono::duration<double, std::milli> diff = t2 - t1;
+    std::cout << "N=" << case_data.inputs.v1.cols() << " | Certification took "
+              << static_cast<double>(diff.count()) / 1000.0 << "seconds." << std::endl;
 
     compareCertificationResult(actual_output, case_data.expected_outputs.certification_result);
-  }
+  };
+
+  testThroughCases(test_run, case_params_);
 }
