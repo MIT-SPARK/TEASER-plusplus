@@ -124,10 +124,11 @@ protected:
         << "Incorrect best optimality gap.";
   }
 
-  void SetUp() override {
-    // load case parameters
-    // read in all case folders
-    std::string root_dir = "./data/certification_test/";
+  /**
+   * Helper function to set up small certification test instances
+   */
+  void setupSmallInstances() {
+    std::string root_dir = "./data/certification_small_instances/";
     auto cases = teaser::test::readSubdirs(root_dir);
     for (const auto& c : cases) {
       std::string case_dir = root_dir + c;
@@ -236,8 +237,13 @@ protected:
       data.expected_outputs.certification_result.best_suboptimality =
           suboptimality_traj_mat.minCoeff();
 
-      case_params_[c] = data;
+      small_instances_params_[c] = data;
     }
+  }
+
+  void SetUp() override {
+    // load case parameters for small instances
+    setupSmallInstances();
   }
 
   /**
@@ -246,16 +252,28 @@ protected:
    * @param functor
    */
   template <typename Functor>
-  void testThroughCases(Functor functor, const std::map<std::string, CaseData>& case_params) {
+  void testThroughCases(std::string test_case_name, Functor functor,
+                        const std::map<std::string, CaseData>& case_params) {
     // get all case names
+    std::string ptr_str = "Timing info for test case: " + test_case_name;
+    std::string div_str(ptr_str.size(), '=');
+    std::cout << ptr_str << std::endl;
+    std::cout << div_str << std::endl;
     for (auto const& kv : case_params) {
       const auto& case_name = kv.first;
+      std::chrono::steady_clock clock;
+      auto t1 = clock.now();
       functor(kv.second);
+      auto t2 = clock.now();
+      std::chrono::duration<double, std::milli> diff = t2 - t1;
+      std::cout << "N=" << kv.second.inputs.v1.cols() << " | Test took "
+                << static_cast<double>(diff.count()) / 1000.0 << "seconds." << std::endl;
     }
+    std::cout << div_str << std::endl;
   }
 
   // parameters per case
-  std::map<std::string, CaseData> case_params_;
+  std::map<std::string, CaseData> small_instances_params_;
 };
 
 TEST_F(DRSCertifierTest, GetOmega1) {
@@ -271,7 +289,7 @@ TEST_F(DRSCertifierTest, GetOmega1) {
         << "Actual output: " << actual_output << "Expected output: " << expected_output;
   };
 
-  testThroughCases(test_run, case_params_);
+  testThroughCases(test_info_->name(), test_run, small_instances_params_);
 }
 
 TEST_F(DRSCertifierTest, GetBlockDiagOmega) {
@@ -290,7 +308,7 @@ TEST_F(DRSCertifierTest, GetBlockDiagOmega) {
         << "Actual output: " << actual_output << "Expected output: " << expected_output;
   };
 
-  testThroughCases(test_run, case_params_);
+  testThroughCases(test_info_->name(), test_run, small_instances_params_);
 }
 
 TEST_F(DRSCertifierTest, GetQCost) {
@@ -307,7 +325,7 @@ TEST_F(DRSCertifierTest, GetQCost) {
         << "Actual output: " << actual_output << "Expected output: " << expected_output;
   };
 
-  testThroughCases(test_run, case_params_);
+  testThroughCases(test_info_->name(), test_run, small_instances_params_);
 }
 
 TEST_F(DRSCertifierTest, GetLambdaGuess) {
@@ -325,7 +343,7 @@ TEST_F(DRSCertifierTest, GetLambdaGuess) {
         << "Actual output: " << actual_output << "Expected output: " << expected_output;
   };
 
-  testThroughCases(test_run, case_params_);
+  testThroughCases(test_info_->name(), test_run, small_instances_params_);
 }
 
 TEST_F(DRSCertifierTest, GetLinearProjection) {
@@ -348,7 +366,7 @@ TEST_F(DRSCertifierTest, GetLinearProjection) {
         << "Actual output: " << actual_output << "Expected output: " << expected_output;
   };
 
-  testThroughCases(test_run, case_params_);
+  testThroughCases(test_info_->name(), test_run, small_instances_params_);
 }
 
 TEST_F(DRSCertifierTest, GetOptimalDualProjection) {
@@ -384,7 +402,7 @@ TEST_F(DRSCertifierTest, GetOptimalDualProjection) {
         << "Actual output: " << actual_output << "Expected output: " << expected_output;
   };
 
-  testThroughCases(test_run, case_params_);
+  testThroughCases(test_info_->name(), test_run, small_instances_params_);
 }
 
 TEST_F(DRSCertifierTest, ComputeSubOptimalityGap) {
@@ -399,7 +417,7 @@ TEST_F(DRSCertifierTest, ComputeSubOptimalityGap) {
     ASSERT_TRUE(std::abs(actual_output - expected_output) < ACCEPTABLE_ERROR);
   };
 
-  testThroughCases(test_run, case_params_);
+  testThroughCases(test_info_->name(), test_run, small_instances_params_);
 }
 
 TEST_F(DRSCertifierTest, Certify) {
@@ -407,17 +425,13 @@ TEST_F(DRSCertifierTest, Certify) {
     // construct the certifier
     teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
 
-    std::chrono::steady_clock clock;
-    auto t1 = clock.now();
     auto actual_output = certifier.certify(case_data.inputs.R_est, case_data.inputs.v1,
                                            case_data.inputs.v2, case_data.inputs.theta_est);
-    auto t2 = clock.now();
-    std::chrono::duration<double, std::milli> diff = t2 - t1;
-    std::cout << "N=" << case_data.inputs.v1.cols() << " | Certification took "
-              << static_cast<double>(diff.count()) / 1000.0 << "seconds." << std::endl;
 
     compareCertificationResult(actual_output, case_data.expected_outputs.certification_result);
   };
 
-  testThroughCases(test_run, case_params_);
+  testThroughCases(test_info_->name(), test_run, small_instances_params_);
 }
+
+TEST_F(DRSCertifierTest, LargeInstance) {}
