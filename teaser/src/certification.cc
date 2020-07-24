@@ -65,8 +65,12 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
   getBlockDiagOmega(Npm, q_solution, &D_omega);
   Eigen::MatrixXd Q_bar = D_omega.transpose() * (Q_cost * D_omega);
   Eigen::VectorXd x_bar = D_omega.transpose() * x;
-  Eigen::MatrixXd J_bar(Npm, Npm);
-  J_bar.block<4, 4>(0, 0) = Eigen::Matrix4d::Identity();
+
+  // build J_bar matrix with a 4-by-4 identity at the top left corner
+  Eigen::SparseMatrix<double> J_bar(Npm, Npm);
+  for (size_t i = 0; i < 4; ++i) {
+    J_bar.insert(i,i) = 1;
+  }
 
   // verify optimality in the "rotated" space using projection
   // this is the cost of the primal, when strong duality holds, mu is also the cost of the dual
