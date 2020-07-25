@@ -91,33 +91,11 @@ void getNearestPSD(const Eigen::Matrix<NumT, Eigen::Dynamic, Eigen::Dynamic>& A,
   Eigen::MatrixXd B = (A + A.transpose()) / 2;
 
   // eigendecomposition of B
-  Eigen::EigenSolver<Eigen::MatrixXd> eig_B(B);
+  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eig_B(B);
   Eigen::VectorXd De = eig_B.eigenvalues().real();
+  Eigen::MatrixXd De_positive = (De.array() < 0).select(0, De).asDiagonal();
   Eigen::MatrixXd Ve = eig_B.eigenvectors().real();
-
-  // find indices of eigenvalues less than threshold
-  std::vector<double> eig_indices;
-  for (size_t i = 0; i < De.rows(); ++i) {
-    if (De(i) < eig_threshold) {
-      eig_indices.push_back(i);
-    }
-  }
-
-  // pick out the corresponding eigen vectors
-  Eigen::MatrixXd selected_eigenvecs(Ve.rows(), eig_indices.size());
-  Eigen::MatrixXd selected_diagonal_eigenvals(eig_indices.size(), eig_indices.size());
-  selected_diagonal_eigenvals.setZero();
-  for (size_t i = 0; i < eig_indices.size(); ++i) {
-    int index_of_eigval = eig_indices[i];
-    selected_eigenvecs.col(i) = Ve.col(index_of_eigval);
-    selected_diagonal_eigenvals(i, i) = De(index_of_eigval);
-  }
-
-  // compute the nearest PSD matrix
-  Eigen::MatrixXd H =
-      selected_eigenvecs * selected_diagonal_eigenvals.cwiseAbs() * selected_eigenvecs.transpose();
-  *nearestPSD = B + H;
-  *nearestPSD = (*nearestPSD + nearestPSD->transpose())/2;
+  *nearestPSD = Ve * De_positive * Ve.transpose();
 }
 
 } // namespace teaser
