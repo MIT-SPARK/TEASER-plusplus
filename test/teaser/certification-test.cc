@@ -241,9 +241,80 @@ protected:
     }
   }
 
+  /**
+   * Helper function to load parameters for large problem instances
+   *
+   * Large instances are only used for testing the main certification function
+   */
+  void setupLargeInstances() {
+    std::string root_dir = "./data/certification_large_instances/";
+    auto cases = teaser::test::readSubdirs(root_dir);
+    for (const auto& c : cases) {
+      std::string case_dir = root_dir + c;
+
+      CaseData data;
+
+      // Inputs:
+      // scalar parameters
+      loadScalarParameters(case_dir + "/parameters.txt", &(data.inputs.cbar2),
+                           &(data.inputs.noise_bound));
+
+      // v1: 3-by-N matrix
+      // These are the TIMs
+      std::ifstream v1_source_file(case_dir + "/v1.csv");
+      data.inputs.v1 =
+          teaser::test::readFileToEigenMatrix<double, 3, Eigen::Dynamic>(v1_source_file);
+
+      // v2: 3-by-N matrix
+      // These are the TIMs
+      std::ifstream v2_source_file(case_dir + "/v2.csv");
+      data.inputs.v2 =
+          teaser::test::readFileToEigenMatrix<double, 3, Eigen::Dynamic>(v2_source_file);
+
+      // q_est: estimated quaternion
+      std::ifstream q_source_file(case_dir + "/q_est.csv");
+      auto q_mat = teaser::test::readFileToEigenFixedMatrix<double, 4, 1>(q_source_file);
+      Eigen::Quaternion<double> q(q_mat(3), q_mat(0), q_mat(1), q_mat(2));
+      data.inputs.q_est = q;
+
+      // R_est: estimated quaternion
+      std::ifstream R_est_source_file(case_dir + "/R_est.csv");
+      data.inputs.R_est = teaser::test::readFileToEigenFixedMatrix<double, 3, 3>(R_est_source_file);
+
+      // theta_est: binary outlier vector
+      std::ifstream theta_source_file(case_dir + "/theta_est.csv");
+      data.inputs.theta_est =
+          teaser::test::readFileToEigenMatrix<double, 1, Eigen::Dynamic>(theta_source_file);
+
+      // suboptimality: calculated suboptimality after 1st iteration
+      std::ifstream suboptimality_source_file(case_dir + "/suboptimality_1st_iter.csv");
+      data.expected_outputs.suboptimality_1st_iter =
+          teaser::test::readFileToEigenFixedMatrix<double, 1, 1>(suboptimality_source_file)(0);
+
+      // certification_result: a struct holding certification results. Specifically:
+      // suboptimality_trajy: suboptimality gaps throughout all the iterations
+      // best_suboptimality: smallest suboptimality gap
+      std::ifstream suboptimality_traj_source_file(case_dir + "/suboptimality_traj.csv");
+      Eigen::RowVectorXd suboptimality_traj_mat =
+          teaser::test::readFileToEigenMatrix<double, 1, Eigen::Dynamic>(
+              suboptimality_traj_source_file);
+      for (size_t i = 0; i < suboptimality_traj_mat.cols(); ++i) {
+        data.expected_outputs.certification_result.suboptimality_traj.push_back(
+            suboptimality_traj_mat(i));
+      }
+      data.expected_outputs.certification_result.best_suboptimality =
+          suboptimality_traj_mat.minCoeff();
+
+      large_instances_params_[c] = data;
+    }
+  }
+
   void SetUp() override {
     // load case parameters for small instances
     setupSmallInstances();
+
+    // load case parameters for large instances
+    setupLargeInstances();
   }
 
   /**
@@ -274,6 +345,7 @@ protected:
 
   // parameters per case
   std::map<std::string, CaseData> small_instances_params_;
+  std::map<std::string, CaseData> large_instances_params_;
 };
 
 TEST_F(DRSCertifierTest, GetOmega1) {
@@ -434,4 +506,16 @@ TEST_F(DRSCertifierTest, Certify) {
   testThroughCases(test_info_->name(), test_run, small_instances_params_);
 }
 
-TEST_F(DRSCertifierTest, LargeInstance) {}
+TEST_F(DRSCertifierTest, LargeInstance) {
+  auto test_run = [&](CaseData case_data) {
+    // construct the certifier
+    teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
+
+    auto actual_output = certifier.certify(case_data.inputs.R_est, case_data.inputs.v1,
+                                           case_data.inputs.v2, case_data.inputs.theta_est);
+
+    compareCertificationResult(actual_output, case_data.expected_outputs.certification_result);
+  };
+
+  testThroughCases(test_info_->name(), test_run, large_instances_params_);
+}
