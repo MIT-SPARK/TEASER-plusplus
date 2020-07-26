@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.10)
+
+project(spectra-download NONE)
+
+include(ExternalProject)
+ExternalProject_Add(spectral
+        GIT_REPOSITORY    https://github.com/jingnanshi/spectra
+        GIT_TAG           5c4fb1de050847988faaaaa50f60e7d3d5f16143
+        SOURCE_DIR        "${CMAKE_CURRENT_BINARY_DIR}/spectra-src"
+        BINARY_DIR        ""
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND     ""
+        INSTALL_COMMAND   ""
+        TEST_COMMAND      ""
+        )
