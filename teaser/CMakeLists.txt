@@ -25,11 +25,12 @@ add_library(teaser_registration SHARED
         )
 target_link_libraries(teaser_registration
         PUBLIC Eigen3::Eigen
-        PRIVATE pmc
+        PRIVATE pmc ${BLAS_LIBRARIES}
         )
 target_include_directories(teaser_registration PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${SPECTRA_INCLUDE_DIRS}>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 find_package(OpenMP)
@@ -92,3 +93,4 @@ install(EXPORT teaserpp-export
 )
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY ${SPECTRA_INCLUDE_DIRS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

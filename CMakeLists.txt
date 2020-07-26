@@ -19,7 +19,7 @@ option(BUILD_MATLAB_BINDINGS "Build MATLAB bindings" OFF)
 option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
 option(BUILD_DOC "Build documentation" ON)
 option(BUILD_WITH_MARCH_NATIVE "Build with flag march=native" OFF)
-option(ENABLE_DIAGNOSTIC_PRINT "Enable printing of diagnostic messages" OFF)
+option(ENABLE_DIAGNOSTIC_PRINT "Enable printing of diagnostic messa" ON)
 
 if (ENABLE_DIAGNOSTIC_PRINT)
     message(STATUS "Enable printing of diagnostic messages.")
@@ -34,6 +34,10 @@ endif ()
 # Find dependencies
 # Eigen3
 find_package(Eigen3 3.2 QUIET REQUIRED NO_MODULE)
+message("Enabling BLAS and/or MKL")
+find_package(BLAS REQUIRED)
+include_directories(${BLAS_INCLUDE_DIRS})
+add_definitions(-DEIGEN_USE_BLAS)
 
 if (BUILD_TEASER_FPFH)
     # Boost
@@ -72,6 +76,15 @@ add_subdirectory("${CMAKE_BINARY_DIR}/tinyply-src"
         "${CMAKE_BINARY_DIR}/tinyply-build")
 target_include_directories(tinyply PUBLIC
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/tinyply-src/source>)
+
+# spectra
+configure_file(cmake/spectra.CMakeLists.txt.in spectra-download/CMakeLists.txt)
+execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/spectra-download")
+execute_process(COMMAND "${CMAKE_COMMAND}" --build .
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/spectra-download")
+add_subdirectory("${CMAKE_BINARY_DIR}/spectra-src")
+set(SPECTRA_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/spectra-src/include")
 
 # Building Targets
 set(TEASERPP_ROOT ${CMAKE_CURRENT_LIST_DIR})
