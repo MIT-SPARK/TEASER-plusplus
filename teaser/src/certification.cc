@@ -8,6 +8,12 @@
 
 #include <limits>
 #include <fstream>
+#include <chrono>
+
+#include <teaser/macros.h>
+#include <Spectra/SymEigsSolver.h>
+#include <Spectra/GenEigsSolver.h>
+#include <Spectra/SymEigsShiftSolver.h>
 
 #include "teaser/certification.h"
 #include "teaser/linalg.h"
@@ -38,16 +44,19 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
   int Npm = 4 + 4 * N;
 
   // prepend theta with 1
-  Eigen::Matrix<double, 1, Eigen::Dynamic> theta_prepended(1, theta.cols()+1);
+  Eigen::Matrix<double, 1, Eigen::Dynamic> theta_prepended(1, theta.cols() + 1);
   theta_prepended << 1, theta;
 
   // get the inverse map
+  TEASER_DEBUG_INFO_MSG("Starting linear inverse map calculation.");
   Eigen::SparseMatrix<double> inverse_map;
   getLinearProjection(theta_prepended, &inverse_map);
+  TEASER_DEBUG_INFO_MSG("Obtained linear inverse map.");
 
   // recall data matrix from QUASAR
   Eigen::MatrixXd Q_cost(Npm, Npm);
   getQCost(src, dst, &Q_cost);
+  TEASER_DEBUG_INFO_MSG("Obtained Q_cost matrix.");
 
   // convert the estimated rotation to quaternion
   Eigen::Quaterniond q_solution(R_solution);
@@ -65,11 +74,12 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
   getBlockDiagOmega(Npm, q_solution, &D_omega);
   Eigen::MatrixXd Q_bar = D_omega.transpose() * (Q_cost * D_omega);
   Eigen::VectorXd x_bar = D_omega.transpose() * x;
+  TEASER_DEBUG_INFO_MSG("Obtained D_omega matrix.");
 
   // build J_bar matrix with a 4-by-4 identity at the top left corner
   Eigen::SparseMatrix<double> J_bar(Npm, Npm);
   for (size_t i = 0; i < 4; ++i) {
-    J_bar.insert(i,i) = 1;
+    J_bar.insert(i, i) = 1;
   }
 
   // verify optimality in the "rotated" space using projection
@@ -82,8 +92,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
 
   // this initial guess lives in the affine subspace
   // use 2 separate steps to limit slow evaluation on only the few non-zeros in the sparse matrix
-  Eigen::MatrixXd M_init = Q_bar - mu * J_bar;
-  M_init -= lambda_bar_init;
+  Eigen::SparseMatrix<double> M_init = Q_bar - mu * J_bar - lambda_bar_init;
 
   // flag to indicate whether we exceeded iterations or reach the desired sub-optim gap
   bool exceeded_maxiters = true;
@@ -96,27 +105,44 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
 
   // preallocate some matrices
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> M_PSD;
+  // TODO: Make M a sparse matrix
   Eigen::MatrixXd M = M_init;
   Eigen::MatrixXd temp_W(M.rows(), M.cols());
   Eigen::MatrixXd W_dual(Npm, Npm);
   Eigen::MatrixXd M_affine(Npm, Npm);
 
+  TEASER_DEBUG_INFO_MSG("Starting Douglas-Rachford Splitting.");
   for (size_t iter = 0; iter < max_iterations_; ++iter) {
 
     // to nearest PSD
+    TEASER_DEBUG_DECLARE_TIMING(PSD);
+    TEASER_DEBUG_START_TIMING(PSD);
     teaser::getNearestPSD<double>(M, &M_PSD);
+    TEASER_DEBUG_STOP_TIMING(PSD);
+    std::cout << "PSD time: " << TEASER_DEBUG_GET_TIMING(PSD) << std::endl;
 
     // projection to affine space
     temp_W = 2 * M_PSD - M - M_init;
+
+    TEASER_DEBUG_DECLARE_TIMING(DualProjection);
+    TEASER_DEBUG_START_TIMING(DualProjection);
     getOptimalDualProjection(temp_W, theta_prepended, inverse_map, &W_dual);
+    TEASER_DEBUG_STOP_TIMING(DualProjection);
+    std::cout << "Dual Projection time: " << TEASER_DEBUG_GET_TIMING(DualProjection) << std::endl;
     M_affine = M_init + W_dual;
 
     // compute suboptimality gap
+    TEASER_DEBUG_DECLARE_TIMING(Gap);
+    TEASER_DEBUG_START_TIMING(Gap);
     current_suboptim = computeSubOptimalityGap(M_affine, mu, N);
+    TEASER_DEBUG_STOP_TIMING(Gap);
+    std::cout << "Sub Optimality Gap time: " << TEASER_DEBUG_GET_TIMING(Gap) << std::endl;
 
     // termination check and update trajectory
     suboptim_traj.push_back(current_suboptim);
     if (current_suboptim < sub_optimality_) {
+      TEASER_DEBUG_INFO_MSG("Suboptimality condition reached in " << iter
+                                                                  << " iterations. Stopping DRS.");
       exceeded_maxiters = false;
       break;
     }
@@ -133,9 +159,26 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
 }
 
 double teaser::DRSCertifier::computeSubOptimalityGap(const Eigen::MatrixXd& M, double mu, int N) {
-  Eigen::MatrixXd new_M = (M + M.transpose()) / 2;
-  Eigen::VectorXd eig_vals = new_M.eigenvalues().real();
-  double min_eig = eig_vals.minCoeff();
+  Eigen::MatrixXd new_M = -(M + M.transpose()) / 2;
+
+  Spectra::DenseSymMatProd<double> op(new_M);
+  Spectra::SymEigsSolver<double, Spectra::LARGEST_ALGE, Spectra::DenseSymMatProd<double>> eigs(
+     &op, 1, 30);
+
+  eigs.init();
+  int nconv = eigs.compute();
+  // Retrieve results
+  Eigen::VectorXd eig_vals;
+  double min_eig;
+  if (eigs.info() == Spectra::SUCCESSFUL) {
+    eig_vals = eigs.eigenvalues();
+    min_eig = -eig_vals(0);
+  } else {
+    // slower
+    eig_vals = new_M.eigenvalues().real();
+    min_eig = eig_vals.minCoeff();
+  }
+
   return (-min_eig * (N + 1)) / mu;
 }
 
