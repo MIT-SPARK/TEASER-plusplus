@@ -16,7 +16,7 @@ set(TEST_SRCS
         linalg-test.cc)
 set(TEST_LINK_LIBRARIES
         Eigen3::Eigen
-        ${BLAS_LIBRARIES}
+        ${TEASERPP_BLAS_LAPACK_LIBS}
         gtest
         gmock
         teaser_io

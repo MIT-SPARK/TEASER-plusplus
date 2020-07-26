@@ -6,11 +6,11 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/" ${CMAKE_MODULE_PATH})
 
 # Check build types
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     message(STATUS "Setting build type to 'Release' as none was specified.")
     set(CMAKE_BUILD_TYPE "Release" CACHE
             STRING "Choose the type of build." FORCE)
-endif()
+endif ()
 
 # Options
 option(BUILD_TESTS "Build tests" ON)
@@ -19,7 +19,8 @@ option(BUILD_MATLAB_BINDINGS "Build MATLAB bindings" OFF)
 option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
 option(BUILD_DOC "Build documentation" ON)
 option(BUILD_WITH_MARCH_NATIVE "Build with flag march=native" OFF)
-option(ENABLE_DIAGNOSTIC_PRINT "Enable printing of diagnostic messa" ON)
+option(ENABLE_MKL "Try to use Eigen with MKL" ON)
+option(ENABLE_DIAGNOSTIC_PRINT "Enable printing of diagnostic messages" ON)
 
 if (ENABLE_DIAGNOSTIC_PRINT)
     message(STATUS "Enable printing of diagnostic messages.")
@@ -34,10 +35,27 @@ endif ()
 # Find dependencies
 # Eigen3
 find_package(Eigen3 3.2 QUIET REQUIRED NO_MODULE)
-message("Enabling BLAS and/or MKL")
-find_package(BLAS REQUIRED)
-include_directories(${BLAS_INCLUDE_DIRS})
-add_definitions(-DEIGEN_USE_BLAS)
+if (ENABLE_MKL)
+    find_package(MKL)
+    if (MKL_FOUND)
+        message(STATUS "MKL found at: ${MKL_LIBRARIES}")
+        include_directories(${MKL_INCLUDE_DIR})
+        add_definitions(-DEIGEN_USE_MKL_ALL)
+        list(APPEND TEASERPP_BLAS_LAPACK_LIBS ${MKL_LIBRARIES})
+    else ()
+        message(STATUS "MKL not found.")
+    endif ()
+endif ()
+if (NOT MKL_FOUND)
+    find_package(LAPACK)
+    if (LAPACK_FOUND)
+        message(STATUS "LAPACK found at: ${LAPACK_LIBRARIES}")
+        include_directories(${LAPACK_INCLUDE_DIRS})
+        list(APPEND TEASERPP_BLAS_LAPACK_LIBS ${LAPACK_LIBRARIES})
+        add_definitions(-DEIGEN_USE_BLAS -DEIGEN_USE_LAPACKE)
+    endif()
+endif ()
+
 
 if (BUILD_TEASER_FPFH)
     # Boost
@@ -124,5 +142,5 @@ endif ()
 export(TARGETS ${TEASERPP_EXPORTED_TARGETS} FILE teaserpp-exports.cmake)
 
 install(FILES cmake/teaserppConfig.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/teaserpp
-)
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/teaserpp
+        )

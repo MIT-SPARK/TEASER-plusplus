@@ -25,7 +25,7 @@ add_library(teaser_registration SHARED
         )
 target_link_libraries(teaser_registration
         PUBLIC Eigen3::Eigen
-        PRIVATE pmc ${BLAS_LIBRARIES}
+        PRIVATE pmc ${TEASERPP_BLAS_LAPACK_LIBS}
         )
 target_include_directories(teaser_registration PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
