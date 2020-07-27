@@ -361,8 +361,7 @@ TEST(RegistrationTest, OutlierDetection) {
   EXPECT_LE(teaser::test::getAngularError(T.topLeftCorner(3, 3), solution.rotation), 0.2);
   EXPECT_LE((T.topRightCorner(3, 1) - solution.translation).norm(), 0.1);
 
-  auto max_clique = solver.getInlierMaxClique();
-  auto final_inliers = solver.getTranslationInliers();
+  auto final_inliers = solver.getInlierMaxClique();
 
   EXPECT_EQ(expected_inliers.size(), final_inliers.size());
   std::sort(expected_inliers.begin(), expected_inliers.end());

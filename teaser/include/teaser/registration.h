@@ -356,6 +356,17 @@ public:
   };
 
   /**
+   * Enum representing the formulation of the TIM graph after maximum clique filtering.
+   *
+   * CHAIN: formulate TIMs by only calculating the TIMs for consecutive measurements
+   * COMPLETE: formulate a fully connected TIM graph
+   */
+  enum class INLIER_GRAPH_FORMULATION {
+    CHAIN = 0,
+    COMPLETE = 1,
+  };
+
+  /**
    * A struct representing params for initializing the RobustRegistrationSolver
    *
    * Note: the default values needed to be changed accordingly for best performance.
@@ -408,6 +419,11 @@ public:
      * iterations.
      */
     double rotation_cost_threshold = 1e-6;
+
+    /**
+     * Type of TIM graph given to GNC rotation solver
+     */
+    INLIER_GRAPH_FORMULATION rotation_tim_graph = INLIER_GRAPH_FORMULATION::CHAIN;
 
     /**
      * \brief Type of the inlier selection
@@ -616,7 +632,7 @@ public:
   /**
    * Return inliers from rotation estimation
    *
-   * @return a vector of indices of measurements deemed as inliers by rotation estimation
+   * @return a vector of indices of TIMs deemed as inliers by rotation estimation
    */
   inline std::vector<int> getRotationInliers() { return rotation_inliers_; }
 
@@ -748,14 +764,20 @@ private:
   Eigen::Matrix<bool, 1, Eigen::Dynamic> translation_inliers_mask_;
 
   // TIMs
+  // TIMs used for scale estimation/pruning
   Eigen::Matrix<double, 3, Eigen::Dynamic> src_tims_;
   Eigen::Matrix<double, 3, Eigen::Dynamic> dst_tims_;
+  // TIMs used for rotation estimation
   Eigen::Matrix<double, 3, Eigen::Dynamic> pruned_src_tims_;
   Eigen::Matrix<double, 3, Eigen::Dynamic> pruned_dst_tims_;
 
   // TIM maps
+  // for scale estimation
   Eigen::Matrix<int, 2, Eigen::Dynamic> src_tims_map_;
   Eigen::Matrix<int, 2, Eigen::Dynamic> dst_tims_map_;
+  // for rotation estimation
+  Eigen::Matrix<int, 2, Eigen::Dynamic> src_tims_map_rotation_;
+  Eigen::Matrix<int, 2, Eigen::Dynamic> dst_tims_map_rotation_;
 
   // Max clique vector
   std::vector<int> max_clique_;
