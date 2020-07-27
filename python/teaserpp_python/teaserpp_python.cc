@@ -80,6 +80,12 @@ PYBIND11_MODULE(teaserpp_python, m) {
       .value("GNC_TLS", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS)
       .value("FGR", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::FGR);
 
+  // Python bound for teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION
+  py::enum_<teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION>(
+      solver, "INLIER_GRAPH_FORMULATION")
+      .value("CHAIN", teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION::CHAIN)
+      .value("COMPLETE", teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION::COMPLETE);
+
   // Python bound for teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE
   py::enum_<teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE>(solver,
                                                                      "INLIER_SELECTION_MODE")
@@ -101,6 +107,8 @@ PYBIND11_MODULE(teaserpp_python, m) {
                      &teaser::RobustRegistrationSolver::Params::rotation_gnc_factor)
       .def_readwrite("rotation_max_iterations",
                      &teaser::RobustRegistrationSolver::Params::rotation_max_iterations)
+      .def_readwrite("rotation_tim_graph",
+                     &teaser::RobustRegistrationSolver::Params::rotation_tim_graph)
       .def_readwrite("inlier_selection_mode",
                      &teaser::RobustRegistrationSolver::Params::inlier_selection_mode)
       .def_readwrite("kcore_heuristic_threshold",

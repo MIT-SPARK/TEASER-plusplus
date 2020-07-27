@@ -689,13 +689,13 @@ public:
   inline Eigen::Matrix<double, 3, Eigen::Dynamic> getDstTIMs() { return dst_tims_; }
 
   /**
-   * Get TIMs built from source point cloud.
+   * Get src TIMs built after max clique pruning.
    * @return
    */
   inline Eigen::Matrix<double, 3, Eigen::Dynamic> getMaxCliqueSrcTIMs() { return pruned_src_tims_; }
 
   /**
-   * Get TIMs built from target point cloud.
+   * Get dst TIMs built after max clique pruning.
    * @return
    */
   inline Eigen::Matrix<double, 3, Eigen::Dynamic> getMaxCliqueDstTIMs() { return pruned_dst_tims_; }
