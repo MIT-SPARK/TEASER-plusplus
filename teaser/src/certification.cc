@@ -188,7 +188,8 @@ double teaser::DRSCertifier::computeSubOptimalityGap(const Eigen::MatrixXd& M, d
     min_eig = eig_vals(0);
   } else {
     // slower
-    eig_vals = new_M.eigenvalues().real();
+    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigensolver(new_M);
+    eig_vals = eigensolver.eigenvalues();
     min_eig = eig_vals.minCoeff();
   }
 
