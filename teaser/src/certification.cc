@@ -102,6 +102,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
 
   // current suboptimality gap
   double current_suboptim = std::numeric_limits<double>::infinity();
+  double best_suboptim = std::numeric_limits<double>::infinity();
 
   // preallocate some matrices
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> M_PSD;
@@ -112,7 +113,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
   Eigen::MatrixXd M_affine(Npm, Npm);
 
   TEASER_DEBUG_INFO_MSG("Starting Douglas-Rachford Splitting.");
-  for (size_t iter = 0; iter < max_iterations_; ++iter) {
+  for (size_t iter = 0; iter < params_.max_iterations; ++iter) {
 
     // to nearest PSD
     TEASER_DEBUG_DECLARE_TIMING(PSD);
@@ -140,7 +141,13 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
 
     // termination check and update trajectory
     suboptim_traj.push_back(current_suboptim);
-    if (current_suboptim < sub_optimality_) {
+
+    // update best optimality
+    if (current_suboptim < best_suboptim) {
+      best_suboptim = current_suboptim;
+    }
+
+    if (current_suboptim < params_.sub_optimality) {
       TEASER_DEBUG_INFO_MSG("Suboptimality condition reached in " << iter
                                                                   << " iterations. Stopping DRS.");
       exceeded_maxiters = false;
@@ -148,12 +155,13 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
     }
 
     // update M
-    M += gamma_ * (M_affine - M_PSD);
+    M += params_.gamma_tau * (M_affine - M_PSD);
   }
 
   // prepare results
   CertificationResult cert_result;
-  cert_result.best_suboptimality = current_suboptim;
+  cert_result.is_optimal = best_suboptim < params_.sub_optimality;
+  cert_result.best_suboptimality = best_suboptim;
   cert_result.suboptimality_traj = suboptim_traj;
   return cert_result;
 }
@@ -187,7 +195,7 @@ void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 3, Eigen::Dynami
                                     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>* Q) {
   int N = v1.cols();
   int Npm = 4 + 4 * N;
-  double noise_bound_scaled = cbar2_ * std::pow(noise_bound_, 2);
+  double noise_bound_scaled = params_.cbar2 * std::pow(params_.noise_bound, 2);
 
   // coefficient matrix that maps vec(qq\tran) to vec(R)
   Eigen::Matrix<double, 9, 16> P(9, 16);
@@ -411,7 +419,7 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
   int K = theta.cols();
   int Npm = 4 * K + 4;
 
-  double noise_bound_scaled = cbar2_ * std::pow(noise_bound_, 2);
+  double noise_bound_scaled = params_.cbar2 * std::pow(params_.noise_bound, 2);
 
   // prepare the lambda sparse matrix output
   lambda_guess->resize(Npm, Npm);

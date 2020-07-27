@@ -15,6 +15,7 @@
 namespace teaser {
 
 struct CertificationResult {
+  bool is_optimal = false;
   double best_suboptimality = -1;
   std::vector<double> suboptimality_traj;
 };
@@ -49,14 +50,55 @@ public:
  */
 class DRSCertifier : public AbstractRotationCertifier {
 public:
+  /**
+   * Parameter struct for DRSCertifier
+   */
+  struct Params {
+    /**
+     * Noise bound for the vectors used for certification
+     */
+    double noise_bound = 0.01;
+
+    /**
+     * Square of the ratio between acceptable noise and noise bound. Usually set to 1.
+     */
+    double cbar2 = 1;
+
+    /**
+     * Suboptimality gap
+     *
+     * This is not a percentage. Multiply by 100 to get a percentage.
+     */
+    double sub_optimality = 1e-3;
+
+    /**
+     * Maximum iterations allowed
+     */
+    double max_iterations = 2e2;
+
+    /**
+     * Gamma value (refer to [1] for details)
+     */
+    double gamma_tau = 1.999999;
+  };
+
   DRSCertifier() = delete;
+
+  /**
+   * Constructor for DRSCertifier that takes in a parameter struct
+   * @param params [in] struct holding all parameters
+   */
+  DRSCertifier(const Params& params) : params_(params) {};
 
   /**
    * Constructor for DRSCertifier
    * @param noise_bound [in] bound on the noise
    * @param cbar2 [in] maximal allowed residual^2 to noise bound^2 ratio, usually set to 1
    */
-  DRSCertifier(double noise_bound, double cbar2) : noise_bound_(noise_bound), cbar2_(cbar2){};
+  DRSCertifier(double noise_bound, double cbar2) {
+    params_.noise_bound = noise_bound;
+    params_.cbar2 = cbar2;
+  };
 
   /**
    * Main certification function
@@ -172,32 +214,8 @@ private:
   void getBlockRowSum(const Eigen::MatrixXd& A, const int& row,
                       const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta,
                       Eigen::Vector4d* output);
-  /**
-   * Suboptimality gap
-   *
-   * This is not a percentage. Multiply by 100 to get a percentage.
-   */
-  double sub_optimality_ = 1e-3;
 
-  /**
-   * Maximum iterations allowed
-   */
-  double max_iterations_ = 2e2;
-
-  /**
-   * Gamma value (refer to [1] for details)
-   */
-  double gamma_ = 1.999999;
-
-  /**
-   * Bounds on the noise for the measurements
-   */
-  double noise_bound_;
-
-  /**
-   * Maximal allowed residual^2 to noise bound^2 ratio, usually set to 1
-   */
-  double cbar2_;
+  Params params_;
 };
 
 } // namespace teaser
