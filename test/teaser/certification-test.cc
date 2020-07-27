@@ -6,6 +6,7 @@
  * See LICENSE for the license information
  */
 
+#include <array>
 #include <iostream>
 #include <fstream>
 #include <random>
@@ -14,6 +15,7 @@
 #include <chrono>
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
@@ -236,6 +238,7 @@ protected:
       }
       data.expected_outputs.certification_result.best_suboptimality =
           suboptimality_traj_mat.minCoeff();
+      data.expected_outputs.certification_result.is_optimal = true;
 
       small_instances_params_[c] = data;
     }
@@ -304,6 +307,7 @@ protected:
       }
       data.expected_outputs.certification_result.best_suboptimality =
           suboptimality_traj_mat.minCoeff();
+      data.expected_outputs.certification_result.is_optimal = true;
 
       large_instances_params_[c] = data;
     }
@@ -518,4 +522,68 @@ TEST_F(DRSCertifierTest, LargeInstance) {
   };
 
   testThroughCases(test_info_->name(), test_run, large_instances_params_);
+}
+
+TEST_F(DRSCertifierTest, RandomLargeInstsances) {
+  // generate 3 random large problem instances
+  std::map<std::string, CaseData> random_instances_params;
+  std::array<double, 3> problem_sizes = {500, 600, 700};
+
+  for (size_t i = 0; i < problem_sizes.size(); ++i) {
+
+    int N = problem_sizes.at(i);
+    std::string case_name = "Random-" + std::to_string(N);
+
+    CaseData data;
+
+    // Inputs:
+    // scalar parameters
+    data.inputs.cbar2 = 1;
+    data.inputs.noise_bound = 0.01;
+
+    // generate random vectors and transformations
+    data.inputs.v1 = Eigen::Matrix<double, 3, Eigen::Dynamic>::Random(3, N);
+    data.inputs.q_est = Eigen::Quaternion<double>::UnitRandom();
+    data.inputs.R_est = data.inputs.q_est.toRotationMatrix();
+    data.inputs.theta_est = Eigen::Matrix<double, 1, Eigen::Dynamic>::Ones(1, N);
+
+    // calculate vectors after transformation
+    // noise bounded by 0.01
+    Eigen::Matrix<double, 3, Eigen::Dynamic> noise =
+        (Eigen::Matrix<double, 3, Eigen::Dynamic>::Random(3, N).array() + 1) / 200.0;
+    data.inputs.v2 = data.inputs.R_est * data.inputs.v1;
+
+    // outliers
+    double outlier_ratio = 0.1;
+    int outlier_start_idx = (int)(N * (1 - outlier_ratio));
+    for (size_t i = outlier_start_idx; i < N; ++i) {
+      data.inputs.v2.col(i) = Eigen::Matrix<double, 3, Eigen::Dynamic>::Random(3, 1) * 5 +
+                              Eigen::Matrix<double, 3, Eigen::Dynamic>::Ones(3, 1) * 5;
+      data.inputs.theta_est(1, i) = -1;
+    }
+
+    // expected outputs
+    data.expected_outputs.certification_result.is_optimal = true;
+    data.expected_outputs.certification_result.best_suboptimality = 1e-5; // a very small value
+
+    random_instances_params[case_name] = data;
+  }
+
+  auto test_run = [](CaseData case_data) {
+    // construct the certifier
+    teaser::DRSCertifier::Params params;
+    params.noise_bound = case_data.inputs.noise_bound;
+    params.cbar2 = case_data.inputs.cbar2;
+    params.gamma_tau = 1;
+    teaser::DRSCertifier certifier(params);
+
+    auto actual_output = certifier.certify(case_data.inputs.R_est, case_data.inputs.v1,
+                                           case_data.inputs.v2, case_data.inputs.theta_est);
+    const auto& expected_output = case_data.expected_outputs.certification_result;
+
+    ASSERT_TRUE(expected_output.is_optimal == actual_output.is_optimal);
+    ASSERT_TRUE(expected_output.best_suboptimality >= actual_output.best_suboptimality);
+  };
+
+  testThroughCases(test_info_->name(), test_run, random_instances_params);
 }

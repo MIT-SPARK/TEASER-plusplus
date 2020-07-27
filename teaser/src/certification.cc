@@ -49,9 +49,13 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
 
   // get the inverse map
   TEASER_DEBUG_INFO_MSG("Starting linear inverse map calculation.");
+  TEASER_DEBUG_DECLARE_TIMING(LProj);
+  TEASER_DEBUG_START_TIMING(LProj);
   Eigen::SparseMatrix<double> inverse_map;
   getLinearProjection(theta_prepended, &inverse_map);
+  TEASER_DEBUG_STOP_TIMING(LProj);
   TEASER_DEBUG_INFO_MSG("Obtained linear inverse map.");
+  std::cout << "Linear projection time: " << TEASER_DEBUG_GET_TIMING(LProj) << std::endl;
 
   // recall data matrix from QUASAR
   Eigen::MatrixXd Q_cost(Npm, Npm);
@@ -105,9 +109,9 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
   double best_suboptim = std::numeric_limits<double>::infinity();
 
   // preallocate some matrices
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> M_PSD;
+  Eigen::MatrixXd M_PSD;
   // TODO: Make M a sparse matrix
-  Eigen::MatrixXd M = M_init;
+  Eigen::MatrixXd M = M_init.toDense();
   Eigen::MatrixXd temp_W(M.rows(), M.cols());
   Eigen::MatrixXd W_dual(Npm, Npm);
   Eigen::MatrixXd M_affine(Npm, Npm);
@@ -138,6 +142,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
     current_suboptim = computeSubOptimalityGap(M_affine, mu, N);
     TEASER_DEBUG_STOP_TIMING(Gap);
     std::cout << "Sub Optimality Gap time: " << TEASER_DEBUG_GET_TIMING(Gap) << std::endl;
+    std::cout << "Current sub-optimality gap: " << current_suboptim << std::endl;
 
     // termination check and update trajectory
     suboptim_traj.push_back(current_suboptim);
@@ -148,7 +153,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
     }
 
     if (current_suboptim < params_.sub_optimality) {
-      TEASER_DEBUG_INFO_MSG("Suboptimality condition reached in " << iter
+      TEASER_DEBUG_INFO_MSG("Suboptimality condition reached in " << iter + 1
                                                                   << " iterations. Stopping DRS.");
       exceeded_maxiters = false;
       break;
@@ -167,11 +172,11 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
 }
 
 double teaser::DRSCertifier::computeSubOptimalityGap(const Eigen::MatrixXd& M, double mu, int N) {
-  Eigen::MatrixXd new_M = -(M + M.transpose()) / 2;
+  Eigen::MatrixXd new_M = (M + M.transpose()) / 2;
 
   Spectra::DenseSymMatProd<double> op(new_M);
-  Spectra::SymEigsSolver<double, Spectra::LARGEST_ALGE, Spectra::DenseSymMatProd<double>> eigs(
-     &op, 1, 30);
+  Spectra::SymEigsSolver<double, Spectra::SMALLEST_ALGE, Spectra::DenseSymMatProd<double>> eigs(
+      &op, 1, 30);
 
   eigs.init();
   int nconv = eigs.compute();
@@ -180,13 +185,17 @@ double teaser::DRSCertifier::computeSubOptimalityGap(const Eigen::MatrixXd& M, d
   double min_eig;
   if (eigs.info() == Spectra::SUCCESSFUL) {
     eig_vals = eigs.eigenvalues();
-    min_eig = -eig_vals(0);
+    min_eig = eig_vals(0);
   } else {
     // slower
     eig_vals = new_M.eigenvalues().real();
     min_eig = eig_vals.minCoeff();
   }
 
+  if (min_eig > 0) {
+    // already optimal
+    return 0;
+  }
   return (-min_eig * (N + 1)) / mu;
 }
 
@@ -528,11 +537,10 @@ void teaser::DRSCertifier::getLinearProjection(
   // creating the inverse map sparse matrix and reserve memory
   int nrNZ_per_row_off_diag = 2 * (N0 - 1);
   int nrNZ_off_diag = nrNZ_per_row_off_diag * nr_vals;
-  A_inv->resize(nr_vals, nr_vals);
 
   // for holding the non zero entries
   std::vector<Eigen::Triplet<double>> sparse_triplets;
-  sparse_triplets.reserve(nrNZ_off_diag + nr_vals * (nr_vals - 1));
+  sparse_triplets.reserve(nrNZ_off_diag + nr_vals);
 
   // for creating columns in inv_A
   for (size_t i = 0; i < N - 1; ++i) {
@@ -578,6 +586,7 @@ void teaser::DRSCertifier::getLinearProjection(
   for (size_t i = 0; i < nr_vals; ++i) {
     sparse_triplets.emplace_back(i, i, x);
   }
+  A_inv->resize(nr_vals, nr_vals);
   A_inv->setFromTriplets(sparse_triplets.begin(), sparse_triplets.end());
 }
 
