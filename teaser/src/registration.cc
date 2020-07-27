@@ -633,6 +633,8 @@ void teaser::GNCTLSRotationSolver::solveForRotation(
   if (noise_bound_sq < 1e-16) {
     noise_bound_sq = 1e-2;
   }
+  TEASER_DEBUG_INFO_MSG("GNC rotation estimation noise bound:" << params_.noise_bound);
+  TEASER_DEBUG_INFO_MSG("GNC rotation estimation noise bound squared:" << noise_bound_sq);
 
   Eigen::Matrix<double, 3, Eigen::Dynamic> diffs(3, match_size);
   Eigen::Matrix<double, 1, Eigen::Dynamic> weights(1, match_size);
