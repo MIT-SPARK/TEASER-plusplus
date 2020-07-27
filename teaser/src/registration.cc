@@ -696,6 +696,12 @@ void teaser::GNCTLSRotationSolver::solveForRotation(
   }
 
   if (inliers) {
-    *inliers = weights.cast<bool>();
+    for (size_t i = 0; i < weights.cols(); ++i) {
+      if (weights(0,i) >= 0.5) {
+        (*inliers)(0,i) = true;
+      } else {
+        (*inliers)(0,i) = false;
+      }
+    }
   }
 }
