@@ -69,6 +69,8 @@ PYBIND11_MODULE(teaserpp_python, m) {
       .def("getInlierGraph", &teaser::RobustRegistrationSolver::getInlierGraph)
       .def("getSrcTIMsMap", &teaser::RobustRegistrationSolver::getSrcTIMsMap)
       .def("getDstTIMsMap", &teaser::RobustRegistrationSolver::getDstTIMsMap)
+      .def("getSrcTIMsMapForRotation", &teaser::RobustRegistrationSolver::getSrcTIMsMapForRotation)
+      .def("getDstTIMsMapForRotation", &teaser::RobustRegistrationSolver::getDstTIMsMapForRotation)
       .def("getMaxCliqueSrcTIMs", &teaser::RobustRegistrationSolver::getMaxCliqueSrcTIMs)
       .def("getMaxCliqueDstTIMs", &teaser::RobustRegistrationSolver::getMaxCliqueDstTIMs)
       .def("getSrcTIMs", &teaser::RobustRegistrationSolver::getSrcTIMs)
