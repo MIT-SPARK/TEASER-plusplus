@@ -11,6 +11,7 @@
 #include <iostream>
 
 #include <Eigen/Core>
+#include <Eigen/SparseCore>
 #include <Eigen/Eigenvalues>
 
 namespace teaser {
@@ -82,8 +83,7 @@ Eigen::Matrix<NumT, Eigen::Dynamic, 1> vectorKron(const Eigen::Matrix<NumT, N, 1
  */
 template <typename NumT>
 void getNearestPSD(const Eigen::Matrix<NumT, Eigen::Dynamic, Eigen::Dynamic>& A,
-                   Eigen::Matrix<NumT, Eigen::Dynamic, Eigen::Dynamic>* nearestPSD,
-                   double eig_threshold = 1e-10) {
+                   Eigen::Matrix<NumT, Eigen::Dynamic, Eigen::Dynamic>* nearestPSD) {
   assert(A.rows() == A.cols());
   nearestPSD->resize(A.rows(), A.cols());
 
@@ -92,9 +92,9 @@ void getNearestPSD(const Eigen::Matrix<NumT, Eigen::Dynamic, Eigen::Dynamic>& A,
 
   // eigendecomposition of B
   Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eig_B(B);
-  Eigen::VectorXd De = eig_B.eigenvalues().real();
+  Eigen::VectorXd De = eig_B.eigenvalues();
   Eigen::MatrixXd De_positive = (De.array() < 0).select(0, De).asDiagonal();
-  Eigen::MatrixXd Ve = eig_B.eigenvectors().real();
+  Eigen::MatrixXd Ve = eig_B.eigenvectors();
   *nearestPSD = Ve * De_positive * Ve.transpose();
 }
 
