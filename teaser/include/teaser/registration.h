@@ -713,6 +713,18 @@ public:
   inline Eigen::Matrix<int, 2, Eigen::Dynamic> getDstTIMsMap() { return dst_tims_map_; }
 
   /**
+   * Get the index map of the TIMs used in rotation estimation.
+   * @return
+   */
+  inline Eigen::Matrix<int, 2, Eigen::Dynamic> getSrcTIMsMapForRotation() { return src_tims_map_rotation_; }
+
+  /**
+   * Get the index map of the TIMs used in rotation estimation.
+   * @return
+   */
+  inline Eigen::Matrix<int, 2, Eigen::Dynamic> getDstTIMsMapForRotation() { return dst_tims_map_rotation_; }
+
+  /**
    * Reset the solver using the provided params
    * @param params a Params struct
    */

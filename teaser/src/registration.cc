@@ -508,6 +508,8 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
     TEASER_DEBUG_INFO_MSG("Using chain graph for GNC rotation.");
     pruned_src_tims_.resize(3, max_clique_.size());
     pruned_dst_tims_.resize(3, max_clique_.size());
+    src_tims_map_rotation_.resize(2, max_clique_.size());
+    dst_tims_map_rotation_.resize(2, max_clique_.size());
     for (size_t i = 0; i < max_clique_.size(); ++i) {
       const auto& root = max_clique_[i];
       int leaf;
@@ -518,6 +520,12 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
       }
       pruned_src_tims_.col(i) = src.col(leaf) - src.col(root);
       pruned_dst_tims_.col(i) = dst.col(leaf) - dst.col(root);
+
+      // populate the TIMs map
+      dst_tims_map_rotation_(0,i) = leaf;
+      dst_tims_map_rotation_(1,i) = root;
+      src_tims_map_rotation_(0,i) = leaf;
+      src_tims_map_rotation_(1,i) = root;
     }
   } else {
     // complete graph
@@ -549,7 +557,7 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
   solveForRotation(pruned_src_tims_, pruned_dst_tims_);
   TEASER_DEBUG_INFO_MSG("Rotation estimation complete.");
 
-  // Save indices of inlier TIMs from GNC rotaiton estimation
+  // Save indices of inlier TIMs from GNC rotation estimation
   for (size_t i = 0; i < rotation_inliers_mask_.cols(); ++i) {
     if (i) {
       rotation_inliers_.emplace_back(i);
