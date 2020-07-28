@@ -177,7 +177,7 @@ double teaser::DRSCertifier::computeSubOptimalityGap(const Eigen::MatrixXd& M, d
   bool successful = false;
   Eigen::VectorXd eig_vals;
   double min_eig;
-  if (params_.spectra_decomposition_solver == EIG_SOLVER_TYPE::EIGEN) {
+  if (params_.eig_decomposition_solver == EIG_SOLVER_TYPE::EIGEN) {
     // Eigen
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigensolver(new_M);
     if (eigensolver.info() == Eigen::Success) {
