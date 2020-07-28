@@ -38,8 +38,7 @@ protected:
    * Note that some may be intermediate outputs from other functions.
    */
   struct Inputs {
-    double noise_bound;
-    double cbar2;
+    teaser::DRSCertifier::Params params;
     Eigen::Matrix<double, 3, Eigen::Dynamic> v1;
     Eigen::Matrix<double, 3, Eigen::Dynamic> v2;
     Eigen::Matrix3d R_est;
@@ -75,7 +74,7 @@ protected:
    * @param cbar2
    * @param noise_bound
    */
-  void loadScalarParameters(std::string file_path, double* cbar2, double* noise_bound) {
+  void loadScalarParameters(std::string file_path, teaser::DRSCertifier::Params* params) {
     // Open the file
     std::ifstream file;
     file.open(file_path);
@@ -92,9 +91,11 @@ protected:
       std::string value = line.substr(delim_idx + 2, line.length());
 
       if (param == "cbar2") {
-        *cbar2 = std::stod(value);
+        params->cbar2 = std::stod(value);
       } else if (param == "noise_bound") {
-        *noise_bound = std::stod(value);
+        params->noise_bound = std::stod(value);
+      } else if (param == "max_iterations") {
+        params->max_iterations = std::stod(value);
       }
     }
   }
@@ -139,8 +140,7 @@ protected:
 
       // Inputs:
       // scalar parameters
-      loadScalarParameters(case_dir + "/parameters.txt", &(data.inputs.cbar2),
-                           &(data.inputs.noise_bound));
+      loadScalarParameters(case_dir + "/parameters.txt", &(data.inputs.params));
 
       // v1: 3-by-N matrix
       // These are the TIMs
@@ -259,8 +259,7 @@ protected:
 
       // Inputs:
       // scalar parameters
-      loadScalarParameters(case_dir + "/parameters.txt", &(data.inputs.cbar2),
-                           &(data.inputs.noise_bound));
+      loadScalarParameters(case_dir + "/parameters.txt", &(data.inputs.params));
 
       // v1: 3-by-N matrix
       // These are the TIMs
@@ -357,7 +356,7 @@ TEST_F(DRSCertifierTest, GetOmega1) {
     const auto& expected_output = case_data.expected_outputs.omega;
 
     // construct the certifier
-    teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
+    teaser::DRSCertifier certifier(case_data.inputs.params);
 
     // perform the computation
     Eigen::Matrix4d actual_output = certifier.getOmega1(case_data.inputs.q_est);
@@ -374,7 +373,7 @@ TEST_F(DRSCertifierTest, GetBlockDiagOmega) {
     const auto& expected_output = case_data.expected_outputs.block_diag_omega;
 
     // construct the certifier
-    teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
+    teaser::DRSCertifier certifier(case_data.inputs.params);
 
     // perform the computation
     Eigen::MatrixXd actual_output;
@@ -392,7 +391,7 @@ TEST_F(DRSCertifierTest, GetQCost) {
     const auto& expected_output = case_data.expected_outputs.Q_cost;
 
     // construct the certifier
-    teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
+    teaser::DRSCertifier certifier(case_data.inputs.params);
 
     // perform the computation
     Eigen::MatrixXd actual_output;
@@ -409,7 +408,7 @@ TEST_F(DRSCertifierTest, GetLambdaGuess) {
     const auto& expected_output = case_data.expected_outputs.lambda_guess;
 
     // construct the certifier
-    teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
+    teaser::DRSCertifier certifier(case_data.inputs.params);
 
     Eigen::SparseMatrix<double> actual_output;
     certifier.getLambdaGuess(case_data.inputs.R_est, case_data.inputs.theta_est,
@@ -427,7 +426,7 @@ TEST_F(DRSCertifierTest, GetLinearProjection) {
     const auto& expected_output = case_data.expected_outputs.A_inv;
 
     // construct the certifier
-    teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
+    teaser::DRSCertifier certifier(case_data.inputs.params);
 
     Eigen::Matrix<double, 1, Eigen::Dynamic> theta_prepended(1,
                                                              case_data.inputs.theta_est.cols() + 1);
@@ -459,7 +458,7 @@ TEST_F(DRSCertifierTest, GetOptimalDualProjection) {
     Eigen::SparseMatrix<double> A_inv_sparse = case_data.expected_outputs.A_inv.sparseView();
 
     // construct the certifier
-    teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
+    teaser::DRSCertifier certifier(case_data.inputs.params);
 
     Eigen::MatrixXd actual_output;
     certifier.getOptimalDualProjection(case_data.inputs.W, theta_prepended, A_inv_sparse,
@@ -484,7 +483,7 @@ TEST_F(DRSCertifierTest, GetOptimalDualProjection) {
 TEST_F(DRSCertifierTest, ComputeSubOptimalityGap) {
   auto test_run = [](CaseData case_data) {
     // construct the certifier
-    teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
+    teaser::DRSCertifier certifier(case_data.inputs.params);
 
     double actual_output = certifier.computeSubOptimalityGap(
         case_data.inputs.M_affine, case_data.inputs.mu, case_data.inputs.v1.cols());
@@ -499,7 +498,7 @@ TEST_F(DRSCertifierTest, ComputeSubOptimalityGap) {
 TEST_F(DRSCertifierTest, Certify) {
   auto test_run = [&](CaseData case_data) {
     // construct the certifier
-    teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
+    teaser::DRSCertifier certifier(case_data.inputs.params);
 
     auto actual_output = certifier.certify(case_data.inputs.R_est, case_data.inputs.v1,
                                            case_data.inputs.v2, case_data.inputs.theta_est);
@@ -513,7 +512,7 @@ TEST_F(DRSCertifierTest, Certify) {
 TEST_F(DRSCertifierTest, LargeInstance) {
   auto test_run = [&](CaseData case_data) {
     // construct the certifier
-    teaser::DRSCertifier certifier(case_data.inputs.noise_bound, case_data.inputs.cbar2);
+    teaser::DRSCertifier certifier(case_data.inputs.params);
 
     auto actual_output = certifier.certify(case_data.inputs.R_est, case_data.inputs.v1,
                                            case_data.inputs.v2, case_data.inputs.theta_est);
@@ -527,7 +526,7 @@ TEST_F(DRSCertifierTest, LargeInstance) {
 TEST_F(DRSCertifierTest, RandomLargeInstsances) {
   // generate 3 random large problem instances
   std::map<std::string, CaseData> random_instances_params;
-  std::array<double, 3> problem_sizes = {500, 600, 700};
+  std::array<double, 3> problem_sizes = {200, 300, 400};
 
   for (size_t i = 0; i < problem_sizes.size(); ++i) {
 
@@ -538,8 +537,8 @@ TEST_F(DRSCertifierTest, RandomLargeInstsances) {
 
     // Inputs:
     // scalar parameters
-    data.inputs.cbar2 = 1;
-    data.inputs.noise_bound = 0.01;
+    data.inputs.params.cbar2 = 1;
+    data.inputs.params.noise_bound = 0.01;
 
     // generate random vectors and transformations
     data.inputs.v1 = Eigen::Matrix<double, 3, Eigen::Dynamic>::Random(3, N);
@@ -571,11 +570,7 @@ TEST_F(DRSCertifierTest, RandomLargeInstsances) {
 
   auto test_run = [](CaseData case_data) {
     // construct the certifier
-    teaser::DRSCertifier::Params params;
-    params.noise_bound = case_data.inputs.noise_bound;
-    params.cbar2 = case_data.inputs.cbar2;
-    params.gamma_tau = 1;
-    teaser::DRSCertifier certifier(params);
+    teaser::DRSCertifier certifier(case_data.inputs.params);
 
     auto actual_output = certifier.certify(case_data.inputs.R_est, case_data.inputs.v1,
                                            case_data.inputs.v2, case_data.inputs.theta_est);
