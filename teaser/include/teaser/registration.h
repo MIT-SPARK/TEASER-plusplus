@@ -609,9 +609,9 @@ public:
    * Return a boolean Eigen row vector indicating whether specific measurements are inliers
    * according to the rotation solver.
    *
-   * @return a 1-by-(size of max clique) boolean Eigen matrix. It is equivalent to a binary mask on
-   * the inlier max clique, with true representing that the measurement is an inlier after
-   * rotation estimation.
+   * @return a 1-by-(size of TIMs used in rotation estimation) boolean Eigen matrix. It is
+   * equivalent to a binary mask on the TIMs used in rotation estimation, with true representing
+   * that the measurement is an inlier after rotation estimation.
    */
   inline Eigen::Matrix<bool, 1, Eigen::Dynamic> getRotationInliersMask() {
     return rotation_inliers_mask_;
@@ -619,6 +619,7 @@ public:
 
   /**
    * Return the index map for translation inliers (equivalent to max clique).
+   * /TODO: This is obsolete now. Remove or update
    *
    * @return a 1-by-(size of max clique) Eigen matrix. Entries represent the indices of the original
    * measurements.
@@ -716,13 +717,17 @@ public:
    * Get the index map of the TIMs used in rotation estimation.
    * @return
    */
-  inline Eigen::Matrix<int, 2, Eigen::Dynamic> getSrcTIMsMapForRotation() { return src_tims_map_rotation_; }
+  inline Eigen::Matrix<int, 2, Eigen::Dynamic> getSrcTIMsMapForRotation() {
+    return src_tims_map_rotation_;
+  }
 
   /**
    * Get the index map of the TIMs used in rotation estimation.
    * @return
    */
-  inline Eigen::Matrix<int, 2, Eigen::Dynamic> getDstTIMsMapForRotation() { return dst_tims_map_rotation_; }
+  inline Eigen::Matrix<int, 2, Eigen::Dynamic> getDstTIMsMapForRotation() {
+    return dst_tims_map_rotation_;
+  }
 
   /**
    * Reset the solver using the provided params
