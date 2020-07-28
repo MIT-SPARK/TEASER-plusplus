@@ -50,6 +50,18 @@ public:
  */
 class DRSCertifier : public AbstractRotationCertifier {
 public:
+
+  /**
+   * Solver for eigen problem solver / spectra decomposition.
+   *
+   * @brief For most cases, the default solvers in Eigen should be used.
+   * For extremely large matrices, it may make sense to use Spectra instead.
+   */
+  enum class EIG_SOLVER_TYPE {
+    EIGEN = 0, ///< Use solvers in the Eigen library
+    SPECTRA = 1, ///< Use solvers in the Spectra library
+  };
+
   /**
    * Parameter struct for DRSCertifier
    */
@@ -80,6 +92,11 @@ public:
      * Gamma value (refer to [1] for details)
      */
     double gamma_tau = 1.999999;
+
+    /**
+     * Solver for spectra decomposition
+     */
+    EIG_SOLVER_TYPE spectra_decomposition_solver = EIG_SOLVER_TYPE::EIGEN;
   };
 
   DRSCertifier() = delete;

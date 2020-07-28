@@ -55,7 +55,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
   getLinearProjection(theta_prepended, &inverse_map);
   TEASER_DEBUG_STOP_TIMING(LProj);
   TEASER_DEBUG_INFO_MSG("Obtained linear inverse map.");
-  std::cout << "Linear projection time: " << TEASER_DEBUG_GET_TIMING(LProj) << std::endl;
+  TEASER_DEBUG_INFO_MSG("Linear projection time: " << TEASER_DEBUG_GET_TIMING(LProj));
 
   // recall data matrix from QUASAR
   Eigen::MatrixXd Q_cost(Npm, Npm);
@@ -124,7 +124,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
     TEASER_DEBUG_START_TIMING(PSD);
     teaser::getNearestPSD<double>(M, &M_PSD);
     TEASER_DEBUG_STOP_TIMING(PSD);
-    std::cout << "PSD time: " << TEASER_DEBUG_GET_TIMING(PSD) << std::endl;
+    TEASER_DEBUG_INFO_MSG("PSD time: " << TEASER_DEBUG_GET_TIMING(PSD));
 
     // projection to affine space
     temp_W = 2 * M_PSD - M - M_init;
@@ -133,7 +133,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
     TEASER_DEBUG_START_TIMING(DualProjection);
     getOptimalDualProjection(temp_W, theta_prepended, inverse_map, &W_dual);
     TEASER_DEBUG_STOP_TIMING(DualProjection);
-    std::cout << "Dual Projection time: " << TEASER_DEBUG_GET_TIMING(DualProjection) << std::endl;
+    TEASER_DEBUG_INFO_MSG("Dual Projection time: " << TEASER_DEBUG_GET_TIMING(DualProjection));
     M_affine = M_init + W_dual;
 
     // compute suboptimality gap
@@ -141,8 +141,8 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
     TEASER_DEBUG_START_TIMING(Gap);
     current_suboptim = computeSubOptimalityGap(M_affine, mu, N);
     TEASER_DEBUG_STOP_TIMING(Gap);
-    std::cout << "Sub Optimality Gap time: " << TEASER_DEBUG_GET_TIMING(Gap) << std::endl;
-    std::cout << "Current sub-optimality gap: " << current_suboptim << std::endl;
+    TEASER_DEBUG_INFO_MSG("Sub Optimality Gap time: " << TEASER_DEBUG_GET_TIMING(Gap));
+    TEASER_DEBUG_INFO_MSG("Current sub-optimality gap: " << current_suboptim);
 
     // termination check and update trajectory
     suboptim_traj.push_back(current_suboptim);
@@ -174,23 +174,35 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
 double teaser::DRSCertifier::computeSubOptimalityGap(const Eigen::MatrixXd& M, double mu, int N) {
   Eigen::MatrixXd new_M = (M + M.transpose()) / 2;
 
-  Spectra::DenseSymMatProd<double> op(new_M);
-  Spectra::SymEigsSolver<double, Spectra::SMALLEST_ALGE, Spectra::DenseSymMatProd<double>> eigs(
-      &op, 1, 30);
-
-  eigs.init();
-  int nconv = eigs.compute();
-  // Retrieve results
+  bool successful = false;
   Eigen::VectorXd eig_vals;
   double min_eig;
-  if (eigs.info() == Spectra::SUCCESSFUL) {
-    eig_vals = eigs.eigenvalues();
-    min_eig = eig_vals(0);
-  } else {
-    // slower
+  if (params_.spectra_decomposition_solver == EIG_SOLVER_TYPE::EIGEN) {
+    // Eigen
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigensolver(new_M);
-    eig_vals = eigensolver.eigenvalues();
-    min_eig = eig_vals.minCoeff();
+    if (eigensolver.info() == Eigen::Success) {
+      eig_vals = eigensolver.eigenvalues();
+      min_eig = eig_vals.minCoeff();
+      successful = true;
+    }
+  } else {
+    // Spectra
+    Spectra::DenseSymMatProd<double> op(new_M);
+    Spectra::SymEigsSolver<double, Spectra::SMALLEST_ALGE, Spectra::DenseSymMatProd<double>> eigs(
+        &op, 1, 30);
+    eigs.init();
+    int nconv = eigs.compute();
+    if (eigs.info() == Spectra::SUCCESSFUL) {
+      eig_vals = eigs.eigenvalues();
+      min_eig = eig_vals(0);
+      successful = true;
+    }
+  }
+
+  if (!successful) {
+    TEASER_DEBUG_ERROR_MSG(
+        "Failed to find the minimal eigenvalue for suboptimality gap calculaiton.");
+    return std::numeric_limits<double>::infinity();
   }
 
   if (min_eig > 0) {
