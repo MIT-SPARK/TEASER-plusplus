@@ -62,10 +62,8 @@
 #define TEASER_DEBUG_DECLARE_TIMING(s) std::chrono::steady_clock clock_##s;
 #define TEASER_DEBUG_START_TIMING(s) auto t_start_##s = clock_##s.now();
 #define TEASER_DEBUG_STOP_TIMING(s)                                                                \
-  do {                                                                                             \
-    auto t_end_##s = clock_##s.now();                                                              \
-    std::chrono::duration<double, std::milli> diff_dur_##s = t_end_##s - t_start_##s;              \
-    double diff_##s = diff_dur_##s.count();                                                        \
-  } while (0)
-#define TEASER_DEBUG_GET_TIMING(s) (double)(diff_##s / 1000.0)
+  auto t_end_##s = clock_##s.now();                                                                \
+  std::chrono::duration<double, std::milli> diff_dur_##s = t_end_##s - t_start_##s;                \
+  double diff_##s = diff_dur_##s.count();
+#define TEASER_DEBUG_GET_TIMING(s)(double)(diff_##s / 1000.0)
 #endif
