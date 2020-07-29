@@ -48,7 +48,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
   theta_prepended << 1, theta;
 
   // get the inverse map
-  TEASER_DEBUG_INFO_MSG("Starting linear inverse map calculation.");
+  TEASER_INFO_MSG("Starting linear inverse map calculation.\n");
   TEASER_DEBUG_DECLARE_TIMING(LProj);
   TEASER_DEBUG_START_TIMING(LProj);
   Eigen::SparseMatrix<double> inverse_map;
