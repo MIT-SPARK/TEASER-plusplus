@@ -340,7 +340,7 @@ protected:
       functor(kv.second);
       auto t2 = clock.now();
       std::chrono::duration<double, std::milli> diff = t2 - t1;
-      std::cout << "N=" << kv.second.inputs.v1.cols() << " | Test took "
+      std::cout << "\nN=" << kv.second.inputs.v1.cols() << " | Test took "
                 << static_cast<double>(diff.count()) / 1000.0 << "seconds." << std::endl;
     }
     std::cout << div_str << std::endl;
