@@ -30,3 +30,4 @@ TAGS
 /cmake-*
 *.m~
 python/*.egg-info/
+/doc/_build/
