@@ -24,7 +24,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
                               const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
                               const Eigen::Matrix<bool, 1, Eigen::Dynamic>& theta) {
   // convert theta to a double Eigen matrix
-  Eigen::Matrix<double, 1, Eigen::Dynamic> theta_double;
+  Eigen::Matrix<double, 1, Eigen::Dynamic> theta_double(1, theta.cols());
   for (size_t i = 0; i < theta.cols(); ++i) {
     if (theta(i)) {
       theta_double(i) = 1;
