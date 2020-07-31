@@ -411,7 +411,7 @@ TEST_F(DRSCertifierTest, GetLambdaGuess) {
     // construct the certifier
     teaser::DRSCertifier certifier(case_data.inputs.params);
 
-    Eigen::SparseMatrix<double> actual_output;
+    teaser::SparseMatrix actual_output;
     certifier.getLambdaGuess(case_data.inputs.R_est, case_data.inputs.theta_est,
                              case_data.inputs.v1, case_data.inputs.v2, &actual_output);
 
@@ -435,7 +435,7 @@ TEST_F(DRSCertifierTest, GetLinearProjection) {
     ASSERT_TRUE(theta_prepended.rows() == 1);
     ASSERT_TRUE(theta_prepended.cols() > 0);
 
-    Eigen::SparseMatrix<double> actual_output;
+    teaser::SparseMatrix actual_output;
     certifier.getLinearProjection(theta_prepended, &actual_output);
 
     ASSERT_TRUE(actual_output.isApprox(expected_output))
@@ -456,7 +456,7 @@ TEST_F(DRSCertifierTest, GetOptimalDualProjection) {
     ASSERT_TRUE(theta_prepended.cols() > 0);
 
     // A_inv
-    Eigen::SparseMatrix<double> A_inv_sparse = case_data.expected_outputs.A_inv.sparseView();
+    teaser::SparseMatrix A_inv_sparse = case_data.expected_outputs.A_inv.sparseView();
 
     // construct the certifier
     teaser::DRSCertifier certifier(case_data.inputs.params);
@@ -559,7 +559,7 @@ TEST_F(DRSCertifierTest, RandomLargeInstsances) {
     for (size_t i = outlier_start_idx; i < N; ++i) {
       data.inputs.v2.col(i) = Eigen::Matrix<double, 3, Eigen::Dynamic>::Random(3, 1) * 5 +
                               Eigen::Matrix<double, 3, Eigen::Dynamic>::Ones(3, 1) * 5;
-      data.inputs.theta_est(1, i) = -1;
+      data.inputs.theta_est(0, i) = -1;
     }
 
     // expected outputs
