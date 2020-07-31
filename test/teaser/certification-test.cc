@@ -14,10 +14,11 @@
 #include <algorithm>
 #include <chrono>
 
-#include <Eigen/Core>
-#include <Eigen/Geometry>
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include "teaser/certification.h"
 #include "test_utils.h"
