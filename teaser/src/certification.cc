@@ -456,9 +456,6 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
   // 4-by-4 Eigen matrix to store the current 4-by-4 block
   Eigen::Matrix<double, 4, 4> current_block = Eigen::Matrix4d::Zero();
 
-  // Eigen triplets vector for sparse matrix construction
-  std::vector<Eigen::Triplet<double>> sparse_triplets;
-
   for (size_t i = 0; i < K; ++i) {
     // hat maps for later usage
     Eigen::Matrix<double, 3, 3> src_i_hatmap = teaser::hatmap(src.col(i));
@@ -506,8 +503,7 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
     // assume current block is column major
     for (size_t col = 0; col < 4; ++col) {
       for (size_t row = 0; row < 4; ++row) {
-        sparse_triplets.emplace_back((i + 1) * 4 + row, (i + 1) * 4 + col,
-                                     -current_block(row, col));
+        lambda_guess->insert((i + 1) * 4 + row, (i + 1) * 4 + col) = -current_block(row, col);
       }
     }
 
@@ -515,15 +511,12 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
     topleft_block += current_block;
   }
 
-  // put the first block to the sparse triplets
+  // put the first block to the sparse matrix
   for (size_t col = 0; col < 4; ++col) {
     for (size_t row = 0; row < 4; ++row) {
-      sparse_triplets.emplace_back(row, col, topleft_block(row, col));
+      lambda_guess->coeffRef(row, col) += topleft_block(row, col);
     }
   }
-
-  // construct the guess as a sparse matrix
-  lambda_guess->setFromTriplets(sparse_triplets.begin(), sparse_triplets.end());
 }
 
 void teaser::DRSCertifier::getLinearProjection(
@@ -554,8 +547,8 @@ void teaser::DRSCertifier::getLinearProjection(
   int nrNZ_off_diag = nrNZ_per_row_off_diag * nr_vals;
 
   // for holding the non zero entries
-  std::vector<Eigen::Triplet<double>> sparse_triplets;
-  sparse_triplets.reserve(nrNZ_off_diag + nr_vals);
+  A_inv->resize(nr_vals, nr_vals);
+  A_inv->reserve(nrNZ_off_diag + nr_vals);
 
   // for creating columns in inv_A
   for (size_t i = 0; i < N - 1; ++i) {
@@ -575,7 +568,7 @@ void teaser::DRSCertifier::getLinearProjection(
             var_i_idx = mat2vec(i, p);
             entry_val = -y * theta_prepended(j) * theta_prepended(p);
           }
-          sparse_triplets.emplace_back(var_i_idx, var_j_idx, entry_val);
+          A_inv->coeffRef(var_i_idx, var_j_idx) = entry_val;
         }
       }
       for (size_t p = 0; p < N; ++p) {
@@ -590,19 +583,15 @@ void teaser::DRSCertifier::getLinearProjection(
             var_i_idx = mat2vec(j, p);
             entry_val = y * theta_prepended(i) * theta_prepended(p);
           }
-          sparse_triplets.emplace_back(var_i_idx, var_j_idx, entry_val);
+          A_inv->coeffRef(var_i_idx, var_j_idx) = entry_val;
         }
       }
     }
   }
   // create diagonal entries
-  // Note that when setting Eigen sparse matrix from a vector of triplets, duplicate entries will be
-  // summed up. Thus directly pushing these values to the end of the vector makes sense.
   for (size_t i = 0; i < nr_vals; ++i) {
-    sparse_triplets.emplace_back(i, i, x);
+    A_inv->coeffRef(i, i) += x;
   }
-  A_inv->resize(nr_vals, nr_vals);
-  A_inv->setFromTriplets(sparse_triplets.begin(), sparse_triplets.end());
 }
 
 void teaser::DRSCertifier::getBlockRowSum(const Eigen::MatrixXd& A, const int& row,
