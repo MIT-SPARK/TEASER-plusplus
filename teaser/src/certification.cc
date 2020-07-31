@@ -321,6 +321,17 @@ void teaser::DRSCertifier::getOptimalDualProjection(
   Eigen::Matrix<double, Eigen::Dynamic, 3> b_W(nr_off_diag_blks, 3);
   b_W.setZero();
 
+  // preallocated temporary variables
+  Eigen::Matrix<double, 1, 2> temp_A;
+  Eigen::Matrix<double, 1, 2> temp_B;
+  Eigen::Matrix<double, 1, 3> temp_C;
+  Eigen::Matrix<double, 1, 3> temp_D;
+  Eigen::Matrix<double, 2, 3> temp_CD;
+  Eigen::Matrix<double, 1, 3> temp_E;
+  Eigen::Matrix<double, 1, 3> temp_F;
+  Eigen::Matrix<double, 2, 3> temp_EF;
+  Eigen::Matrix<double, 1, 3> y_b_Wt;
+
   int count = 0;
   for (size_t i = 0; i < N; ++i) {
     // prepare indices
@@ -335,27 +346,23 @@ void teaser::DRSCertifier::getOptimalDualProjection(
       double theta_ij = theta_prepended.col(i) * theta_prepended.col(j);
 
       // [-theta_ij 1]
-      Eigen::Matrix<double, 1, 2> temp_A;
       temp_A << -theta_ij, 1;
 
       // [-1 theta_ij]
-      Eigen::Matrix<double, 1, 2> temp_B;
       temp_B << -1, theta_ij;
 
       // W([row_idx(4) col_idx(4)],row_idx(1:3))
-      Eigen::Matrix<double, 1, 3> temp_C = W.block<1, 3>(row_idx_end, row_idx_start);
-      Eigen::Matrix<double, 1, 3> temp_D = W.block<1, 3>(col_idx_end, row_idx_start);
-      Eigen::Matrix<double, 2, 3> temp_CD;
+      temp_C = W.block<1, 3>(row_idx_end, row_idx_start);
+      temp_D = W.block<1, 3>(col_idx_end, row_idx_start);
       temp_CD << temp_C, temp_D;
 
       // W([row_idx(4) col_idx(4)], col_idx(1:3))
-      Eigen::Matrix<double, 1, 3> temp_E = W.block<1, 3>(row_idx_end, col_idx_start);
-      Eigen::Matrix<double, 1, 3> temp_F = W.block<1, 3>(col_idx_end, col_idx_start);
-      Eigen::Matrix<double, 2, 3> temp_EF;
+      temp_E = W.block<1, 3>(row_idx_end, col_idx_start);
+      temp_F = W.block<1, 3>(col_idx_end, col_idx_start);
       temp_EF << temp_E, temp_F;
 
       // calculate the current row for b_W with the temporary variables
-      Eigen::Matrix<double, 1, 3> y_b_Wt = temp_A * temp_CD + temp_B * temp_EF;
+      y_b_Wt = temp_A * temp_CD + temp_B * temp_EF;
 
       // update b_W
       b_W.row(count) = y_b_Wt;
@@ -410,10 +417,10 @@ void teaser::DRSCertifier::getOptimalDualProjection(
   Eigen::Matrix4d W_ii = Eigen::Matrix4d::Zero();
   Eigen::Matrix4d W_diag_mean = Eigen::Matrix4d::Zero();
   Eigen::Matrix3d W_diag_sum_33 = Eigen::Matrix3d::Zero();
+  Eigen::Vector4d W_dual_row_sum_last_column;
+
   for (size_t i = 0; i < N + 1; ++i) {
     int idx_start = i * 4;
-    // Eigen::Vector4d W_dual_row_sum_last_column= W_dual->middleRows<4>(idx_start).rowwise().sum();
-    Eigen::Vector4d W_dual_row_sum_last_column;
     // sum 4 rows
     getBlockRowSum(*W_dual, idx_start, theta_prepended, &W_dual_row_sum_last_column);
     W_ii = W.block<4, 4>(idx_start, idx_start);
@@ -426,14 +433,14 @@ void teaser::DRSCertifier::getOptimalDualProjection(
   W_diag_mean.topLeftCorner<3, 3>() = W_diag_sum_33 / (N + 1);
 
   // update diagonal blocks
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> temp_A((N + 1) * W_diag_mean.rows(),
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> temp_DB((N + 1) * W_diag_mean.rows(),
                                                                (N + 1) * W_diag_mean.cols());
-  temp_A.setZero();
+  temp_DB.setZero();
   for (int i = 0; i < N + 1; i++) {
-    temp_A.block(i * W_diag_mean.rows(), i * W_diag_mean.cols(), W_diag_mean.rows(),
+    temp_DB.block(i * W_diag_mean.rows(), i * W_diag_mean.cols(), W_diag_mean.rows(),
                  W_diag_mean.cols()) = W_diag_mean;
   }
-  *W_dual -= temp_A;
+  *W_dual -= temp_DB;
 }
 
 void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
@@ -543,8 +550,7 @@ void teaser::DRSCertifier::getLinearProjection(
   }
 
   // creating the inverse map sparse matrix and reserve memory
-  int nrNZ_per_row_off_diag = 2 * (N0 - 1) + 1;
-  // int nrNZ_off_diag = nrNZ_per_row_off_diag * nr_vals;
+  int nrNZ_per_col_off_diag = 2 * (N0 - 1) + 1;
 
   // resize the inverse matrix to the appropriate size
   // this won't reserve any memory for non-zero values
@@ -552,7 +558,7 @@ void teaser::DRSCertifier::getLinearProjection(
 
   // temporary vector storing column for holding the non zero entries
   std::vector<Eigen::Triplet<double>> temp_column;
-  temp_column.reserve(nrNZ_per_row_off_diag);
+  temp_column.reserve(nrNZ_per_col_off_diag);
 
   // for creating columns in inv_A
   for (size_t i = 0; i < N - 1; ++i) {
@@ -633,7 +639,7 @@ void teaser::DRSCertifier::getLinearProjection(
         A_inv->insertBack(temp_column[tidx].row(), var_j_idx) = temp_column[tidx].value();
       }
       temp_column.clear();
-      temp_column.reserve(nrNZ_per_row_off_diag);
+      temp_column.reserve(nrNZ_per_col_off_diag);
     }
   }
   TEASER_DEBUG_INFO_MSG("Finalizing A_inv ...");
