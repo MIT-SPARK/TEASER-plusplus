@@ -556,7 +556,7 @@ void teaser::DRSCertifier::getLinearProjection(
 
   // for creating columns in inv_A
   for (size_t i = 0; i < N - 1; ++i) {
-    TEASER_DEBUG_INFO_MSG("Linear proj at i=" << i);
+    TEASER_INFO_MSG_THROTTLE("Linear proj at i=" << i << "\n", i, 10);
     for (size_t j = i + 1; j < N; ++j) {
       // get current column index
       // var_j_idx is unique for all each loop, i.e., each var_j_idx only occurs once and the loops
@@ -638,7 +638,7 @@ void teaser::DRSCertifier::getLinearProjection(
   }
   TEASER_DEBUG_INFO_MSG("Finalizing A_inv ...");
   A_inv->finalize();
-  TEASER_DEBUG_INFO_MSG("A_inv finalized. Updating diagonal entries.");
+  TEASER_DEBUG_INFO_MSG("A_inv finalized.");
 }
 
 void teaser::DRSCertifier::getBlockRowSum(const Eigen::MatrixXd& A, const int& row,
