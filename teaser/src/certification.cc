@@ -9,6 +9,7 @@
 #include <limits>
 #include <fstream>
 #include <chrono>
+#include <algorithm>
 
 #include <teaser/macros.h>
 #include <Spectra/SymEigsSolver.h>
@@ -51,7 +52,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
   TEASER_INFO_MSG("Starting linear inverse map calculation.\n");
   TEASER_DEBUG_DECLARE_TIMING(LProj);
   TEASER_DEBUG_START_TIMING(LProj);
-  Eigen::SparseMatrix<double> inverse_map;
+  SparseMatrix inverse_map;
   getLinearProjection(theta_prepended, &inverse_map);
   TEASER_DEBUG_STOP_TIMING(LProj);
   TEASER_DEBUG_INFO_MSG("Obtained linear inverse map.");
@@ -91,7 +92,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
   double mu = x.transpose().dot(Q_cost * x);
 
   // get initial guess
-  Eigen::SparseMatrix<double> lambda_bar_init;
+  SparseMatrix lambda_bar_init;
   getLambdaGuess(R_solution, theta, src, dst, &lambda_bar_init);
 
   // this initial guess lives in the affine subspace
@@ -306,8 +307,8 @@ void teaser::DRSCertifier::getBlockDiagOmega(
 
 void teaser::DRSCertifier::getOptimalDualProjection(
     const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& W,
-    const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended,
-    const Eigen::SparseMatrix<double>& A_inv, Eigen::MatrixXd* W_dual) {
+    const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended, const SparseMatrix& A_inv,
+    Eigen::MatrixXd* W_dual) {
   // prepare some variables
   int Npm = W.rows();
   int N = Npm / 4 - 1;
@@ -439,7 +440,7 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
                                           const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta,
                                           const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
                                           const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
-                                          Eigen::SparseMatrix<double>* lambda_guess) {
+                                          SparseMatrix* lambda_guess) {
   int K = theta.cols();
   int Npm = 4 * K + 4;
 
@@ -520,8 +521,7 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
 }
 
 void teaser::DRSCertifier::getLinearProjection(
-    const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended,
-    Eigen::SparseMatrix<double>* A_inv) {
+    const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended, SparseMatrix* A_inv) {
   // number of off-diagonal entries in the inverse map
   int N0 = theta_prepended.cols() - 1;
 
@@ -543,18 +543,35 @@ void teaser::DRSCertifier::getLinearProjection(
   }
 
   // creating the inverse map sparse matrix and reserve memory
-  int nrNZ_per_row_off_diag = 2 * (N0 - 1);
-  int nrNZ_off_diag = nrNZ_per_row_off_diag * nr_vals;
+  int nrNZ_per_row_off_diag = 2 * (N0 - 1) + 1;
+  // int nrNZ_off_diag = nrNZ_per_row_off_diag * nr_vals;
 
-  // for holding the non zero entries
+  // resize the inverse matrix to the appropriate size
+  // this won't reserve any memory for non-zero values
   A_inv->resize(nr_vals, nr_vals);
-  // A_inv->reserve(nrNZ_off_diag + nr_vals);
-  A_inv->reserve(Eigen::VectorXi::Constant(nr_vals, nrNZ_off_diag + nr_vals));
+
+  // temporary vector storing column for holding the non zero entries
+  std::vector<Eigen::Triplet<double>> temp_column;
+  temp_column.reserve(nrNZ_per_row_off_diag);
 
   // for creating columns in inv_A
   for (size_t i = 0; i < N - 1; ++i) {
+    TEASER_DEBUG_INFO_MSG("Linear proj at i=" << i);
     for (size_t j = i + 1; j < N; ++j) {
+      // get current column index
+      // var_j_idx is unique for all each loop, i.e., each var_j_idx only occurs once and the loops
+      // won't enter the same column twice
       int var_j_idx = mat2vec(i, j);
+
+      // start a inner vector
+      // A_inv is column major so this will enable us to insert values to the end of column
+      // var_j_idx
+      A_inv->startVec(var_j_idx);
+
+      // flag to indicated whether a diagonal entry on this column has been inserted
+      // this is used to save computation time for adding x to all the diagonal entries
+      bool diag_inserted = false;
+      size_t diag_idx = 0;
 
       for (size_t p = 0; p < N; ++p) {
         if ((p != j) && (p != i)) {
@@ -569,7 +586,11 @@ void teaser::DRSCertifier::getLinearProjection(
             var_i_idx = mat2vec(i, p);
             entry_val = -y * theta_prepended(j) * theta_prepended(p);
           }
-          A_inv->coeffRef(var_i_idx, var_j_idx) = entry_val;
+          temp_column.emplace_back(var_i_idx, var_j_idx, entry_val);
+          if (var_i_idx == var_j_idx) {
+            diag_inserted = true;
+            diag_idx = temp_column.size()-1;
+          }
         }
       }
       for (size_t p = 0; p < N; ++p) {
@@ -584,15 +605,40 @@ void teaser::DRSCertifier::getLinearProjection(
             var_i_idx = mat2vec(j, p);
             entry_val = y * theta_prepended(i) * theta_prepended(p);
           }
-          A_inv->coeffRef(var_i_idx, var_j_idx) = entry_val;
+          temp_column.emplace_back(var_i_idx, var_j_idx, entry_val);
+          if (var_i_idx == var_j_idx) {
+            diag_inserted = true;
+            diag_idx = temp_column.size()-1;
+          }
         }
       }
+
+      // insert diagonal entries if not already done so
+      if (!diag_inserted) {
+        temp_column.emplace_back(var_j_idx, var_j_idx, x);
+      } else {
+        double entry_val = temp_column[diag_idx].value() + x;
+        temp_column[diag_idx] = {var_j_idx, var_j_idx, entry_val};
+      }
+
+      // sort by row index (ascending)
+      std::sort(temp_column.begin(), temp_column.end(),
+                [](const Eigen::Triplet<double>& t1, const Eigen::Triplet<double>& t2) {
+                  return t1.row() < t2.row();
+                });
+
+      // populate A_inv with the temporary column
+      for (size_t tidx = 0; tidx < temp_column.size(); ++tidx) {
+        // take care of the diagonal entries
+        A_inv->insertBack(temp_column[tidx].row(), var_j_idx) = temp_column[tidx].value();
+      }
+      temp_column.clear();
+      temp_column.reserve(nrNZ_per_row_off_diag);
     }
   }
-  // create diagonal entries
-  for (size_t i = 0; i < nr_vals; ++i) {
-    A_inv->coeffRef(i, i) += x;
-  }
+  TEASER_DEBUG_INFO_MSG("Finalizing A_inv ...");
+  A_inv->finalize();
+  TEASER_DEBUG_INFO_MSG("A_inv finalized. Updating diagonal entries.");
 }
 
 void teaser::DRSCertifier::getBlockRowSum(const Eigen::MatrixXd& A, const int& row,

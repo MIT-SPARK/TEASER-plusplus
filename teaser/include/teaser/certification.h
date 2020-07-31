@@ -14,6 +14,8 @@
 
 namespace teaser {
 
+using SparseMatrix = Eigen::SparseMatrix<double, Eigen::ColMajor, int64_t>;
+
 struct CertificationResult {
   bool is_optimal = false;
   double best_suboptimality = -1;
@@ -188,7 +190,7 @@ public:
    */
   void getOptimalDualProjection(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& W,
                                 const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended,
-                                const Eigen::SparseMatrix<double>& A_inv, Eigen::MatrixXd* W_dual);
+                                const SparseMatrix& A_inv, Eigen::MatrixXd* W_dual);
 
   /**
    * Generate an initial guess (see Appendix U of [1]).
@@ -207,7 +209,7 @@ public:
                       const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta,
                       const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
                       const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
-                      Eigen::SparseMatrix<double>* lambda_guess);
+                      SparseMatrix* lambda_guess);
 
   /**
    * Calculate the inverse of the linear projection matrix A mentioned in Theorem 35 of our TEASER
@@ -218,7 +220,7 @@ public:
    * @param A_inv [out] inverse of A
    */
   void getLinearProjection(const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended,
-                           Eigen::SparseMatrix<double>* A_inv);
+                           SparseMatrix* A_inv);
 
 private:
   /**
