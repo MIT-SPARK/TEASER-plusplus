@@ -117,10 +117,9 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
   Eigen::MatrixXd M_affine(Npm, Npm);
 
   TEASER_INFO_MSG("Starting Douglas-Rachford Splitting.\n");
-  TEASER_INFO_MSG("Iter=");
   for (size_t iter = 0; iter < params_.max_iterations; ++iter) {
     // print out iteration every 10 iteration
-    TEASER_INFO_MSG_THROTTLE(" " << iter, iter, 10);
+    TEASER_INFO_MSG_THROTTLE("Iteration: " << iter << "\n", iter, 10);
 
     // to nearest PSD
     TEASER_DEBUG_DECLARE_TIMING(PSD);
