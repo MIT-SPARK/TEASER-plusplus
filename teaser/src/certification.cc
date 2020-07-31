@@ -548,7 +548,8 @@ void teaser::DRSCertifier::getLinearProjection(
 
   // for holding the non zero entries
   A_inv->resize(nr_vals, nr_vals);
-  A_inv->reserve(nrNZ_off_diag + nr_vals);
+  // A_inv->reserve(nrNZ_off_diag + nr_vals);
+  A_inv->reserve(Eigen::VectorXi::Constant(nr_vals, nrNZ_off_diag + nr_vals));
 
   // for creating columns in inv_A
   for (size_t i = 0; i < N - 1; ++i) {
