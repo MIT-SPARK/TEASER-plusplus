@@ -14,6 +14,13 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 import sphinx_rtd_theme
+import subprocess, os
+
+read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
+
+# If building for readthedocs, generate doxygen xml files
+if read_the_docs_build:
+    subprocess.call('doxygen', shell=True)
 
 # -- Project information -----------------------------------------------------
 
