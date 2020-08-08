@@ -559,7 +559,7 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
 
   // Save indices of inlier TIMs from GNC rotation estimation
   for (size_t i = 0; i < rotation_inliers_mask_.cols(); ++i) {
-    if (i) {
+    if (rotation_inliers_mask_[i]) {
       rotation_inliers_.emplace_back(i);
     }
   }
