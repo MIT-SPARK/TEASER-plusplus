@@ -289,6 +289,18 @@ TEST(RegistrationTest, SolveRegistrationProblemDecoupled) {
       EXPECT_TRUE(expected_scale_inliers(0, i) == actual_scale_inliers(0, i));
     }
     **/
+
+    // rotation inlier mask and rotation inliers consistency
+    const auto actual_rotation_inlier_mask = solver.getRotationInliersMask();
+    const auto actual_rotation_inliers = solver.getRotationInliers();
+    int count = 0;
+    for (size_t i = 0; i < actual_rotation_inlier_mask.cols(); ++i) {
+      if (actual_rotation_inlier_mask[i]) {
+        count++;
+      }
+    }
+    EXPECT_EQ(count, actual_rotation_inliers.size());
+
     EXPECT_NEAR(expected_solution, actual_solution.scale, 0.0001);
     EXPECT_LE(teaser::test::getAngularError(expected_rotation_solution, actual_solution.rotation),
               0.2);

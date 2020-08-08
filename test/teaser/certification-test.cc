@@ -523,6 +523,65 @@ TEST_F(DRSCertifierTest, LargeInstance) {
   testThroughCases(test_info_->name(), test_run, large_instances_params_);
 }
 
+TEST_F(DRSCertifierTest, Random100Points) {
+  // generate 3 random large problem instances
+  std::map<std::string, CaseData> random_instances_params;
+  int num_tests = 5;
+  int N = 100;
+
+  for (size_t i = 0; i < num_tests; ++i) {
+    std::string case_name = "Random100-" + std::to_string(i) + "-" + std::to_string(N);
+
+    CaseData data;
+
+    // Inputs:
+    // scalar parameters
+    data.inputs.params.cbar2 = 1;
+    data.inputs.params.noise_bound = 0.01;
+
+    // generate random vectors and transformations
+    data.inputs.v1 = Eigen::Matrix<double, 3, Eigen::Dynamic>::Random(3, N);
+    data.inputs.q_est = Eigen::Quaternion<double>::UnitRandom();
+    data.inputs.R_est = data.inputs.q_est.toRotationMatrix();
+    data.inputs.theta_est = Eigen::Matrix<double, 1, Eigen::Dynamic>::Ones(1, N);
+
+    // calculate vectors after transformation
+    // noise bounded by 0.01
+    Eigen::Matrix<double, 3, Eigen::Dynamic> noise =
+        (Eigen::Matrix<double, 3, Eigen::Dynamic>::Random(3, N).array() + 1) / 200.0;
+    data.inputs.v2 = data.inputs.R_est * data.inputs.v1;
+
+    // outliers
+    double outlier_ratio = 0.1;
+    int outlier_start_idx = (int)(N * (1 - outlier_ratio));
+    for (size_t i = outlier_start_idx; i < N; ++i) {
+      data.inputs.v2.col(i) = Eigen::Matrix<double, 3, Eigen::Dynamic>::Random(3, 1) * 5 +
+                              Eigen::Matrix<double, 3, Eigen::Dynamic>::Ones(3, 1) * 5;
+      data.inputs.theta_est(0, i) = -1;
+    }
+
+    // expected outputs
+    data.expected_outputs.certification_result.is_optimal = true;
+    data.expected_outputs.certification_result.best_suboptimality = 1e-5; // a very small value
+
+    random_instances_params[case_name] = data;
+  }
+
+  auto test_run = [](CaseData case_data) {
+    // construct the certifier
+    teaser::DRSCertifier certifier(case_data.inputs.params);
+
+    auto actual_output = certifier.certify(case_data.inputs.R_est, case_data.inputs.v1,
+                                           case_data.inputs.v2, case_data.inputs.theta_est);
+    const auto& expected_output = case_data.expected_outputs.certification_result;
+
+    ASSERT_TRUE(expected_output.is_optimal == actual_output.is_optimal);
+    ASSERT_TRUE(expected_output.best_suboptimality >= actual_output.best_suboptimality);
+  };
+
+  testThroughCases(test_info_->name(), test_run, random_instances_params);
+}
+
 TEST_F(DRSCertifierTest, RandomLargeInstsances) {
   // generate 3 random large problem instances
   std::map<std::string, CaseData> random_instances_params;
