@@ -2,14 +2,9 @@ project(teaserpp_doc)
 
 set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
-# Doxygen configuration
-set(teaserpp_DOXY_PROJECT_NAME             "teaserpp")
-set(teaserpp_DOXY_INPUT                    "\"${teaserpp_SOURCE_DIR}/teaser\" \"${teaserpp_SOURCE_DIR}/doc\"")
-
-configure_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in
-        ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-)
+file(COPY
+        ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_target(doc ALL
         COMMAND doxygen
@@ -31,4 +26,4 @@ if (Sphinx_FOUND)
             ${SPHINX_SOURCE} ${SPHINX_BUILD}
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMENT "Generating documentation with Sphinx")
-endif()
+endif ()
