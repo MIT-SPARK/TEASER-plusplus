@@ -61,4 +61,5 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 # -- Breathe configuration --------------------------------------------------
+breathe_projects = { "teaserpp": "./doxygen/xml" }
 breathe_default_project = "teaserpp"

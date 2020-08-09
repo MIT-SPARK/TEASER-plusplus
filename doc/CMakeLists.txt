@@ -22,7 +22,7 @@ if (Sphinx_FOUND)
     add_custom_target(Sphinx ALL
             COMMAND
             ${SPHINX_EXECUTABLE} -b html
-            -Dbreathe_projects.teaserpp=${teaserpp_BINARY_DIR}/doc/xml
+            -Dbreathe_projects.teaserpp=${teaserpp_BINARY_DIR}/doc/doxygen/xml
             ${SPHINX_SOURCE} ${SPHINX_BUILD}
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMENT "Generating documentation with Sphinx")
