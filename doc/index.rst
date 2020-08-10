@@ -1,20 +1,16 @@
-.. TEASER++ documentation master file, created by
-   sphinx-quickstart on Wed Jul 29 10:52:56 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to TEASER++'s documentation!
+Overview
 ====================================
+**TEASER++** is a fast and certifiably-robust point cloud registration library written in C++, with Python and MATLAB bindings.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
 
+    introduction
 
 Docs
 ====
 .. doxygennamespace:: teaser
    :members:
+
 
 Indices and tables
 ==================
