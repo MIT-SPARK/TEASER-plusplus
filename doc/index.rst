@@ -16,9 +16,9 @@ If you are looking for information on a specific class or method, please refer t
 
 .. toctree::
 
-   api_cpp
-   api_python
-   api_matlab
+   api-cpp
+   api-python
+   api-matlab
 
 Indices and tables
 ==================

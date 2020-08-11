@@ -1,4 +1,4 @@
-.. _api_cpp:
+.. _api-cpp:
 
 C++ API
 ========

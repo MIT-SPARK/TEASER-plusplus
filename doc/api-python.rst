@@ -1,4 +1,4 @@
-.. _api_python:
+.. _api-python:
 
 Python API
 ==========

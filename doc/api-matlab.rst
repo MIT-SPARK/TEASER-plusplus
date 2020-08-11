@@ -1,4 +1,4 @@
-.. _api_matlab:
+.. _api-matlab:
 
 MATLAB API
 ==========
