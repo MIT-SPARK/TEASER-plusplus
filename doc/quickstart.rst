@@ -130,6 +130,40 @@ Contrary to the object-oriented designs in C++ and Python, in MATLAB you only ha
                                      'RotationGNCFactor', 1.4, 'RotationMaxIterations', 100, ...
                                      'RotationCostThreshold', 1e-12);
 
+Assume we have `src` and `dst`, two 3-by-N matrices. And we know that `dst = R * src + t + e`, where `e` is bounded within 0.01. The following is a snippet of how you can use TEASER++'s MATLAB bindings to solve it:
+
+.. code-block:: matlab
+
+   cbar2 = 1;
+   noise_bound = 0.01;
+   estimate_scaling = false; % we know there's no scale difference
+   rot_alg = 0; % use GNC-TLS, set to 1 for FGR
+   rot_gnc_factor = 1.4;
+   rot_max_iters = 100;
+   rot_cost_threshold = 1e-12;
+
+   [s, R, t, time_taken] = teaser_solve(src, dst, 'Cbar2', cbar2, 'NoiseBound', noise_bound, ...
+                                        'EstimateScaling', estimate_scaling, 'RotationEstimationAlgorithm', rot_alg, ...
+                                     'RotationGNCFactor', rot_gnc_factor, 'RotationMaxIterations', 100, ...
+                                     'RotationCostThreshold', rot_cost_threshold);
+
+Similarly, if we don't know the scale, here is a snippet for solving the registration problem with MATLAB bindings:
+
+.. code-block:: matlab
+
+   cbar2 = 1;
+   noise_bound = 0.01;
+   estimate_scaling = true;
+   rot_alg = 0; % use GNC-TLS, set to 1 to use FGR
+   rot_gnc_factor = 1.4;
+   rot_max_iters = 100;
+   rot_cost_threshold = 1e-12;
+
+   [s, R, t, time_taken] = teaser_solve(src, dst, 'Cbar2', cbar2, 'NoiseBound', noise_bound, ...
+                                        'EstimateScaling', estimate_scaling, 'RotationEstimationAlgorithm', rot_alg, ...
+                                     'RotationGNCFactor', rot_gnc_factor, 'RotationMaxIterations', 100, ...
+                                     'RotationCostThreshold', rot_cost_threshold);
+
 For more MATLAB API documentation, please refer to :ref:`api-matlab`.
 
 Usage In ROS Projects
