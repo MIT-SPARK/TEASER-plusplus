@@ -20,7 +20,7 @@ read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 
 # If building for readthedocs, generate doxygen xml files
 if read_the_docs_build:
-    subprocess.call('doxygen', shell=True)
+    subprocess.call('TEASERPP_SOURCE_DIR=../teaser doxygen', shell=True)
 
 # -- Project information -----------------------------------------------------
 
