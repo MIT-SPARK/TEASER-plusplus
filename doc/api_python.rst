@@ -4,6 +4,7 @@ Python API
 ==========
 
 The TEASER++ Python binding ``teaserpp-python`` uses `pybind11 <https://github.com/pybind/pybind11>`_ to allow for minimal-effort interoperability between C++ and Python. To use TEASER++ in Python, the following C++ constructs are exposed:
+
 - ``teaser::RobustRegistrationSolver``: the main solver class for solving registration problems with TEASER++
 - ``teaser::RobustRegistrationSolver::Params``: a struct for holding the initialization parameters for TEASER++
 - ``teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM``: an enum for specifying what kind rotation estimation algorithm to use
