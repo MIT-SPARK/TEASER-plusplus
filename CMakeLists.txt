@@ -46,16 +46,6 @@ if (ENABLE_MKL)
         message(STATUS "MKL not found.")
     endif ()
 endif ()
-if (NOT MKL_FOUND)
-    find_package(BLAS)
-    if (BLAS_FOUND)
-        message(STATUS "BLAS found at: ${BLAS_LIBRARIES}")
-        include_directories(${BLAS_INCLUDE_DIRS})
-        list(APPEND TEASERPP_BLAS_LAPACK_LIBS ${BLAS_LIBRARIES})
-        add_definitions(-DEIGEN_USE_BLAS)
-    endif()
-endif ()
-
 
 if (BUILD_TEASER_FPFH)
     # Boost
