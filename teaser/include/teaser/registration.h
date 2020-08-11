@@ -633,7 +633,9 @@ public:
   /**
    * Return inliers from rotation estimation
    *
-   * @return a vector of indices of TIMs deemed as inliers by rotation estimation
+   * @return a vector of indices of TIMs passed to rotation estimator deemed as inliers by rotation
+   * estimation. Note that depending on the rotation_tim_graph parameter, number of TIMs passed to
+   * rotation estimation will be different.
    */
   inline std::vector<int> getRotationInliers() { return rotation_inliers_; }
 

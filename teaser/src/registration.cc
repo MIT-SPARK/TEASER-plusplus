@@ -577,7 +577,7 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
   TEASER_DEBUG_INFO_MSG("Translation estimation complete.");
 
   // Find the final inliers
-  translation_inliers_ = utils::maskVector<int>(translation_inliers_mask_, rotation_inliers_);
+  translation_inliers_ = utils::findNonzero<bool>(translation_inliers_mask_);
 
   // Update validity flag
   solution_.valid = true;
