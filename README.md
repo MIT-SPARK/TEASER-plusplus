@@ -145,12 +145,14 @@ You should be able to see Open3D windows showing registration results:
 ![TEASER++ 3DSmooth](examples/teaser_python_3dsmooth/3dsmooth_example.gif)
 
 ## Getting Started
-- [Installation](https://teaser.readthedocs.io/en/latest/installation.html)
+- Installation
+  - [Dependencies](https://teaser.readthedocs.io/en/latest/installation.html#installing-dependencies)
+  - [Compilation](https://teaser.readthedocs.io/en/latest/installation.html#compilation-and-installation)
   - [Install C++ Libraries](https://teaser.readthedocs.io/en/latest/installation.html#installing-c-libraries-and-headers)
   - [Install Python Bindings](https://teaser.readthedocs.io/en/latest/installation.html#installing-python-bindings)
   - [Install MATLAB Bindings](https://teaser.readthedocs.io/en/latest/installation.html#installing-matlab-bindings)
   - [Run Tests](https://teaser.readthedocs.io/en/latest/installation.html#run-tests)
-- [Usage](https://teaser.readthedocs.io/en/latest/quickstart.html)
+- Usage
   - [In C++](https://teaser.readthedocs.io/en/latest/quickstart.html#usage-in-c-projects)
   - [In Python](https://teaser.readthedocs.io/en/latest/quickstart.html#usage-in-python-projects)
   - [In MATLAB](https://teaser.readthedocs.io/en/latest/quickstart.html#usage-in-matlab-projects)
