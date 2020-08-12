@@ -356,6 +356,17 @@ public:
   };
 
   /**
+   * Enum representing the formulation of the TIM graph after maximum clique filtering.
+   *
+   * CHAIN: formulate TIMs by only calculating the TIMs for consecutive measurements
+   * COMPLETE: formulate a fully connected TIM graph
+   */
+  enum class INLIER_GRAPH_FORMULATION {
+    CHAIN = 0,
+    COMPLETE = 1,
+  };
+
+  /**
    * A struct representing params for initializing the RobustRegistrationSolver
    *
    * Note: the default values needed to be changed accordingly for best performance.
@@ -408,6 +419,11 @@ public:
      * iterations.
      */
     double rotation_cost_threshold = 1e-6;
+
+    /**
+     * Type of TIM graph given to GNC rotation solver
+     */
+    INLIER_GRAPH_FORMULATION rotation_tim_graph = INLIER_GRAPH_FORMULATION::CHAIN;
 
     /**
      * \brief Type of the inlier selection
@@ -593,9 +609,9 @@ public:
    * Return a boolean Eigen row vector indicating whether specific measurements are inliers
    * according to the rotation solver.
    *
-   * @return a 1-by-(size of max clique) boolean Eigen matrix. It is equivalent to a binary mask on
-   * the inlier max clique, with true representing that the measurement is an inlier after
-   * rotation estimation.
+   * @return a 1-by-(size of TIMs used in rotation estimation) boolean Eigen matrix. It is
+   * equivalent to a binary mask on the TIMs used in rotation estimation, with true representing
+   * that the measurement is an inlier after rotation estimation.
    */
   inline Eigen::Matrix<bool, 1, Eigen::Dynamic> getRotationInliersMask() {
     return rotation_inliers_mask_;
@@ -603,6 +619,7 @@ public:
 
   /**
    * Return the index map for translation inliers (equivalent to max clique).
+   * /TODO: This is obsolete now. Remove or update
    *
    * @return a 1-by-(size of max clique) Eigen matrix. Entries represent the indices of the original
    * measurements.
@@ -616,7 +633,9 @@ public:
   /**
    * Return inliers from rotation estimation
    *
-   * @return a vector of indices of measurements deemed as inliers by rotation estimation
+   * @return a vector of indices of TIMs passed to rotation estimator deemed as inliers by rotation
+   * estimation. Note that depending on the rotation_tim_graph parameter, number of TIMs passed to
+   * rotation estimation will be different.
    */
   inline std::vector<int> getRotationInliers() { return rotation_inliers_; }
 
@@ -673,13 +692,13 @@ public:
   inline Eigen::Matrix<double, 3, Eigen::Dynamic> getDstTIMs() { return dst_tims_; }
 
   /**
-   * Get TIMs built from source point cloud.
+   * Get src TIMs built after max clique pruning.
    * @return
    */
   inline Eigen::Matrix<double, 3, Eigen::Dynamic> getMaxCliqueSrcTIMs() { return pruned_src_tims_; }
 
   /**
-   * Get TIMs built from target point cloud.
+   * Get dst TIMs built after max clique pruning.
    * @return
    */
   inline Eigen::Matrix<double, 3, Eigen::Dynamic> getMaxCliqueDstTIMs() { return pruned_dst_tims_; }
@@ -695,6 +714,22 @@ public:
    * @return
    */
   inline Eigen::Matrix<int, 2, Eigen::Dynamic> getDstTIMsMap() { return dst_tims_map_; }
+
+  /**
+   * Get the index map of the TIMs used in rotation estimation.
+   * @return
+   */
+  inline Eigen::Matrix<int, 2, Eigen::Dynamic> getSrcTIMsMapForRotation() {
+    return src_tims_map_rotation_;
+  }
+
+  /**
+   * Get the index map of the TIMs used in rotation estimation.
+   * @return
+   */
+  inline Eigen::Matrix<int, 2, Eigen::Dynamic> getDstTIMsMapForRotation() {
+    return dst_tims_map_rotation_;
+  }
 
   /**
    * Reset the solver using the provided params
@@ -748,14 +783,20 @@ private:
   Eigen::Matrix<bool, 1, Eigen::Dynamic> translation_inliers_mask_;
 
   // TIMs
+  // TIMs used for scale estimation/pruning
   Eigen::Matrix<double, 3, Eigen::Dynamic> src_tims_;
   Eigen::Matrix<double, 3, Eigen::Dynamic> dst_tims_;
+  // TIMs used for rotation estimation
   Eigen::Matrix<double, 3, Eigen::Dynamic> pruned_src_tims_;
   Eigen::Matrix<double, 3, Eigen::Dynamic> pruned_dst_tims_;
 
   // TIM maps
+  // for scale estimation
   Eigen::Matrix<int, 2, Eigen::Dynamic> src_tims_map_;
   Eigen::Matrix<int, 2, Eigen::Dynamic> dst_tims_map_;
+  // for rotation estimation
+  Eigen::Matrix<int, 2, Eigen::Dynamic> src_tims_map_rotation_;
+  Eigen::Matrix<int, 2, Eigen::Dynamic> dst_tims_map_rotation_;
 
   // Max clique vector
   std::vector<int> max_clique_;

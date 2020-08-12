@@ -289,6 +289,18 @@ TEST(RegistrationTest, SolveRegistrationProblemDecoupled) {
       EXPECT_TRUE(expected_scale_inliers(0, i) == actual_scale_inliers(0, i));
     }
     **/
+
+    // rotation inlier mask and rotation inliers consistency
+    const auto actual_rotation_inlier_mask = solver.getRotationInliersMask();
+    const auto actual_rotation_inliers = solver.getRotationInliers();
+    int count = 0;
+    for (size_t i = 0; i < actual_rotation_inlier_mask.cols(); ++i) {
+      if (actual_rotation_inlier_mask[i]) {
+        count++;
+      }
+    }
+    EXPECT_EQ(count, actual_rotation_inliers.size());
+
     EXPECT_NEAR(expected_solution, actual_solution.scale, 0.0001);
     EXPECT_LE(teaser::test::getAngularError(expected_rotation_solution, actual_solution.rotation),
               0.2);
@@ -361,8 +373,7 @@ TEST(RegistrationTest, OutlierDetection) {
   EXPECT_LE(teaser::test::getAngularError(T.topLeftCorner(3, 3), solution.rotation), 0.2);
   EXPECT_LE((T.topRightCorner(3, 1) - solution.translation).norm(), 0.1);
 
-  auto max_clique = solver.getInlierMaxClique();
-  auto final_inliers = solver.getTranslationInliers();
+  auto final_inliers = solver.getInlierMaxClique();
 
   EXPECT_EQ(expected_inliers.size(), final_inliers.size());
   std::sort(expected_inliers.begin(), expected_inliers.end());

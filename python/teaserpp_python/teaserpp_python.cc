@@ -14,6 +14,7 @@
 #include <pybind11/stl.h>
 
 #include "teaser/registration.h"
+#include "teaser/certification.h"
 
 namespace py = pybind11;
 
@@ -68,6 +69,8 @@ PYBIND11_MODULE(teaserpp_python, m) {
       .def("getInlierGraph", &teaser::RobustRegistrationSolver::getInlierGraph)
       .def("getSrcTIMsMap", &teaser::RobustRegistrationSolver::getSrcTIMsMap)
       .def("getDstTIMsMap", &teaser::RobustRegistrationSolver::getDstTIMsMap)
+      .def("getSrcTIMsMapForRotation", &teaser::RobustRegistrationSolver::getSrcTIMsMapForRotation)
+      .def("getDstTIMsMapForRotation", &teaser::RobustRegistrationSolver::getDstTIMsMapForRotation)
       .def("getMaxCliqueSrcTIMs", &teaser::RobustRegistrationSolver::getMaxCliqueSrcTIMs)
       .def("getMaxCliqueDstTIMs", &teaser::RobustRegistrationSolver::getMaxCliqueDstTIMs)
       .def("getSrcTIMs", &teaser::RobustRegistrationSolver::getSrcTIMs)
@@ -79,7 +82,13 @@ PYBIND11_MODULE(teaserpp_python, m) {
       .value("GNC_TLS", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS)
       .value("FGR", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::FGR);
 
-  // Python bound for teaser::RobustRegistrationSolver::ROTATION_ESTIMATE_ALGORITHM
+  // Python bound for teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION
+  py::enum_<teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION>(solver,
+                                                                        "INLIER_GRAPH_FORMULATION")
+      .value("CHAIN", teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION::CHAIN)
+      .value("COMPLETE", teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION::COMPLETE);
+
+  // Python bound for teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE
   py::enum_<teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE>(solver,
                                                                      "INLIER_SELECTION_MODE")
       .value("PMC_EXACT", teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_EXACT)
@@ -100,6 +109,8 @@ PYBIND11_MODULE(teaserpp_python, m) {
                      &teaser::RobustRegistrationSolver::Params::rotation_gnc_factor)
       .def_readwrite("rotation_max_iterations",
                      &teaser::RobustRegistrationSolver::Params::rotation_max_iterations)
+      .def_readwrite("rotation_tim_graph",
+                     &teaser::RobustRegistrationSolver::Params::rotation_tim_graph)
       .def_readwrite("inlier_selection_mode",
                      &teaser::RobustRegistrationSolver::Params::inlier_selection_mode)
       .def_readwrite("kcore_heuristic_threshold",
@@ -146,4 +157,52 @@ PYBIND11_MODULE(teaserpp_python, m) {
                      << ">";
         return print_string.str();
       });
+
+  // Python bound for CertificationResult
+  py::class_<teaser::CertificationResult>(m, "CertificationResult")
+      .def_readwrite("is_optimal", &teaser::CertificationResult::is_optimal)
+      .def_readwrite("best_suboptimality", &teaser::CertificationResult::best_suboptimality)
+      .def_readwrite("suboptimality_traj", &teaser::CertificationResult::suboptimality_traj)
+      .def("__repr__", [](const teaser::CertificationResult& a) {
+        std::ostringstream print_string;
+
+        print_string << "<CertificationResult \n"
+                     << "Is optimal:" << a.is_optimal << "\n"
+                     << "Best suboptimality:" << a.best_suboptimality << "\n"
+                     << "Iterations: " << a.suboptimality_traj.size() << "\n"
+                     << ">";
+        return print_string.str();
+      });
+
+  // Python bound for DRSCertifier
+  py::class_<teaser::DRSCertifier> certifier(m, "DRSCertifier");
+  certifier.def(py::init<const teaser::DRSCertifier::Params>())
+      .def(
+          "certify",
+          py::overload_cast<const Eigen::Matrix3d&, const Eigen::Matrix<double, 3, Eigen::Dynamic>&,
+                            const Eigen::Matrix<double, 3, Eigen::Dynamic>&,
+                            const Eigen::Matrix<bool, 1, Eigen::Dynamic>&>(
+              &teaser::DRSCertifier::certify))
+      .def(
+          "certify",
+          py::overload_cast<const Eigen::Matrix3d&, const Eigen::Matrix<double, 3, Eigen::Dynamic>&,
+                            const Eigen::Matrix<double, 3, Eigen::Dynamic>&,
+                            const Eigen::Matrix<double, 1, Eigen::Dynamic>&>(
+              &teaser::DRSCertifier::certify));
+
+  // Python bound for DRSCertifier::EIG_SOLVER_TYPE
+  py::enum_<teaser::DRSCertifier::EIG_SOLVER_TYPE>(certifier, "EIG_SOLVER_TYPE")
+      .value("EIGEN", teaser::DRSCertifier::EIG_SOLVER_TYPE::EIGEN)
+      .value("SPECTRA", teaser::DRSCertifier::EIG_SOLVER_TYPE::SPECTRA);
+
+  // Python bound for DRSCertifier parameter struct
+  py::class_<teaser::DRSCertifier::Params>(certifier, "Params")
+      .def(py::init<>())
+      .def_readwrite("noise_bound", &teaser::DRSCertifier::Params::noise_bound)
+      .def_readwrite("cbar2", &teaser::DRSCertifier::Params::cbar2)
+      .def_readwrite("sub_optimality", &teaser::DRSCertifier::Params::sub_optimality)
+      .def_readwrite("max_iterations", &teaser::DRSCertifier::Params::max_iterations)
+      .def_readwrite("gamma_tau", &teaser::DRSCertifier::Params::gamma_tau)
+      .def_readwrite("eig_decomposition_solver",
+                     &teaser::DRSCertifier::Params::eig_decomposition_solver);
 }

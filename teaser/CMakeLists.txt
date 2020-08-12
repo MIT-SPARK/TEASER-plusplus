@@ -19,16 +19,18 @@ add_library(teaserpp::teaser_io ALIAS teaser_io)
 
 # teaser_registration library
 add_library(teaser_registration SHARED
+        src/certification.cc
         src/registration.cc
         src/graph.cc
         )
 target_link_libraries(teaser_registration
         PUBLIC Eigen3::Eigen
-        PRIVATE pmc
+        PRIVATE pmc ${TEASERPP_BLAS_LAPACK_LIBS}
         )
 target_include_directories(teaser_registration PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${SPECTRA_INCLUDE_DIRS}>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 find_package(OpenMP)
@@ -91,3 +93,4 @@ install(EXPORT teaserpp-export
 )
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY ${SPECTRA_INCLUDE_DIRS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

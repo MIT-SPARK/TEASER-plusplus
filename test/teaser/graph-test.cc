@@ -252,6 +252,12 @@ TEST(PMCTest, FindMaximumClique3) {
   }
   EXPECT_GE(in.ub, in.lb);
 
+  // for isolated vertices, pmc has lb = 0, which will
+  // cause a potential segfault in search dense function
+  if (in.lb == 0) {
+    in.lb += 1;
+  }
+
   if (G.num_vertices() < in.adj_limit) {
     G.create_adj();
     pmc::pmcx_maxclique finder(G, in);

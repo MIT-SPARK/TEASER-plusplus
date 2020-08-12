@@ -143,11 +143,28 @@ inline Eigen::Matrix3d svdRot(const Eigen::Matrix<double, 3, Eigen::Dynamic>& X,
  */
 template <class T>
 inline std::vector<T> maskVector(Eigen::Matrix<bool, 1, Eigen::Dynamic> mask,
-                                 std::vector<T> elements) {
+                                 const std::vector<T>& elements) {
+  assert(mask.cols() == elements.size());
   std::vector<T> result;
   for (size_t i = 0; i < mask.cols(); ++i) {
     if (mask(i)) {
-      result.push_back(elements[i]);
+      result.emplace_back(elements[i]);
+    }
+  }
+  return result;
+}
+
+/**
+ * Get indices of non-zero elements in an Eigen row vector
+ * @param mask a 1-by-N boolean Eigen matrix
+ * @return A vector containing indices of the true elements in the row vector
+ */
+template <class T>
+inline std::vector<int> findNonzero(Eigen::Matrix<T, 1, Eigen::Dynamic> mask) {
+  std::vector<int> result;
+  for (size_t i = 0; i < mask.cols(); ++i) {
+    if (mask(i)) {
+      result.emplace_back(i);
     }
   }
   return result;

@@ -7,6 +7,7 @@ add_executable(all_benchmarks
         registration-benchmark.cc)
 target_link_libraries(all_benchmarks
         Eigen3::Eigen
+        ${TEASERPP_BLAS_LAPACK_LIBS}
         gtest
         gmock
         teaser_io

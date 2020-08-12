@@ -494,12 +494,22 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
       solution_.valid = false;
       return solution_;
     }
+  } else {
+    // not using clique filtering is equivalent to saying all measurements are in the max clique
+    max_clique_.reserve(src.cols());
+    for (size_t i = 0; i < src.cols(); ++i) {
+      max_clique_.push_back(i);
+    }
+  }
 
-    // Calculate new measurements & TIMs based on max clique inliers
-    Eigen::Matrix<double, 3, Eigen::Dynamic> pruned_src(3, max_clique_.size());
-    Eigen::Matrix<double, 3, Eigen::Dynamic> pruned_dst(3, max_clique_.size());
+  // Calculate new measurements & TIMs based on max clique inliers
+  if (params_.rotation_tim_graph == INLIER_GRAPH_FORMULATION::CHAIN) {
+    // chain graph
+    TEASER_DEBUG_INFO_MSG("Using chain graph for GNC rotation.");
     pruned_src_tims_.resize(3, max_clique_.size());
     pruned_dst_tims_.resize(3, max_clique_.size());
+    src_tims_map_rotation_.resize(2, max_clique_.size());
+    dst_tims_map_rotation_.resize(2, max_clique_.size());
     for (size_t i = 0; i < max_clique_.size(); ++i) {
       const auto& root = max_clique_[i];
       int leaf;
@@ -508,35 +518,35 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
       } else {
         leaf = max_clique_[0];
       }
-      pruned_src.col(i) = src.col(root);
-      pruned_dst.col(i) = dst.col(root);
       pruned_src_tims_.col(i) = src.col(leaf) - src.col(root);
       pruned_dst_tims_.col(i) = dst.col(leaf) - dst.col(root);
-    }
 
-  } else {
-    max_clique_.reserve(src.cols());
-    pruned_src_tims_.resize(3, src.cols());
-    pruned_dst_tims_.resize(3, dst.cols());
-    for (size_t i = 0; i < src.cols(); ++i) {
-      const auto& root = i;
-      int leaf;
-      if (i != src.cols() - 1) {
-        leaf = i + 1;
-      } else {
-        leaf = 0;
-      }
-      pruned_src_tims_.col(i) = src.col(leaf) - src.col(root);
-      pruned_dst_tims_.col(i) = dst.col(leaf) - dst.col(root);
-      max_clique_.push_back(i);
+      // populate the TIMs map
+      dst_tims_map_rotation_(0,i) = leaf;
+      dst_tims_map_rotation_(1,i) = root;
+      src_tims_map_rotation_(0,i) = leaf;
+      src_tims_map_rotation_(1,i) = root;
     }
+  } else {
+    // complete graph
+    TEASER_DEBUG_INFO_MSG("Using complete graph for GNC rotation.");
+    // select the inlier measurements with max clique
+    Eigen::Matrix<double, 3, Eigen::Dynamic> src_inliers(3, max_clique_.size());
+    Eigen::Matrix<double, 3, Eigen::Dynamic> dst_inliers(3, max_clique_.size());
+    for (size_t i = 0; i < max_clique_.size(); ++i) {
+      src_inliers.col(i) = src.col(max_clique_[i]);
+      dst_inliers.col(i) = dst.col(max_clique_[i]);
+    }
+    // construct the TIMs
+    pruned_dst_tims_ = computeTIMs(dst_inliers, &dst_tims_map_rotation_);
+    pruned_src_tims_ = computeTIMs(src_inliers, &src_tims_map_rotation_);
   }
 
   // Remove scaling for rotation estimation
   pruned_dst_tims_ *= (1 / solution_.scale);
 
   // Update GNC rotation solver's noise bound with the new information
-  // Note: this implicitly assume that rotation_solver_'s noise bound
+  // Note: this implicitly assumes that rotation_solver_'s noise bound
   // is set to the original noise bound of the measurements.
   auto params = rotation_solver_->getParams();
   params.noise_bound *= (2 / solution_.scale);
@@ -547,17 +557,17 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
   solveForRotation(pruned_src_tims_, pruned_dst_tims_);
   TEASER_DEBUG_INFO_MSG("Rotation estimation complete.");
 
-  // TODO: Pruning based on the weight vectors from the rotation solver.
-  // Create a inlier vector and pass it to the solveForRotation function
-  // The size of the rotation inlier vector is the same as the size of max clique / pruned_src/dst
-  // where 0 indicates that the corresponding node in max clique is determined to be an outlier,
-  // and 1 otherwise.
-  rotation_inliers_ = utils::maskVector<int>(rotation_inliers_mask_, max_clique_);
-  Eigen::Matrix<double, 3, Eigen::Dynamic> rotation_pruned_src(3, rotation_inliers_.size());
-  Eigen::Matrix<double, 3, Eigen::Dynamic> rotation_pruned_dst(3, rotation_inliers_.size());
-  for (size_t i = 0; i < rotation_inliers_.size(); ++i) {
-    rotation_pruned_src.col(i) = src.col(rotation_inliers_[i]);
-    rotation_pruned_dst.col(i) = dst.col(rotation_inliers_[i]);
+  // Save indices of inlier TIMs from GNC rotation estimation
+  for (size_t i = 0; i < rotation_inliers_mask_.cols(); ++i) {
+    if (rotation_inliers_mask_[i]) {
+      rotation_inliers_.emplace_back(i);
+    }
+  }
+  Eigen::Matrix<double, 3, Eigen::Dynamic> rotation_pruned_src(3, max_clique_.size());
+  Eigen::Matrix<double, 3, Eigen::Dynamic> rotation_pruned_dst(3, max_clique_.size());
+  for (size_t i = 0; i < max_clique_.size(); ++i) {
+    rotation_pruned_src.col(i) = src.col(max_clique_[i]);
+    rotation_pruned_dst.col(i) = dst.col(max_clique_[i]);
   }
 
   // Solve for translation
@@ -567,7 +577,7 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
   TEASER_DEBUG_INFO_MSG("Translation estimation complete.");
 
   // Find the final inliers
-  translation_inliers_ = utils::maskVector<int>(translation_inliers_mask_, rotation_inliers_);
+  translation_inliers_ = utils::findNonzero<bool>(translation_inliers_mask_);
 
   // Update validity flag
   solution_.valid = true;
@@ -633,6 +643,8 @@ void teaser::GNCTLSRotationSolver::solveForRotation(
   if (noise_bound_sq < 1e-16) {
     noise_bound_sq = 1e-2;
   }
+  TEASER_DEBUG_INFO_MSG("GNC rotation estimation noise bound:" << params_.noise_bound);
+  TEASER_DEBUG_INFO_MSG("GNC rotation estimation noise bound squared:" << noise_bound_sq);
 
   Eigen::Matrix<double, 3, Eigen::Dynamic> diffs(3, match_size);
   Eigen::Matrix<double, 1, Eigen::Dynamic> weights(1, match_size);
@@ -696,6 +708,8 @@ void teaser::GNCTLSRotationSolver::solveForRotation(
   }
 
   if (inliers) {
-    *inliers = weights.cast<bool>();
+    for (size_t i = 0; i < weights.cols(); ++i) {
+      (*inliers)(0, i) = weights(0, i) >= 0.5;
+    }
   }
 }
