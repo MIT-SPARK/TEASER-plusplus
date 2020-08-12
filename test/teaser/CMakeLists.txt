@@ -37,7 +37,7 @@ target_link_libraries(all_tests ${TEST_LINK_LIBRARIES})
 
 gtest_add_tests(TARGET all_tests
         TEST_LIST allTests)
-set_tests_properties(${allTests} PROPERTIES TIMEOUT 10)
+set_tests_properties(${allTests} PROPERTIES TIMEOUT 120)
 
 # Copy test data files to binary directory
 file(COPY .
