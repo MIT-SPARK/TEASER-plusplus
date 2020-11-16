@@ -59,7 +59,7 @@ If you want to build MATLAB bindings, you also need:
 
 TEASER++ uses the Parallel Maximum Clique (`paper <https://arxiv.org/abs/1302.6256>`_, `code <https://github.com/ryanrossi/pmc>`_) for maximum clique calculation. It will be downloaded automatically during CMake configuration. In addition, CMake will also download Google Test and pybind11 if necessary.
 
-On Mac OS
+On macOS
 ^^^^^^^^^^
 
 First, you need to install ``homebrew`` by following instructions `here <https://brew.sh/>`_.
