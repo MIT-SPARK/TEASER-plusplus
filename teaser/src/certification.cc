@@ -97,7 +97,12 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
 
   // this initial guess lives in the affine subspace
   // use 2 separate steps to limit slow evaluation on only the few non-zeros in the sparse matrix
+#if EIGEN_VERSION_AT_LEAST(3,3,0)
   Eigen::SparseMatrix<double> M_init = Q_bar - mu * J_bar - lambda_bar_init;
+#else
+  // fix for this bug in Eigen 3.2: https://eigen.tuxfamily.org/bz/show_bug.cgi?id=632
+  Eigen::SparseMatrix<double> M_init = Q_bar.sparseView() - mu * J_bar - lambda_bar_init;
+#endif
 
   // flag to indicate whether we exceeded iterations or reach the desired sub-optim gap
   bool exceeded_maxiters = true;
@@ -130,14 +135,24 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
     TEASER_DEBUG_INFO_MSG("PSD time: " << TEASER_DEBUG_GET_TIMING(PSD));
 
     // projection to affine space
+#if EIGEN_VERSION_AT_LEAST(3,3,0)
     temp_W = 2 * M_PSD - M - M_init;
+#else
+    // fix for this bug in Eigen 3.2: https://eigen.tuxfamily.org/bz/show_bug.cgi?id=632
+    temp_W = 2 * M_PSD - M - M_init.toDense();
+#endif
 
     TEASER_DEBUG_DECLARE_TIMING(DualProjection);
     TEASER_DEBUG_START_TIMING(DualProjection);
     getOptimalDualProjection(temp_W, theta_prepended, inverse_map, &W_dual);
     TEASER_DEBUG_STOP_TIMING(DualProjection);
     TEASER_DEBUG_INFO_MSG("Dual Projection time: " << TEASER_DEBUG_GET_TIMING(DualProjection));
+#if EIGEN_VERSION_AT_LEAST(3,3,0)
     M_affine = M_init + W_dual;
+#else
+    // fix for this bug in Eigen 3.2: https://eigen.tuxfamily.org/bz/show_bug.cgi?id=632
+    M_affine = M_init.toDense() + W_dual;
+#endif
 
     // compute suboptimality gap
     TEASER_DEBUG_DECLARE_TIMING(Gap);
