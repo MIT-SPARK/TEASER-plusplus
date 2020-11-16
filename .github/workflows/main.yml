@@ -10,6 +10,19 @@ on:
 
 jobs:
 
+  build-debug-ubuntu16:
+    name: CMake Debug Build
+    runs-on: ubuntu-16.04
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: install-eigen
+        run: sudo apt install libeigen3-dev
+      - name: configure
+        run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug ..
+      - name: build
+        run: cmake --build build
+
   build-debug:
     name: CMake Debug Build
     runs-on: ubuntu-18.04
