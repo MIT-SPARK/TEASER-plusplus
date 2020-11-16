@@ -19,7 +19,7 @@ jobs:
       - name: install-eigen
         run: sudo apt-get install libeigen3-dev
       - name: configure
-        run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug ..
+        run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DEigen3_DIR=/usr/lib/cmake/eigen3/ ..
       - name: build
         run: cmake --build build
 
