@@ -770,6 +770,7 @@ public:
     max_clique_.clear();
     rotation_inliers_.clear();
     translation_inliers_.clear();
+    inlier_graph_.clear();
   }
 
   /**
