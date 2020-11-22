@@ -180,6 +180,14 @@ public:
   void reserve(const int& num_vertices) { adj_list_.reserve(num_vertices); }
 
   /**
+   * Clear the contents of the graph
+   */
+  void clear() {
+    adj_list_.clear();
+    num_edges_ = 0;
+  }
+
+  /**
    * Reserve space for complete graph. A complete undirected graph should have N*(N-1)/2 edges
    * @param num_vertices
    */
@@ -210,7 +218,6 @@ private:
  */
 class MaxCliqueSolver {
 public:
-
   /**
    * Enum representing the solver algorithm to use
    */

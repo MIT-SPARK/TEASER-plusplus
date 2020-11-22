@@ -765,11 +765,17 @@ public:
     // Initialize the translation estimator
     setTranslationEstimator(
         std::make_unique<teaser::TLSTranslationSolver>(params_.noise_bound, params_.cbar2));
+
+    // Clear member variables
+    max_clique_.clear();
+    rotation_inliers_.clear();
+    translation_inliers_.clear();
+    inlier_graph_.clear();
   }
 
   /**
    * Return the params
-   * @return a Params truct
+   * @return a Params struct
    */
   Params getParams() { return params_; }
 
