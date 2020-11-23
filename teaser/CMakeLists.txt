@@ -53,7 +53,7 @@ if (BUILD_TEASER_FPFH)
             src/matcher.cc
             )
     target_link_libraries(teaser_features
-            PUBLIC pcl_common pcl_io pcl_features pcl_kdtree
+            PUBLIC ${PCL_LIBRARIES}
             PRIVATE Eigen3::Eigen
             )
     if (BUILD_WITH_MKL AND MKL_FOUND)
@@ -66,7 +66,7 @@ if (BUILD_TEASER_FPFH)
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-    install(TARGETS teaser_features 
+    install(TARGETS teaser_features
         EXPORT teaserpp-export
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
