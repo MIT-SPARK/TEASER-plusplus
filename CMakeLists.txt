@@ -53,7 +53,7 @@ if (BUILD_TEASER_FPFH)
     if(NOT DEFINED CMAKE_SUPPRESS_DEVELOPER_WARNINGS)
         set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS 1 CACHE INTERNAL "No dev warnings")
     endif()
-    find_package(PCL 1.11 QUIET REQUIRED COMPONENTS common io features kdtree)
+    find_package(PCL 1.9 QUIET REQUIRED COMPONENTS common io features kdtree)
 
     # check for -march=native in PCL compile definitions
     get_target_property(PCL_COMPILE_OPTIONS pcl_common INTERFACE_COMPILE_OPTIONS)
