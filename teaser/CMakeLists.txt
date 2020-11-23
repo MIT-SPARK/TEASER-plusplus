@@ -53,7 +53,7 @@ if (BUILD_TEASER_FPFH)
             src/matcher.cc
             )
     target_link_libraries(teaser_features
-            PRIVATE ${PCL_LIBRARIES}
+            PUBLIC pcl_common pcl_io pcl_features pcl_kdtree
             PRIVATE Eigen3::Eigen
             )
     if (BUILD_WITH_MKL AND MKL_FOUND)
