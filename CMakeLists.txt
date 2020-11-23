@@ -48,16 +48,22 @@ if (ENABLE_MKL)
 endif ()
 
 if (BUILD_TEASER_FPFH)
-    if (NOT BUILD_WITH_MARCH_NATIVE)
-        message(WARNING "If installed PCL is built with march=native, you need to enable BUILD_WITH_MARCH_NATIVE for TEASER++ as well.")
-    endif()
-
     # Suppress CMake warnings
     # see here: https://github.com/PointCloudLibrary/pcl/issues/3680
     if(NOT DEFINED CMAKE_SUPPRESS_DEVELOPER_WARNINGS)
         set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS 1 CACHE INTERNAL "No dev warnings")
     endif()
     find_package(PCL 1.11 QUIET REQUIRED COMPONENTS common io features kdtree)
+
+    # check for -march=native in PCL compile definitions
+    get_target_property(PCL_COMPILE_OPTIONS pcl_common INTERFACE_COMPILE_OPTIONS)
+    string(FIND "${PCL_COMPILE_OPTIONS}" "-march=native" PCL_IS_NATIVE)
+    if (NOT PCL_IS_NATIVE EQUAL -1)
+        if (NOT BUILD_WITH_MARCH_NATIVE)
+            message (STATUS "PCL built with -march=native. Enable -march=native for TEASER++ as well")
+            set(BUILD_WITH_MARCH_NATIVE ON)
+        endif()
+    endif()
 endif ()
 
 # googletest
