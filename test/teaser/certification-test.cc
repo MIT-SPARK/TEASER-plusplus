@@ -327,7 +327,7 @@ protected:
    * @param functor
    */
   template <typename Functor>
-  void testThroughCases(std::string test_case_name, Functor functor,
+  void testThroughCases(const std::string& test_case_name, Functor functor,
                         const std::map<std::string, CaseData>& case_params) {
     // get all case names
     std::string ptr_str = "Timing info for test case: " + test_case_name;
