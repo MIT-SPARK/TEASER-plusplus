@@ -70,6 +70,11 @@ Run the following script to install dependencies:
 
    brew install eigen boost
 
+On Windows
+^^^^^^^^^^
+
+Windows installation is not officially supported. However, you can try this repo `here <https://github.com/DrGabor/WinTeaser/>`_, courtesy of Di Wang at Xi'an Jiaotong University.
+
 Compilation and Installation
 ----------------------------
 
