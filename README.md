@@ -20,8 +20,7 @@ If you find this library helpful or use it in your projects, please cite:
 @article{Yang20tro-teaser,
   title={{TEASER: Fast and Certifiable Point Cloud Registration}},
   author={H. Yang and J. Shi and L. Carlone},
-  journal=tro,
-  note = {extended arXiv version 2001.07715 \linkToPdf{https://arxiv.org/pdf/2001.07715.pdf}},
+  journal={{IEEE} Trans. Robotics},
   pdf={https://arxiv.org/pdf/2001.07715.pdf},
   Year = {2020} 
 }
