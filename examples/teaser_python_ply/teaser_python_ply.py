@@ -72,7 +72,7 @@ if __name__ == "__main__":
     print(T[:3, :3])
     print("Estimated rotation: ")
     print(solution.rotation)
-    print("Error (deg): ")
+    print("Error (rad): ")
     print(get_angular_error(T[:3,:3], solution.rotation))
 
     print("Expected translation: ")
