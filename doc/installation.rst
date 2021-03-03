@@ -70,6 +70,11 @@ Run the following script to install dependencies:
 
    brew install eigen boost
 
+On Windows
+^^^^^^^^^^^^
+
+If you encounter errors regarding Eigen, take a look `here <https://github.com/zhongjingjogy/use-eigen-with-cmake>`_.
+
 Compilation and Installation
 ----------------------------
 
