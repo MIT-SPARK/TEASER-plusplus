@@ -74,6 +74,7 @@ On Windows
 ^^^^^^^^^^
 
 Windows installation is not officially supported. However, you can try this repo `here <https://github.com/DrGabor/WinTeaser/>`_, courtesy of Di Wang at Xi'an Jiaotong University.
+In addition, if you encounter errors regarding Eigen on Windows, take a look `here <https://github.com/zhongjingjogy/use-eigen-with-cmake>`_.
 
 Compilation and Installation
 ----------------------------
