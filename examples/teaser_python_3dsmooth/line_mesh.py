@@ -73,7 +73,7 @@ class LineMesh(object):
                 axis_a = axis * angle
                 R = o3d.geometry.get_rotation_matrix_from_axis_angle(axis_a)
                 cylinder_segment = cylinder_segment.rotate(
-                    R, center=True)
+                    R, center=np.zeros([3, 1], dtype=np.float64))
             # color cylinder
             color = self.colors if self.colors.ndim == 1 else self.colors[i, :]
             cylinder_segment.paint_uniform_color(color)
