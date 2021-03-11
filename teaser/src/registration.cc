@@ -310,21 +310,9 @@ void teaser::ScaleInliersSelector::solveForScale(
       dst.array().square().colwise().sum().array().sqrt();
   double beta = 2 * noise_bound_ * sqrt(cbar2_);
 
-  // A pair-wise correspondence is an inlier if it passes the following two tests:
-  // 1. dst / src is within maximum allowed error
-  // 2. src / dst is within maximum allowed error
-  Eigen::Matrix<double, 1, Eigen::Dynamic> alphas_forward = beta * v1_dist.cwiseInverse();
-  Eigen::Matrix<double, 1, Eigen::Dynamic> raw_scales_forward = v2_dist.array() / v1_dist.array();
-  Eigen::Matrix<bool, 1, Eigen::Dynamic> inliers_forward =
-      (raw_scales_forward.array() - *scale).array().abs() <= alphas_forward.array();
-
-  Eigen::Matrix<double, 1, Eigen::Dynamic> alphas_reverse = beta * v2_dist.cwiseInverse();
-  Eigen::Matrix<double, 1, Eigen::Dynamic> raw_scales_reverse = v1_dist.array() / v2_dist.array();
-  Eigen::Matrix<bool, 1, Eigen::Dynamic> inliers_reverse =
-      (raw_scales_reverse.array() - *scale).array().abs() <= alphas_reverse.array();
-
-  // element-wise AND using component-wise product (Eigen 3.2 compatible)
-  *inliers = inliers_forward.cwiseProduct(inliers_reverse);
+  // A pair-wise correspondence is an inlier if it passes the following test:
+  // abs(|dst| - |src|) is within maximum allowed error
+  *inliers = (v1_dist.array() - v2_dist.array()).array().abs() <= beta;
 }
 
 void teaser::TLSTranslationSolver::solveForTranslation(
