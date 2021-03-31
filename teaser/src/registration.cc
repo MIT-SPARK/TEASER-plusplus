@@ -30,7 +30,6 @@ void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd& X,
   assert(!dimension_inconsistent);
   assert(!only_one_element); // TODO: admit a trivial solution
 
-
   int N = X.cols();
   std::vector<std::pair<double, int>> h;
   for (size_t i= 0 ;i < N ;++i)
@@ -58,7 +57,7 @@ void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd& X,
 
   for (size_t i = 0 ; i < nr_centers ; ++i){
 
-      int idx = int(std::abs(h.at(i).second))-1; // Indices starting at 1
+      int idx = int(std::abs(h.at(i).second)) - 1; // Indices starting at 1
       int epsilon = (h.at(i).second > 0) ? 1 : -1;
 
       consensus_set_cardinal += epsilon;
