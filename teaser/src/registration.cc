@@ -32,10 +32,9 @@ void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd& X,
 
   int N = X.cols();
   std::vector<std::pair<double, int>> h;
-  for (size_t i= 0 ;i < N ;++i)
-  {
-      h.push_back(std::make_pair(X(i) - ranges(i), i+1));
-      h.push_back(std::make_pair(X(i) + ranges(i), -i-1));
+  for (size_t i= 0 ;i < N ;++i){
+    h.push_back(std::make_pair(X(i) - ranges(i), i+1));
+    h.push_back(std::make_pair(X(i) + ranges(i), -i-1));
   }
 
   // ascending order
@@ -57,20 +56,20 @@ void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd& X,
 
   for (size_t i = 0 ; i < nr_centers ; ++i){
 
-      int idx = int(std::abs(h.at(i).second)) - 1; // Indices starting at 1
-      int epsilon = (h.at(i).second > 0) ? 1 : -1;
+    int idx = int(std::abs(h.at(i).second)) - 1; // Indices starting at 1
+    int epsilon = (h.at(i).second > 0) ? 1 : -1;
 
-      consensus_set_cardinal += epsilon;
-      dot_weights_consensus += epsilon * weights(idx);
-      dot_X_weights += epsilon * weights(idx) * X(idx);
-      ranges_inverse_sum -= epsilon * ranges(idx);
-      sum_xi += epsilon * X(idx);
-      sum_xi_square += epsilon * X(idx) * X(idx);
+    consensus_set_cardinal += epsilon;
+    dot_weights_consensus += epsilon * weights(idx);
+    dot_X_weights += epsilon * weights(idx) * X(idx);
+    ranges_inverse_sum -= epsilon * ranges(idx);
+    sum_xi += epsilon * X(idx);
+    sum_xi_square += epsilon * X(idx) * X(idx);
 
-      x_hat(i) = dot_X_weights / dot_weights_consensus;
+    x_hat(i) = dot_X_weights / dot_weights_consensus;
 
-      double residual = consensus_set_cardinal * x_hat(i) * x_hat(i) + sum_xi_square  - 2 * sum_xi * x_hat(i);
-      x_cost(i) = residual + ranges_inverse_sum;
+    double residual = consensus_set_cardinal * x_hat(i) * x_hat(i) + sum_xi_square  - 2 * sum_xi * x_hat(i);
+    x_cost(i) = residual + ranges_inverse_sum;
       
   }
 
