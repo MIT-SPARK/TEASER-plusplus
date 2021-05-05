@@ -48,6 +48,7 @@ add_library(teaserpp::teaser_registration ALIAS teaser_registration)
 
 # teaser_features library
 if (BUILD_TEASER_FPFH)
+    include_directories(${PCL_INCLUDE_DIRS})
     add_library(teaser_features SHARED
             src/fpfh.cc
             src/matcher.cc
