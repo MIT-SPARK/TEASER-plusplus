@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(teaserpp VERSION 1.0.0)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/" ${CMAKE_MODULE_PATH})
 
@@ -53,6 +53,10 @@ if (BUILD_TEASER_FPFH)
 
     # PCL
     find_package(PCL 1.8 QUIET REQUIRED COMPONENTS common io features kdtree)
+
+    # Fix Eigen alignment issue
+    # See: http://eigen.tuxfamily.org/dox-devel/group__TopicUnalignedArrayAssert.html
+    add_definitions(-DEIGEN_MAX_STATIC_ALIGN_BYTES=0)
 endif ()
 
 # googletest
