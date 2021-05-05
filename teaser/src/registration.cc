@@ -30,51 +30,47 @@ void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd& X,
   assert(!dimension_inconsistent);
   assert(!only_one_element); // TODO: admit a trivial solution
 
-  // Prepare variables for calculations
   int N = X.cols();
-  Eigen::RowVectorXd h(N * 2);
-  h << X - ranges, X + ranges;
+  std::vector<std::pair<double, int>> h;
+  for (size_t i= 0 ;i < N ;++i){
+    h.push_back(std::make_pair(X(i) - ranges(i), i+1));
+    h.push_back(std::make_pair(X(i) + ranges(i), -i-1));
+  }
+
   // ascending order
-  std::sort(h.data(), h.data() + h.cols(), [](double a, double b) { return a < b; });
-  // calculate interval centers
-  Eigen::RowVectorXd h_centers = (h.head(h.cols() - 1) + h.tail(h.cols() - 1)) / 2;
-  auto nr_centers = h_centers.cols();
+  std::sort(h.begin(), h.end(), [](std::pair<double, int> a, std::pair<double, int> b) { return a.first < b.first; });
 
   // calculate weights
   Eigen::RowVectorXd weights = ranges.array().square();
   weights = weights.array().inverse();
-
+  int nr_centers = 2 * N;
   Eigen::RowVectorXd x_hat = Eigen::MatrixXd::Zero(1, nr_centers);
   Eigen::RowVectorXd x_cost = Eigen::MatrixXd::Zero(1, nr_centers);
 
-#pragma omp parallel for default(none)                                                             \
-    shared(N, nr_centers, h_centers, X, ranges, weights, x_hat, x_cost)
-  for (size_t i = 0; i < nr_centers; ++i) {
-    double ranges_inverse_sum = 0;
-    double dot_X_weights = 0;
-    double dot_weights_consensus = 0;
-    std::vector<double> X_consensus_vec;
+  double ranges_inverse_sum = ranges.sum();
+  double dot_X_weights = 0;
+  double dot_weights_consensus = 0;
+  int consensus_set_cardinal = 0;
+  double sum_xi = 0; 
+  double sum_xi_square = 0;
 
-    for (size_t j = 0; j < N; ++j) {
-      // consensus = (abs(X-h_centers(i)) <= ranges);
-      bool consensus = std::abs(X(j) - h_centers(i)) <= ranges(j);
-      if (consensus) {
-        dot_X_weights += X(j) * weights(j);
-        dot_weights_consensus += weights(j);
-        X_consensus_vec.push_back(X(j));
-      } else {
-        ranges_inverse_sum += ranges(j);
-      }
-    }
-    // x_hat(i) = dot(X(consensus), weights(consensus)) / dot(weights, consensus);
+  for (size_t i = 0 ; i < nr_centers ; ++i){
+
+    int idx = int(std::abs(h.at(i).second)) - 1; // Indices starting at 1
+    int epsilon = (h.at(i).second > 0) ? 1 : -1;
+
+    consensus_set_cardinal += epsilon;
+    dot_weights_consensus += epsilon * weights(idx);
+    dot_X_weights += epsilon * weights(idx) * X(idx);
+    ranges_inverse_sum -= epsilon * ranges(idx);
+    sum_xi += epsilon * X(idx);
+    sum_xi_square += epsilon * X(idx) * X(idx);
+
     x_hat(i) = dot_X_weights / dot_weights_consensus;
 
-    // residual = X(consensus)-x_hat(i);
-    Eigen::Map<Eigen::VectorXd> X_consensus(X_consensus_vec.data(), X_consensus_vec.size());
-    Eigen::VectorXd residual = X_consensus.array() - x_hat(i);
-
-    // x_cost(i) = dot(residual,residual) + sum(ranges(~consensus));
-    x_cost(i) = residual.squaredNorm() + ranges_inverse_sum;
+    double residual = consensus_set_cardinal * x_hat(i) * x_hat(i) + sum_xi_square  - 2 * sum_xi * x_hat(i);
+    x_cost(i) = residual + ranges_inverse_sum;
+      
   }
 
   size_t min_idx;
@@ -310,21 +306,9 @@ void teaser::ScaleInliersSelector::solveForScale(
       dst.array().square().colwise().sum().array().sqrt();
   double beta = 2 * noise_bound_ * sqrt(cbar2_);
 
-  // A pair-wise correspondence is an inlier if it passes the following two tests:
-  // 1. dst / src is within maximum allowed error
-  // 2. src / dst is within maximum allowed error
-  Eigen::Matrix<double, 1, Eigen::Dynamic> alphas_forward = beta * v1_dist.cwiseInverse();
-  Eigen::Matrix<double, 1, Eigen::Dynamic> raw_scales_forward = v2_dist.array() / v1_dist.array();
-  Eigen::Matrix<bool, 1, Eigen::Dynamic> inliers_forward =
-      (raw_scales_forward.array() - *scale).array().abs() <= alphas_forward.array();
-
-  Eigen::Matrix<double, 1, Eigen::Dynamic> alphas_reverse = beta * v2_dist.cwiseInverse();
-  Eigen::Matrix<double, 1, Eigen::Dynamic> raw_scales_reverse = v1_dist.array() / v2_dist.array();
-  Eigen::Matrix<bool, 1, Eigen::Dynamic> inliers_reverse =
-      (raw_scales_reverse.array() - *scale).array().abs() <= alphas_reverse.array();
-
-  // element-wise AND using component-wise product (Eigen 3.2 compatible)
-  *inliers = inliers_forward.cwiseProduct(inliers_reverse);
+  // A pair-wise correspondence is an inlier if it passes the following test:
+  // abs(|dst| - |src|) is within maximum allowed error
+  *inliers = (v1_dist.array() - v2_dist.array()).array().abs() <= beta;
 }
 
 void teaser::TLSTranslationSolver::solveForTranslation(

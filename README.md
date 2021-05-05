@@ -17,15 +17,12 @@ TEASER++ can solve the rigid body transformation problem between two point cloud
 
 If you find this library helpful or use it in your projects, please cite:
 ```bibtex
-@article{Yang20arXiv-TEASER,
-    title={TEASER: Fast and Certifiable Point Cloud Registration},
-    author={Yang, Heng and Shi, Jingnan and Carlone, Luca},
-    year={2020},
-    eprint={2001.07715},
-    archivePrefix={arXiv},
-    primaryClass={cs.RO},
-    url = {https://github.com/MIT-SPARK/TEASER-plusplus},
-    pdf = {https://arxiv.org/abs/2001.07715}
+@article{Yang20tro-teaser,
+  title={{TEASER: Fast and Certifiable Point Cloud Registration}},
+  author={H. Yang and J. Shi and L. Carlone},
+  journal={{IEEE} Trans. Robotics},
+  pdf={https://arxiv.org/pdf/2001.07715.pdf},
+  Year = {2020} 
 }
 ```
 
