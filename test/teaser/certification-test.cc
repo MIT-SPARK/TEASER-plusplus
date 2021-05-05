@@ -360,7 +360,7 @@ TEST_F(DRSCertifierTest, GetOmega1) {
     teaser::DRSCertifier certifier(case_data.inputs.params);
 
     // perform the computation
-    Eigen::Matrix4d actual_output = certifier.getOmega1(case_data.inputs.q_est);
+    auto actual_output = certifier.getOmega1(case_data.inputs.q_est);
     ASSERT_TRUE(actual_output.isApprox(expected_output))
         << "Actual output: " << actual_output << "Expected output: " << expected_output;
   };
