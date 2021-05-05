@@ -160,11 +160,11 @@ inline std::vector<T> maskVector(Eigen::Matrix<bool, 1, Eigen::Dynamic> mask,
  * @return A vector containing indices of the true elements in the row vector
  */
 template <class T>
-inline std::vector<int> findNonzero(Eigen::Matrix<T, 1, Eigen::Dynamic> mask) {
+inline std::vector<int> findNonzero(const Eigen::Matrix<T, 1, Eigen::Dynamic>& mask) {
   std::vector<int> result;
   for (size_t i = 0; i < mask.cols(); ++i) {
     if (mask(i)) {
-      result.emplace_back(i);
+      result.push_back(i);
     }
   }
   return result;

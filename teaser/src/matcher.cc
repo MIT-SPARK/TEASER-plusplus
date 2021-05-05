@@ -6,12 +6,15 @@
  * See LICENSE for the license information
  */
 
-#include "teaser/matcher.h"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <flann/flann.hpp>
 
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+
+#include "teaser/matcher.h"
 #include "teaser/geometry.h"
 
 namespace teaser {

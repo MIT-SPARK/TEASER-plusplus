@@ -9,8 +9,6 @@
 #pragma once
 
 #include <flann/flann.hpp>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
 
 #include "teaser/geometry.h"
 #include "fpfh.h"
