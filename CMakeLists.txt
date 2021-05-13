@@ -14,7 +14,7 @@ endif ()
 
 # Options
 option(BUILD_TESTS "Build tests" ON)
-option(BUILD_TEASER_FPFH "Build TEASER++ wrappers for PCL FPFH estimation." ON)
+option(BUILD_TEASER_FPFH "Build TEASER++ wrappers for PCL FPFH estimation." OFF)
 option(BUILD_MATLAB_BINDINGS "Build MATLAB bindings" OFF)
 option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
 option(BUILD_DOC "Build documentation" ON)
