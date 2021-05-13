@@ -54,7 +54,7 @@ if (BUILD_TEASER_FPFH)
             src/matcher.cc
             )
     target_link_libraries(teaser_features
-            PUBLIC ${PCL_LIBRARIES}
+            PRIVATE ${PCL_LIBRARIES}
             PRIVATE Eigen3::Eigen
             )
     if (BUILD_WITH_MKL AND MKL_FOUND)
