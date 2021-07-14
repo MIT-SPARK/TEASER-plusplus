@@ -12,6 +12,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <pcl/features/fpfh.h>
+
 #include "teaser/geometry.h"
 #include "fpfh.h"
 
@@ -41,6 +43,24 @@ public:
   std::vector<std::pair<int, int>>
   calculateCorrespondences(teaser::PointCloud& source_points, teaser::PointCloud& target_points,
                            teaser::FPFHCloud& source_features, teaser::FPFHCloud& target_features,
+                           bool use_absolute_scale = true, bool use_crosscheck = true,
+                           bool use_tuple_test = true, float tuple_scale = 0);
+  /**
+   * Calculate correspondences based on given features and point clouds.
+   * @param source_points Pointer to a pcl::PointCloud<pcl::PointXYZ>
+   * @param target_points Pointer to a pcl::PointCloud<pcl::PointXYZ>
+   * @param source_features Pointer to a pcl::PointCloud<pcl::FPFHSignature33>
+   * @param target_features Pointer to a pcl::PointCloud<pcl::FPFHSignature33>
+   * @param use_absolute_scale
+   * @param use_crosscheck
+   * @param use_tuple_test
+   * @return
+   */
+  std::vector<std::pair<int, int>>
+  calculateCorrespondences(pcl::PointCloud<pcl::PointXYZ>::Ptr source_points,
+                           pcl::PointCloud<pcl::PointXYZ>::Ptr target_points,
+                           pcl::PointCloud<pcl::FPFHSignature33>::Ptr source_features,
+                           pcl::PointCloud<pcl::FPFHSignature33>::Ptr target_features,
                            bool use_absolute_scale = true, bool use_crosscheck = true,
                            bool use_tuple_test = true, float tuple_scale = 0);
 

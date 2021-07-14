@@ -50,6 +50,52 @@ std::vector<std::pair<int, int>> Matcher::calculateCorrespondences(
   return corres_;
 }
 
+std::vector<std::pair<int, int>> Matcher::calculateCorrespondences(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr source_points,
+    pcl::PointCloud<pcl::PointXYZ>::Ptr target_points,
+    pcl::PointCloud<pcl::FPFHSignature33>::Ptr source_features,
+    pcl::PointCloud<pcl::FPFHSignature33>::Ptr target_features, bool use_absolute_scale,
+    bool use_crosscheck, bool use_tuple_test, float tuple_scale) {
+
+  teaser::PointCloud src_cloud;
+  teaser::PointCloud dst_cloud;
+  for (auto & i : *source_points) {
+    src_cloud.push_back({i.x, i.y, i.z});
+  }
+  for (auto & i : *target_points) {
+    src_cloud.push_back({i.x, i.y, i.z});
+  }
+
+  pointcloud_.push_back(src_cloud);
+  pointcloud_.push_back(dst_cloud);
+
+  Feature cloud_features;
+
+  // It compute the global_scale_ required to set correctly the search radius
+  normalizePoints(use_absolute_scale);
+
+  for (auto& f : *source_features) {
+    Eigen::VectorXf fpfh(33);
+    for (int i = 0; i < 33; i++)
+      fpfh(i) = f.histogram[i];
+    cloud_features.push_back(fpfh);
+  }
+  features_.push_back(cloud_features);
+
+  cloud_features.clear();
+  for (auto& f : *target_features) {
+    Eigen::VectorXf fpfh(33);
+    for (int i = 0; i < 33; i++)
+      fpfh(i) = f.histogram[i];
+    cloud_features.push_back(fpfh);
+  }
+  features_.push_back(cloud_features);
+
+  advancedMatching(use_crosscheck, use_tuple_test, tuple_scale);
+
+  return corres_;
+}
+
 void Matcher::normalizePoints(bool use_absolute_scale) {
   int num = 2;
   float scale = 0;
