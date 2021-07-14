@@ -64,7 +64,7 @@ if (BUILD_TEASER_FPFH)
     if (NOT PCL_IS_NATIVE EQUAL -1)
         # Fix Eigen alignment conflicting with pcl issue
         # See: http://eigen.tuxfamily.org/dox-devel/group__TopicUnalignedArrayAssert.html
-        add_compile_definitions(EIGEN_MAX_STATIC_ALIGN_BYTES=0)
+        add_definitions(-DEIGEN_MAX_STATIC_ALIGN_BYTES=0)
 
         if (NOT BUILD_WITH_MARCH_NATIVE)
             message (STATUS "PCL built with -march=native. Enable -march=native for TEASER++ as well")
