@@ -5,7 +5,6 @@ set (CMAKE_CXX_STANDARD 14)
 
 find_package(Eigen3 REQUIRED)
 find_package(teaserpp REQUIRED)
-find_package(Boost 1.58 REQUIRED)
 find_package(PCL 1.9 REQUIRED COMPONENTS common features kdtree)
 
 # Change this line to include your own executable file

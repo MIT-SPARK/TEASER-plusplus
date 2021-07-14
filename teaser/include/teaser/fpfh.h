@@ -10,6 +10,7 @@
 
 #include <boost/smart_ptr/shared_ptr.hpp>
 #include <pcl/features/fpfh.h>
+#include <pcl/features/fpfh_omp.h>
 
 #include "teaser/geometry.h"
 
@@ -22,7 +23,7 @@ class FPFHEstimation {
 public:
   FPFHEstimation()
       : fpfh_estimation_(
-            new pcl::FPFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33>){};
+            new pcl::FPFHEstimationOMP<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33>){};
 
   /**
    * Compute FPFH features.
@@ -32,20 +33,22 @@ public:
    * @param normal_search_radius Radius for estimating normals
    * @param fpfh_search_radius Radius for calculating FPFH (needs to be at least normalSearchRadius)
    */
-  FPFHCloudPtr computeFPFHFeatures(const PointCloud& input_cloud, double normal_search_radius = 0.03,
-                                        double fpfh_search_radius = 0.05);
+  FPFHCloudPtr computeFPFHFeatures(const PointCloud& input_cloud,
+                                   double normal_search_radius = 0.03,
+                                   double fpfh_search_radius = 0.05);
 
   /**
    * Return the pointer to the underlying pcl::FPFHEstimation object
    * @return
    */
-  inline pcl::FPFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33>::Ptr
+  inline pcl::FPFHEstimationOMP<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33>::Ptr
   getImplPointer() const {
     return fpfh_estimation_;
   }
 
 private:
-  pcl::FPFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33>::Ptr fpfh_estimation_;
+  // pcl::FPFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33>::Ptr fpfh_estimation_;
+  pcl::FPFHEstimationOMP<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33>::Ptr fpfh_estimation_;
 
   /**
    * Wrapper function for the corresponding PCL function.
