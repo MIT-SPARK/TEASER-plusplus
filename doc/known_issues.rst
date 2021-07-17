@@ -16,3 +16,4 @@ Known Issues
       export LD_PRELOAD=/opt/intel/mkl/lib/intel64/libmkl_intel_lp64.so:/opt/intel/mkl/lib/intel64/libmkl_gnu_thread.so:/opt/intel/mkl/lib/intel64/libmkl_core.so
 
    You may need to change the paths according to your MKL installation.
+- If you see errors similar to:  ``./teaser_cpp_ply: error while loading shared libraries: libpmc.so: cannot open shared object file: No such file or directory``, you need to run `sudo ldconfig` after installation.
