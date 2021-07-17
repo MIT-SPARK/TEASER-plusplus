@@ -107,6 +107,8 @@ Make sure you have compiled the project, then run:
 
    # Install shared libraries and headers
    sudo make install
+   # Update links and cache to shared libraries
+   sudo ldconfig
 
 Installing Python bindings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

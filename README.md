@@ -37,6 +37,7 @@ git clone https://github.com/MIT-SPARK/TEASER-plusplus.git
 cd TEASER-plusplus && mkdir build && cd build
 cmake .. && make
 sudo make install
+sudo ldconfig
 cd .. && cd examples/teaser_cpp_ply && mkdir build && cd build
 cmake .. && make
 ./teaser_cpp_ply
