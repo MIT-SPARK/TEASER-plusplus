@@ -327,7 +327,7 @@ protected:
    * @param functor
    */
   template <typename Functor>
-  void testThroughCases(std::string test_case_name, Functor functor,
+  void testThroughCases(const std::string& test_case_name, Functor functor,
                         const std::map<std::string, CaseData>& case_params) {
     // get all case names
     std::string ptr_str = "Timing info for test case: " + test_case_name;
@@ -360,7 +360,7 @@ TEST_F(DRSCertifierTest, GetOmega1) {
     teaser::DRSCertifier certifier(case_data.inputs.params);
 
     // perform the computation
-    Eigen::Matrix4d actual_output = certifier.getOmega1(case_data.inputs.q_est);
+    auto actual_output = certifier.getOmega1(case_data.inputs.q_est);
     ASSERT_TRUE(actual_output.isApprox(expected_output))
         << "Actual output: " << actual_output << "Expected output: " << expected_output;
   };

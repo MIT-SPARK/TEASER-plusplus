@@ -48,6 +48,7 @@ add_library(teaserpp::teaser_registration ALIAS teaser_registration)
 
 # teaser_features library
 if (BUILD_TEASER_FPFH)
+    include_directories(${PCL_INCLUDE_DIRS})
     add_library(teaser_features SHARED
             src/fpfh.cc
             src/matcher.cc
@@ -66,7 +67,7 @@ if (BUILD_TEASER_FPFH)
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-    install(TARGETS teaser_features 
+    install(TARGETS teaser_features
         EXPORT teaserpp-export
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
