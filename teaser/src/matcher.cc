@@ -54,8 +54,8 @@ std::vector<std::pair<int, int>> Matcher::calculateCorrespondences(
 }
 
 std::vector<std::pair<int, int>> Matcher::calculateCorrespondences(
-    pcl::PointCloud<pcl::PointXYZ>::Ptr source_points,
-    pcl::PointCloud<pcl::PointXYZ>::Ptr target_points,
+    pcl::PointCloud<pcl::PointXYZINormal>::Ptr source_points,
+    pcl::PointCloud<pcl::PointXYZINormal>::Ptr target_points,
     pcl::PointCloud<pcl::FPFHSignature33>::Ptr source_features,
     pcl::PointCloud<pcl::FPFHSignature33>::Ptr target_features, bool use_absolute_scale,
     bool use_crosscheck, bool use_tuple_test, float tuple_scale) {

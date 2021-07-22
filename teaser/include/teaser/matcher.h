@@ -55,8 +55,8 @@ public:
    * @return
    */
   std::vector<std::pair<int, int>>
-  calculateCorrespondences(pcl::PointCloud<pcl::PointXYZ>::Ptr source_points,
-                           pcl::PointCloud<pcl::PointXYZ>::Ptr target_points,
+  calculateCorrespondences(pcl::PointCloud<pcl::PointXYZINormal>::Ptr source_points,
+                           pcl::PointCloud<pcl::PointXYZINormal>::Ptr target_points,
                            pcl::PointCloud<pcl::FPFHSignature33>::Ptr source_features,
                            pcl::PointCloud<pcl::FPFHSignature33>::Ptr target_features,
                            bool use_absolute_scale = true, bool use_crosscheck = true,
