@@ -66,7 +66,7 @@ std::vector<std::pair<int, int>> Matcher::calculateCorrespondences(
     src_cloud.push_back({i.x, i.y, i.z});
   }
   for (auto & i : *target_points) {
-    src_cloud.push_back({i.x, i.y, i.z});
+    dst_cloud.push_back({i.x, i.y, i.z});
   }
 
   pointcloud_.push_back(src_cloud);
