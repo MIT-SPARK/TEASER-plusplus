@@ -67,12 +67,65 @@ TEST(FPFHMatcherTest, MatchCase1) {
     ASSERT_EQ(tokens.size(), 2);
     ref_correspondences.emplace_back(
         // -1 because the ref correspondences use 1-index (MATLAB)
-        std::pair<int, int>{std::stoi(tokens[0])-1, std::stoi(tokens[1])-1});
+        std::pair<int, int>{std::stoi(tokens[0]) - 1, std::stoi(tokens[1]) - 1});
   }
 
   // compare calculated correspondences with reference correspondences
   for (size_t i = 0; i < ref_correspondences.size(); ++i) {
     EXPECT_EQ(correspondences[i].first, ref_correspondences[i].first);
     EXPECT_EQ(correspondences[i].second, ref_correspondences[i].second);
+  }
+}
+
+TEST(FPFHMatcherTest, kNeighborMatchSingle) {
+  teaser::PLYReader reader;
+  teaser::PointCloud obj_cloud;
+  teaser::PointCloud scene_cloud;
+  auto status_0 = reader.read("./data/matcher-test-object-1.ply", obj_cloud);
+  EXPECT_EQ(status_0, 0);
+  auto status_1 = reader.read("./data/matcher-test-object-1.ply", scene_cloud);
+  EXPECT_EQ(status_1, 0);
+
+  teaser::FPFHEstimation fpfh;
+  auto obj_descriptors = fpfh.computeFPFHFeatures(obj_cloud, 0.02, 0.04);
+  auto scene_descriptors = fpfh.computeFPFHFeatures(scene_cloud, 0.02, 0.04);
+
+  teaser::Matcher matcher;
+  auto correspondences = matcher.calculateKCorrespondences(obj_cloud, scene_cloud, *obj_descriptors,
+                                                           *scene_descriptors, 1);
+
+  for (size_t i = 0; i < correspondences.size(); ++i) {
+    EXPECT_EQ(correspondences[i].first, i);
+    EXPECT_EQ(correspondences[i].second, i);
+  }
+ }
+
+
+TEST(FPFHMatcherTest, kNeighborMatchMultiple) {
+  teaser::PLYReader reader;
+  teaser::PointCloud obj_cloud;
+  teaser::PointCloud scene_cloud;
+  auto status_0 = reader.read("./data/matcher-test-object-1.ply", obj_cloud);
+  EXPECT_EQ(status_0, 0);
+  auto status_1 = reader.read("./data/matcher-test-object-1.ply", scene_cloud);
+  EXPECT_EQ(status_1, 0);
+
+  teaser::FPFHEstimation fpfh;
+  auto obj_descriptors = fpfh.computeFPFHFeatures(obj_cloud, 0.02, 0.04);
+  auto scene_descriptors = fpfh.computeFPFHFeatures(scene_cloud, 0.02, 0.04);
+
+  int og_size = obj_cloud.size();
+  int nn = 5;
+  teaser::Matcher matcher;
+  auto correspondences = matcher.calculateKCorrespondences(obj_cloud, scene_cloud, *obj_descriptors,
+                                                           *scene_descriptors, nn);
+  EXPECT_EQ(correspondences.size(), nn * og_size);
+  for (int i = 0; i < correspondences.size(); ++i) {
+    int pt_idx = i / nn;
+    int k_idx = i % nn;
+    EXPECT_EQ(correspondences[i].first, pt_idx);
+    if (k_idx == 0) {
+      EXPECT_EQ(correspondences[i].second, pt_idx);
+    }
   }
 }

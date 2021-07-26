@@ -6,7 +6,6 @@
  * See LICENSE for the license information
  */
 
-
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <flann/flann.hpp>
@@ -53,19 +52,20 @@ std::vector<std::pair<int, int>> Matcher::calculateCorrespondences(
   return corres_;
 }
 
-std::vector<std::pair<int, int>> Matcher::calculateCorrespondences(
-    pcl::PointCloud<pcl::PointXYZINormal>::Ptr source_points,
-    pcl::PointCloud<pcl::PointXYZINormal>::Ptr target_points,
-    pcl::PointCloud<pcl::FPFHSignature33>::Ptr source_features,
-    pcl::PointCloud<pcl::FPFHSignature33>::Ptr target_features, bool use_absolute_scale,
-    bool use_crosscheck, bool use_tuple_test, float tuple_scale) {
+std::vector<std::pair<int, int>>
+Matcher::calculateCorrespondences(pcl::PointCloud<pcl::PointXYZINormal>::Ptr source_points,
+                                  pcl::PointCloud<pcl::PointXYZINormal>::Ptr target_points,
+                                  pcl::PointCloud<pcl::FPFHSignature33>::Ptr source_features,
+                                  pcl::PointCloud<pcl::FPFHSignature33>::Ptr target_features,
+                                  bool use_absolute_scale, bool use_crosscheck, bool use_tuple_test,
+                                  float tuple_scale) {
 
   teaser::PointCloud src_cloud;
   teaser::PointCloud dst_cloud;
-  for (auto & i : *source_points) {
+  for (auto& i : *source_points) {
     src_cloud.push_back({i.x, i.y, i.z});
   }
-  for (auto & i : *target_points) {
+  for (auto& i : *target_points) {
     dst_cloud.push_back({i.x, i.y, i.z});
   }
 
@@ -95,6 +95,77 @@ std::vector<std::pair<int, int>> Matcher::calculateCorrespondences(
   features_.push_back(cloud_features);
 
   advancedMatching(use_crosscheck, use_tuple_test, tuple_scale);
+
+  return corres_;
+}
+
+std::vector<std::pair<int, int>> Matcher::calculateKCorrespondences(
+    teaser::PointCloud& source_points, teaser::PointCloud& target_points,
+    teaser::FPFHCloud& source_features, teaser::FPFHCloud& target_features, int k) {
+
+  pointcloud_.push_back(source_points);
+  pointcloud_.push_back(target_points);
+
+  Feature cloud_features;
+  for (auto& f : source_features) {
+    Eigen::VectorXf fpfh(33);
+    for (int i = 0; i < 33; i++)
+      fpfh(i) = f.histogram[i];
+    cloud_features.push_back(fpfh);
+  }
+  features_.push_back(cloud_features);
+
+  cloud_features.clear();
+  for (auto& f : target_features) {
+    Eigen::VectorXf fpfh(33);
+    for (int i = 0; i < 33; i++)
+      fpfh(i) = f.histogram[i];
+    cloud_features.push_back(fpfh);
+  }
+  features_.push_back(cloud_features);
+
+  kMatching(k);
+
+  return corres_;
+}
+
+std::vector<std::pair<int, int>>
+Matcher::calculateKCorrespondences(pcl::PointCloud<pcl::PointXYZINormal>::Ptr source_points,
+                                   pcl::PointCloud<pcl::PointXYZINormal>::Ptr target_points,
+                                   pcl::PointCloud<pcl::FPFHSignature33>::Ptr source_features,
+                                   pcl::PointCloud<pcl::FPFHSignature33>::Ptr target_features,
+                                   int k) {
+  teaser::PointCloud src_cloud;
+  teaser::PointCloud dst_cloud;
+  for (auto& i : *source_points) {
+    src_cloud.push_back({i.x, i.y, i.z});
+  }
+  for (auto& i : *target_points) {
+    dst_cloud.push_back({i.x, i.y, i.z});
+  }
+
+  pointcloud_.push_back(src_cloud);
+  pointcloud_.push_back(dst_cloud);
+
+  Feature cloud_features;
+  for (auto& f : *source_features) {
+    Eigen::VectorXf fpfh(33);
+    for (int i = 0; i < 33; i++)
+      fpfh(i) = f.histogram[i];
+    cloud_features.push_back(fpfh);
+  }
+  features_.push_back(cloud_features);
+
+  cloud_features.clear();
+  for (auto& f : *target_features) {
+    Eigen::VectorXf fpfh(33);
+    for (int i = 0; i < 33; i++)
+      fpfh(i) = f.histogram[i];
+    cloud_features.push_back(fpfh);
+  }
+  features_.push_back(cloud_features);
+
+  kMatching(k);
 
   return corres_;
 }
@@ -158,6 +229,31 @@ void Matcher::normalizePoints(bool use_absolute_scale) {
     }
   }
 }
+
+void Matcher::kMatching(int nn) {
+  int fi = 0; // source idx
+  int fj = 1; // destination idx
+
+  int nPti = pointcloud_[fi].size();
+
+  // Build target feature KD tree
+  KDTree feature_tree_j(flann::KDTreeSingleIndexParams(15));
+  buildKDTree(features_[fj], &feature_tree_j);
+
+  std::vector<int> corres_K;
+  std::vector<float> dis;
+
+  std::vector<std::pair<int, int>> corres;
+
+  // For all source features, match k neighbors in the target feature tree
+  for (int i = 0; i < nPti; i++) {
+    searchKDTree(&feature_tree_j, features_[fi][i], corres_K, dis, nn);
+    for (int k = 0; k < corres_K.size(); ++k) {
+      corres_.push_back(std::pair<int, int>(i, corres_K[k]));
+    }
+  }
+}
+
 void Matcher::advancedMatching(bool use_crosscheck, bool use_tuple_test, float tuple_scale) {
 
   int fi = 0; // source idx

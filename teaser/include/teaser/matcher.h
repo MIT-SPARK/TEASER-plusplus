@@ -61,6 +61,35 @@ public:
                            pcl::PointCloud<pcl::FPFHSignature33>::Ptr target_features,
                            bool use_absolute_scale = true, bool use_crosscheck = true,
                            bool use_tuple_test = true, float tuple_scale = 0);
+  /**
+   * @brief For all source points, find top k matching correspondences.
+   * @param source_points
+   * @param target_points
+   * @param source_features
+   * @param target_features
+   * @param k
+   * @return
+   */
+  std::vector<std::pair<int, int>>
+  calculateKCorrespondences(teaser::PointCloud& source_points, teaser::PointCloud& target_points,
+                            teaser::FPFHCloud& source_features, teaser::FPFHCloud& target_features,
+                            int k = 10);
+
+  /**
+   * @brief For all source points, find top k matching correspondences.
+   * @param source_points
+   * @param target_points
+   * @param source_features
+   * @param target_features
+   * @param k
+   * @return
+   */
+  std::vector<std::pair<int, int>>
+  calculateKCorrespondences(pcl::PointCloud<pcl::PointXYZINormal>::Ptr source_points,
+                            pcl::PointCloud<pcl::PointXYZINormal>::Ptr target_points,
+                            pcl::PointCloud<pcl::FPFHSignature33>::Ptr source_features,
+                            pcl::PointCloud<pcl::FPFHSignature33>::Ptr target_features,
+                            int k = 10);
 
 private:
   template <typename T> void buildKDTree(const std::vector<T>& data, KDTree* tree);
@@ -68,6 +97,8 @@ private:
   template <typename T>
   void searchKDTree(KDTree* tree, const T& input, std::vector<int>& indices,
                     std::vector<float>& dists, int nn);
+
+  void kMatching(int k);
 
   void advancedMatching(bool use_crosscheck, bool use_tuple_test, float tuple_scale);
 
