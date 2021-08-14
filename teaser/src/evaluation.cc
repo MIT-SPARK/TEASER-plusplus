@@ -8,21 +8,23 @@
 
 #include <teaser/evaluation.h>
 
-teaser::SolutionEvaluator::SolutionEvaluator(const Eigen::Matrix3d& src, const Eigen::Matrix3d& dst,
+teaser::SolutionEvaluator::SolutionEvaluator(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                                             const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
                                              double corr_dist_threshold)
     : src_(src), dst_(dst), corr_dist_threshold_(corr_dist_threshold) {
   buildKDTree(dst_);
   error_functor_ = new TruncatedError(corr_dist_threshold);
 }
 
-void teaser::SolutionEvaluator::setPointClouds(const Eigen::Matrix3d& src,
-                                               const Eigen::Matrix3d& dst) {
+void teaser::SolutionEvaluator::setPointClouds(
+    const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+    const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst) {
   src_ = src;
   dst_ = dst;
   buildKDTree(dst_);
 }
 
-void teaser::SolutionEvaluator::buildKDTree(const Eigen::Matrix3d& dst) {
+void teaser::SolutionEvaluator::buildKDTree(const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst) {
   int num_pts, dim;
   num_pts = static_cast<int>(dst.cols());
   dim = static_cast<int>(dst.rows());
@@ -40,7 +42,7 @@ void teaser::SolutionEvaluator::buildKDTree(const Eigen::Matrix3d& dst) {
 double teaser::SolutionEvaluator::computeErrorMetric(const Eigen::Matrix3d& rotation,
                                                      const Eigen::Vector3d& translation) {
   // apply transformation to src
-  Eigen::Matrix3d transformed_src = rotation * src_;
+  Eigen::Matrix<double, 3, Eigen::Dynamic> transformed_src = rotation * src_;
   transformed_src.colwise() += translation;
   std::vector<int> corres_K;
   std::vector<double> dis;

@@ -59,10 +59,12 @@ public:
 
   SolutionEvaluator() = delete;
 
-  SolutionEvaluator(const Eigen::Matrix3d& src, const Eigen::Matrix3d& dst,
+  SolutionEvaluator(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                    const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
                     double corr_dist_threshold = 100);
 
-  void setPointClouds(const Eigen::Matrix3d& src, const Eigen::Matrix3d& dst);
+  void setPointClouds(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                      const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst);
 
   double computeErrorMetric(const Eigen::Matrix3d& rotation, const Eigen::Vector3d& translation);
 
@@ -73,15 +75,15 @@ public:
 private:
   typedef flann::Index<flann::L2<double>> KDTree;
 
-  void buildKDTree(const Eigen::Matrix3d& dst);
+  void buildKDTree(const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst);
 
   template <typename T>
   void searchKDTree(KDTree* tree, const T& input, std::vector<int>& indices,
                     std::vector<double>& dists, int nn);
 
   double corr_dist_threshold_ = 100;
-  Eigen::Matrix3d src_;
-  Eigen::Matrix3d dst_;
+  Eigen::Matrix<double, 3, Eigen::Dynamic> src_;
+  Eigen::Matrix<double, 3, Eigen::Dynamic> dst_;
   KDTree* tree_ = nullptr;
   ErrorFunctor* error_functor_ = nullptr;
 };
