@@ -13,6 +13,7 @@ set(TEST_SRCS
         registration-test.cc
         graph-test.cc
         certification-test.cc
+        evaluation-test.cc
         linalg-test.cc)
 set(TEST_LINK_LIBRARIES
         Eigen3::Eigen
