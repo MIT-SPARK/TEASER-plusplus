@@ -52,6 +52,7 @@ if (BUILD_TEASER_FPFH)
     add_library(teaser_features SHARED
             src/fpfh.cc
             src/matcher.cc
+            src/evaluation.cc
             )
     target_link_libraries(teaser_features
             PRIVATE ${PCL_LIBRARIES}
