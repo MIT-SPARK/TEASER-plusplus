@@ -21,7 +21,7 @@ source:
 requirements:
   build:
     - boost
-    - python 3.6
+    - python {{ python }}
     - setuptools
     - cmake
     - make
