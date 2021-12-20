@@ -3,17 +3,17 @@ package:
   version: 2.0.1
 
 source:
-  - path: ../cmake
+  - path: ../../cmake
     folder: cmake
-  - path: ../python
+  - path: ../../python
     folder: python
-  - path: ../teaser
+  - path: ../../teaser
     folder: teaser
-  - path: ../doc
+  - path: ../../doc
     folder: doc
-  - path: ../test
+  - path: ../../test
     folder: test
-  - path: ../CMakeLists.txt
+  - path: ../../CMakeLists.txt
 
 # TODO build for different python versions
 # TODO try without llvm-openmp
