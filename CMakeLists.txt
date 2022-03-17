@@ -59,7 +59,7 @@ if (BUILD_TEASER_FPFH)
     find_package(PCL 1.8 QUIET REQUIRED COMPONENTS common io features kdtree)
 
     # check for -march=native in PCL compile definitions
-    get_target_property(PCL_COMPILE_OPTIONS pcl_common INTERFACE_COMPILE_OPTIONS)
+    # get_target_property(PCL_COMPILE_OPTIONS pcl_common INTERFACE_COMPILE_OPTIONS)
     string(FIND "${PCL_COMPILE_OPTIONS}" "-march=native" PCL_IS_NATIVE)
     if (NOT PCL_IS_NATIVE EQUAL -1)
         # Fix Eigen alignment conflicting with pcl issue
