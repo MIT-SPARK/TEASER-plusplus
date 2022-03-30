@@ -12,7 +12,7 @@ def extract_fpfh(pcd, voxel_size):
       o3d.geometry.KDTreeSearchParamHybrid(radius=radius_normal, max_nn=30))
 
   radius_feature = voxel_size * 5
-  fpfh = o3d.registration.compute_fpfh_feature(
+  fpfh = o3d.pipelines.registration.compute_fpfh_feature(
       pcd, o3d.geometry.KDTreeSearchParamHybrid(radius=radius_feature, max_nn=100))
   return np.array(fpfh.data).T
 
