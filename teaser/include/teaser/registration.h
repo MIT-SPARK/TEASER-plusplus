@@ -496,9 +496,9 @@ public:
                              const std::vector<std::pair<int, int>> correspondences);
 
   /**
-   * Solve for scale, translation and rotation. Assumes v2 is v1 after transformation.
-   * @param v1
-   * @param v2
+   * Solve for scale, translation and rotation. Assumes dst is src after transformation.
+   * @param src
+   * @param dst
    */
   RegistrationSolution solve(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst);

@@ -26,6 +26,7 @@ set(TEST_LINK_LIBRARIES
 
 # Add feature tests if TEASER_FPFH is enabled
 if (BUILD_TEASER_FPFH)
+    include_directories(${PCL_INCLUDE_DIRS})
     list(APPEND TEST_SRCS feature-test.cc
             matcher-test.cc)
     list(APPEND TEST_LINK_LIBRARIES teaser_features ${PCL_LIBRARIES})

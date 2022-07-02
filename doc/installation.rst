@@ -7,6 +7,7 @@ Supported Platforms
 -------------------
 
 TEASER++ has been tested on Ubuntu 18.04 with g++-7/9 and clang++-7/8/9.
+You can also install it on Ubunutu 16.04, however you may need to install Eigen 3.3 manually from source.
 
 For Python bindings, we recommend using Python 3.
 
@@ -59,6 +60,8 @@ If you want to build MATLAB bindings, you also need:
 
 TEASER++ uses the Parallel Maximum Clique (`paper <https://arxiv.org/abs/1302.6256>`_, `code <https://github.com/ryanrossi/pmc>`_) for maximum clique calculation. It will be downloaded automatically during CMake configuration. In addition, CMake will also download Google Test and pybind11 if necessary.
 
+On Ubuntu 16.04, you may need to install Eigen 3.3 manually. You can do so by following the official installation instructions.
+
 On macOS
 ^^^^^^^^^^
 
@@ -107,6 +110,8 @@ Make sure you have compiled the project, then run:
 
    # Install shared libraries and headers
    sudo make install
+   # Update links and cache to shared libraries
+   sudo ldconfig
 
 Installing Python bindings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

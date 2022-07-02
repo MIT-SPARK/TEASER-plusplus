@@ -264,10 +264,10 @@ def pair_eval_helper(scene_path, desc_path, gt_mat, frag1_idx, frag2_idx):
     frag2_desc = frag2_desc["data"]
 
     # save as o3d feature
-    frag1 = o3d.registration.Feature()
+    frag1 = o3d.pipelines.registration.Feature()
     frag1.data = frag1_desc.T
 
-    frag2 = o3d.registration.Feature()
+    frag2 = o3d.pipelines.registration.Feature()
     frag2.data = frag2_desc.T
 
     # load point clouds
