@@ -16,6 +16,8 @@
 #include <Eigen/SVD>
 #include <Eigen/Geometry>
 
+#include "omp.h"
+
 #include "teaser/graph.h"
 #include "teaser/geometry.h"
 
@@ -461,6 +463,11 @@ public:
      * Time limit on running the max clique algorithm (in seconds).
      */
     double max_clique_time_limit = 3600;
+
+    /**
+     * Number of threads used for the maximum clique solver
+     */
+    int max_clique_num_threads = omp_get_max_threads();
   };
 
   RobustRegistrationSolver() = default;

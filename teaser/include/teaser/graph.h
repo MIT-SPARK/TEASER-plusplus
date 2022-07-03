@@ -254,6 +254,11 @@ public:
      * Time limit on running the solver.
      */
     double time_limit = 3600;
+
+    /**
+     * Number of threads to use for the solver
+     */
+     int num_threads = 1;
   };
 
   MaxCliqueSolver() = default;
