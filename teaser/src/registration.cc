@@ -463,6 +463,7 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
     }
     clique_params.time_limit = params_.max_clique_time_limit;
     clique_params.kcore_heuristic_threshold = params_.kcore_heuristic_threshold;
+    clique_params.num_threads = params_.max_clique_num_threads;
 
     teaser::MaxCliqueSolver clique_solver(clique_params);
     max_clique_ = clique_solver.findMaxClique(inlier_graph_);
