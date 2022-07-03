@@ -303,3 +303,108 @@ TEST(MaxCliqueSolverTest, FindMaxClique) {
     }
   }
 }
+
+TEST(PMCTest, FindMaximumCliqueSingleThreaded) {
+  // A complete graph with max clique # = 5
+  auto in = generateMockInput();
+  in.threads = 1;
+  std::map<int, std::vector<int>> vertices_map;
+
+  // create a complete graph
+  int nodes_count = 5;
+  for (int i = 0; i < nodes_count; ++i) {
+    std::vector<int> temp;
+    for (int j = 0; j < nodes_count; ++j) {
+      if (j != i) {
+        temp.push_back(j);
+      }
+    }
+    vertices_map[i] = temp;
+  }
+  pmc::pmc_graph G(vertices_map);
+  G.create_adj();
+  printAdjMatirx(G.adj, nodes_count);
+
+  EXPECT_EQ(G.max_degree, nodes_count - 1);
+  EXPECT_EQ(G.min_degree, nodes_count - 1);
+
+  // upper-bound of max clique
+  G.compute_cores();
+  if (in.ub == 0) {
+    in.ub = G.get_max_core() + 1;
+  }
+
+  // lower-bound of max clique
+  vector<int> C;
+  if (in.lb == 0 && in.heu_strat != "0") { // skip if given as input
+    pmc::pmc_heu maxclique(G, in);
+    in.lb = maxclique.search(G, C);
+  }
+
+  EXPECT_EQ(in.lb, 5);
+  EXPECT_EQ(in.lb, in.ub);
+
+  if (G.num_vertices() < in.adj_limit) {
+    G.create_adj();
+    pmc::pmcx_maxclique finder(G, in);
+    finder.search_dense(G, C);
+  } else {
+    pmc::pmcx_maxclique finder(G, in);
+    finder.search(G, C);
+  }
+
+  EXPECT_EQ(C.size(), 5);
+}
+
+
+TEST(PMCTest, FindMaximumCliqueMultiThreaded) {
+  // A complete graph with max clique # = 5
+  auto in = generateMockInput();
+  in.threads = 15;
+  std::map<int, std::vector<int>> vertices_map;
+
+  // create a complete graph
+  int nodes_count = 5;
+  for (int i = 0; i < nodes_count; ++i) {
+    std::vector<int> temp;
+    for (int j = 0; j < nodes_count; ++j) {
+      if (j != i) {
+        temp.push_back(j);
+      }
+    }
+    vertices_map[i] = temp;
+  }
+  pmc::pmc_graph G(vertices_map);
+  G.create_adj();
+  printAdjMatirx(G.adj, nodes_count);
+
+  EXPECT_EQ(G.max_degree, nodes_count - 1);
+  EXPECT_EQ(G.min_degree, nodes_count - 1);
+
+  // upper-bound of max clique
+  G.compute_cores();
+  if (in.ub == 0) {
+    in.ub = G.get_max_core() + 1;
+  }
+
+  // lower-bound of max clique
+  vector<int> C;
+  if (in.lb == 0 && in.heu_strat != "0") { // skip if given as input
+    pmc::pmc_heu maxclique(G, in);
+    in.lb = maxclique.search(G, C);
+  }
+
+  EXPECT_EQ(in.lb, 5);
+  EXPECT_EQ(in.lb, in.ub);
+
+  if (G.num_vertices() < in.adj_limit) {
+    G.create_adj();
+    pmc::pmcx_maxclique finder(G, in);
+    finder.search_dense(G, C);
+  } else {
+    pmc::pmcx_maxclique finder(G, in);
+    finder.search(G, C);
+  }
+
+  EXPECT_EQ(C.size(), 5);
+}
