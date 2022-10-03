@@ -66,14 +66,12 @@ o3d.visualization.draw_geometries([A_pcd_T_teaser,B_pcd])
 # local refinement using ICP
 icp_sol = o3d.pipelines.registration.registration_icp(
       A_pcd, B_pcd, NOISE_BOUND, T_teaser,
-      o3d.registration.TransformationEstimationPointToPoint(),
-      o3d.registration.ICPConvergenceCriteria(max_iteration=100))
+      o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+      o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=100))
 T_icp = icp_sol.transformation
 
 # visualize the registration after ICP refinement
 A_pcd_T_icp = copy.deepcopy(A_pcd).transform(T_icp)
 o3d.visualization.draw_geometries([A_pcd_T_icp,B_pcd])
-
-
 
 
