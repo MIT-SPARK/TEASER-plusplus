@@ -334,10 +334,16 @@ public:
    * ECCV 2016, Cham, 2016, vol. 9906, pp. 766–782. and H. Yang, P. Antonante, V. Tzoumas, and L.
    * Carlone, “Graduated Non-Convexity for Robust Spatial Perception: From Non-Minimal Solvers to
    * Global Outlier Rejection,” arXiv:1909.08605 [cs, math], Sep. 2019.
+   *
+   * QUATRO: H. Lim et al., "A Single Correspondence Is Enough: Robust Global Registration
+   * to Avoid Degeneracy in Urban Environments," in Robotics -
+   * ICRA 2022, Accepted. To appear.
+   * arXiv:2203.06612 [cs], Mar. 2022.
    */
   enum class ROTATION_ESTIMATION_ALGORITHM {
     GNC_TLS = 0,
     FGR = 1,
+    QUATRO = 2,
   };
 
   /**
