@@ -276,6 +276,138 @@ void teaser::FastGlobalRegistrationSolver::solveForRotation(
   }
 }
 
+void teaser::QuatroSolver::solveForRotation(
+    const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+    const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst, Eigen::Matrix3d* rotation,
+    Eigen::Matrix<bool, 1, Eigen::Dynamic>* inliers) {
+  assert(rotation);                 // make sure R is not a nullptr
+  assert(src.cols() == dst.cols()); // check dimensions of input data
+  assert(params_.gnc_factor > 1);   // make sure mu will increase
+  assert(params_.noise_bound != 0); // make sure noise sigma is not zero
+  if (inliers) {
+    assert(inliers->cols() == src.cols());
+  }
+  // Initialization
+  *rotation = Eigen::Matrix3d::Identity();
+
+  Eigen::Matrix<double, 2, Eigen::Dynamic> src_2d;
+  Eigen::Matrix<double, 2, Eigen::Dynamic> dst_2d;
+  // XY Coordinates for calculate yaw
+  src_2d.resize(2, src.cols());
+  dst_2d.resize(2, dst.cols());
+  src_2d = src.topRows(2);
+  dst_2d = dst.topRows(2);
+
+  /**
+   * Only the yaw rotation is estimated; thus, SO(2) estimation is performed
+   */
+  Eigen::Matrix2d rotation_2d = Eigen::Matrix2d::Identity();
+
+  if (inliers) {
+    assert(inliers->cols() == src.cols());
+  }
+
+  /**
+   * Loop: terminate when:
+   *    1. the change in cost in two consecutive runs is smaller than a user-defined threshold
+   *    2. # iterations exceeds the maximum allowed
+   *
+   * Within each loop:
+   * 1. fix weights and solve for R
+   * 2. fix R and solve for weights
+   */
+
+  // Prepare some variables
+  size_t match_size = src.cols(); // number of correspondences
+
+  double mu = 1; // arbitrary starting mu
+
+  double prev_cost = std::numeric_limits<double>::infinity();
+  cost_ = std::numeric_limits<double>::infinity();
+  //  double noise_bound_sq = std::pow(params_.noise_bound, 2);
+  static double rot_noise_bound = params_.noise_bound;
+  static double noise_bound_sq = std::pow(rot_noise_bound, 2);
+  if (noise_bound_sq < 1e-16) {
+    noise_bound_sq = 1e-2;
+  }
+  TEASER_DEBUG_INFO_MSG("GNC rotation estimation noise bound:" << rot_noise_bound);
+  TEASER_DEBUG_INFO_MSG("GNC rotation estimation noise bound squared:" << noise_bound_sq);
+
+  Eigen::Matrix<double, 2, Eigen::Dynamic> diffs(2, match_size);
+  Eigen::Matrix<double, 1, Eigen::Dynamic> weights(1, match_size);
+  weights.setOnes(1, match_size);
+  Eigen::Matrix<double, 1, Eigen::Dynamic> residuals_sq(1, match_size);
+
+  // Loop for performing GNC-TLS
+  for (size_t i = 0; i < params_.max_iterations; ++i) {
+
+    // Fix weights and perform SVD 2d rotation estimation
+    rotation_2d = teaser::utils::svdRot2d(src_2d, dst_2d, weights);
+
+    // Calculate residuals squared
+    diffs = (dst_2d - rotation_2d * src_2d).array().square();
+    residuals_sq = diffs.colwise().sum();
+    if (i == 0) {
+      // Initialize rule for mu
+      double max_residual = residuals_sq.maxCoeff();
+      mu = 1 / (2 * max_residual / noise_bound_sq - 1);
+      // Degenerate case: mu = -1 because max_residual is very small
+      // i.e., little to none noise
+      if (mu <= 0) {
+        TEASER_DEBUG_INFO_MSG(
+            "GNC-TLS terminated because maximum residual at initialization is very small.");
+        break;
+      }
+    }
+
+    // Fix R and solve for weights in closed form
+    double th1 = (mu + 1) / mu * noise_bound_sq;
+    double th2 = mu / (mu + 1) * noise_bound_sq;
+    cost_ = 0;
+    for (size_t j = 0; j < match_size; ++j) {
+      // Also calculate cost in this loop
+      // Note: the cost calculated is using the previously solved weights
+      cost_ += weights(j) * residuals_sq(j);
+
+      if (residuals_sq(j) >= th1) {
+        weights(j) = 0;
+      } else if (residuals_sq(j) <= th2) {
+        weights(j) = 1;
+      } else {
+        weights(j) = sqrt(noise_bound_sq * mu * (mu + 1) / residuals_sq(j)) - mu;
+        assert(weights(j) >= 0 && weights(j) <= 1);
+      }
+
+    }
+
+    // Calculate cost
+    double cost_diff = std::abs(cost_ - prev_cost);
+
+
+    // Increase mu
+    mu = mu * params_.gnc_factor;
+    prev_cost = cost_;
+
+    if (cost_diff < params_.cost_threshold) {
+      TEASER_DEBUG_INFO_MSG("GNC-TLS solver terminated due to cost convergence.");
+      TEASER_DEBUG_INFO_MSG("Cost diff: " << cost_diff);
+      TEASER_DEBUG_INFO_MSG("Iterations: " << i);
+      break;
+    }
+  }
+
+  if (inliers) {
+    for (size_t i = 0; i < weights.cols(); ++i) {
+      (*inliers)(0, i) = weights(0, i) >= 0.4;
+    }
+  }
+
+  /*
+   * After the SO(2) estimation, the output matrix is filled by 'rotation_2d'
+   */
+  (*rotation).block<2, 2>(0, 0) = rotation_2d;
+}
+
 void teaser::TLSScaleSolver::solveForScale(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
                                            const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
                                            double* scale,

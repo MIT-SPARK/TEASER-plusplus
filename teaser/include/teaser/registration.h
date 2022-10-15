@@ -313,6 +313,43 @@ public:
 };
 
 /**
+ * Use Quatro to solve for pairwise registration problems avoiding degeneracy
+ *
+ * For more information, please see the original paper on FGR:
+ * H. Lim et al., "A Single Correspondence Is Enough: Robust Global Registration
+ * to Avoid Degeneracy in Urban Environments," in Robotics - ICRA 2022,
+ * Accepted. To appear. arXiv:2203.06612 [cs], Mar. 2022.
+ * Quatro and TEASER++ differ in the estimation of rotation. Quatro forgoes roll and pitch estimation,
+ * yet it is empirically found that it makes the algorithm more robust against degeneracy.
+ */
+class QuatroSolver : public GNCRotationSolver {
+public:
+  /**
+   * Remove default constructor
+   */
+  QuatroSolver() = delete;
+
+  /**
+   * Parametrized constructor
+   * @param params
+   * @param rotation_only
+   */
+  explicit QuatroSolver(Params params) : GNCRotationSolver(params){};
+
+  /**
+   * Solve a pairwise registration problem given two sets of points.
+   * Notice that we assume no scale difference between v1 & v2.
+   * @param src
+   * @param dst
+   * @return a RegistrationSolution struct.
+   */
+  void solveForRotation(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                        const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
+                        Eigen::Matrix3d* rotation,
+                        Eigen::Matrix<bool, 1, Eigen::Dynamic>* inliers) override;
+};
+
+/**
  * Solve registration problems robustly.
  *
  * For more information, please refer to:
@@ -764,6 +801,10 @@ public:
     }
     case ROTATION_ESTIMATION_ALGORITHM::FGR: { // FGR method
       setRotationEstimator(std::make_unique<teaser::FastGlobalRegistrationSolver>(rotation_params));
+      break;
+    }
+    case ROTATION_ESTIMATION_ALGORITHM::QUATRO: { // Quatro method
+      setRotationEstimator(std::make_unique<teaser::QuatroSolver>(rotation_params));
       break;
     }
     }
