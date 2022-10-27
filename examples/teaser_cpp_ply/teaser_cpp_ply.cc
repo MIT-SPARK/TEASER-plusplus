@@ -21,8 +21,7 @@ inline double getAngularError(Eigen::Matrix3d R_exp, Eigen::Matrix3d R_est) {
 void addNoiseAndOutliers(Eigen::Matrix<double, 3, Eigen::Dynamic>& tgt) {
   // Add uniform noise
   Eigen::Matrix<double, 3, Eigen::Dynamic> noise =
-      Eigen::Matrix<double, 3, Eigen::Dynamic>::Random(3, tgt.cols()) * NOISE_BOUND;
-  NOISE_BOUND / 2;
+      Eigen::Matrix<double, 3, Eigen::Dynamic>::Random(3, tgt.cols()) * NOISE_BOUND / 2;
   tgt = tgt + noise;
 
   // Add outliers
@@ -103,7 +102,7 @@ int main() {
   std::cout << T.topLeftCorner(3, 3) << std::endl;
   std::cout << "Estimated rotation: " << std::endl;
   std::cout << solution.rotation << std::endl;
-  std::cout << "Error (deg): " << getAngularError(T.topLeftCorner(3, 3), solution.rotation)
+  std::cout << "Error (rad): " << getAngularError(T.topLeftCorner(3, 3), solution.rotation)
             << std::endl;
   std::cout << std::endl;
   std::cout << "Expected translation: " << std::endl;
