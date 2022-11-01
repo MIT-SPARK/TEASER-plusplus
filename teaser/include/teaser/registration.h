@@ -374,7 +374,7 @@ public:
    *
    * QUATRO: H. Lim et al., "A Single Correspondence Is Enough: Robust Global Registration
    * to Avoid Degeneracy in Urban Environments," in Robotics -
-   * ICRA 2022, Accepted. To appear.
+   * ICRA 2022, pp. 8010-8017
    * arXiv:2203.06612 [cs], Mar. 2022.
    */
   enum class ROTATION_ESTIMATION_ALGORITHM {
