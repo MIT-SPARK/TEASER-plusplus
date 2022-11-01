@@ -8,6 +8,13 @@ find_package(teaserpp REQUIRED)
 find_package(PCL 1.9 REQUIRED COMPONENTS common features kdtree)
 
 # Change this line to include your own executable file
+add_executable(quatro_cpp_fpfh quatro_cpp_fpfh.cc)
+
+# Link to teaserpp & Eigen3
+target_link_libraries(quatro_cpp_fpfh Eigen3::Eigen teaserpp::teaser_registration teaserpp::teaser_features
+        teaserpp::teaser_io ${PCL_LIBRARIES})
+
+# Change this line to include your own executable file
 add_executable(teaser_cpp_fpfh teaser_cpp_fpfh.cc)
 
 # Link to teaserpp & Eigen3
