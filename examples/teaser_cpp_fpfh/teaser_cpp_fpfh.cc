@@ -14,6 +14,7 @@
 #define N_OUTLIERS 1700
 #define OUTLIER_TRANSLATION_LB 5
 #define OUTLIER_TRANSLATION_UB 10
+#define RAD2DEG 180.0 / M_PI
 
 inline double getAngularError(Eigen::Matrix3d R_exp, Eigen::Matrix3d R_est) {
   return std::abs(std::acos(fmin(fmax(((R_exp.transpose() * R_est).trace() - 1) / 2, -1.0), 1.0)));
@@ -120,7 +121,7 @@ int main() {
   std::cout << T.topLeftCorner(3, 3) << std::endl;
   std::cout << "Estimated rotation: " << std::endl;
   std::cout << solution.rotation << std::endl;
-  std::cout << "Error (deg): " << getAngularError(T.topLeftCorner(3, 3), solution.rotation)
+  std::cout << "Error (deg): " << getAngularError(T.topLeftCorner(3, 3), solution.rotation) * RAD2DEG
             << std::endl;
   std::cout << std::endl;
   std::cout << "Expected translation: " << std::endl;
