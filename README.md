@@ -76,6 +76,20 @@ Number of correspondences: 1889
 Number of outliers: 1700
 Time taken (s): 0.786677
 ```
+### Minimal C++ example for MacOS with brew:
+Run the following script to show a minimal C++ example:
+```shell script
+brew install cmake
+brew install boost
+brew install eigen
+git clone https://github.com/MIT-SPARK/TEASER-plusplus.git
+cd TEASER-plusplus && mkdir build && cd build
+cmake .. && make
+sudo make install
+cd .. && cd examples/teaser_cpp_ply && mkdir build && cd build
+cmake .. && make
+./teaser_cpp_ply
+```
 ### Minimal Python 3 example
 Run the following script to show a minimal Python 3 example (needs Anaconda installed):
 ```shell script
