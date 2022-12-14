@@ -42,12 +42,14 @@ void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd& X,
 
   // calculate weights
   Eigen::RowVectorXd weights = ranges.array().square();
+  // the unit is m^2
+  double ranges_inverse_sum = weights.sum();
   weights = weights.array().inverse();
   int nr_centers = 2 * N;
   Eigen::RowVectorXd x_hat = Eigen::MatrixXd::Zero(1, nr_centers);
   Eigen::RowVectorXd x_cost = Eigen::MatrixXd::Zero(1, nr_centers);
 
-  double ranges_inverse_sum = ranges.sum();
+  
   double dot_X_weights = 0;
   double dot_weights_consensus = 0;
   int consensus_set_cardinal = 0;
@@ -62,13 +64,15 @@ void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd& X,
     consensus_set_cardinal += epsilon;
     dot_weights_consensus += epsilon * weights(idx);
     dot_X_weights += epsilon * weights(idx) * X(idx);
-    ranges_inverse_sum -= epsilon * ranges(idx);
+    // the unit is m^2
+    ranges_inverse_sum -= epsilon * ranges(idx) * ranges(idx);
     sum_xi += epsilon * X(idx);
     sum_xi_square += epsilon * X(idx) * X(idx);
 
     x_hat(i) = dot_X_weights / dot_weights_consensus;
-
+    // the unit is m^2
     double residual = consensus_set_cardinal * x_hat(i) * x_hat(i) + sum_xi_square  - 2 * sum_xi * x_hat(i);
+    // the unit is m^2
     x_cost(i) = residual + ranges_inverse_sum;
       
   }
