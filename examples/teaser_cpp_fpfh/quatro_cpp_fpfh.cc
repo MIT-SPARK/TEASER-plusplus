@@ -18,7 +18,7 @@ inline double getAngularError(Eigen::Matrix3d R_exp, Eigen::Matrix3d R_est) {
 
 inline void calcErrors(const Eigen::Matrix4d& T, const Eigen::Matrix3d est_rot, const Eigen::Vector3d est_ts,
                 double &rot_error, double& ts_error) {
-  rot_error = RAD2DEG(getAngularError(T.topLeftCorner(3, 3), est_rot));
+  rot_error = getAngularError(T.topLeftCorner(3, 3), est_rot);
   ts_error = (T.topRightCorner(3, 1) - est_ts).norm();
 }
 
@@ -146,7 +146,7 @@ int main() {
   std::cout << T.topLeftCorner(3, 3) << std::endl;
   std::cout << "Estimated rotation: " << std::endl;
   std::cout << solution_by_quatro.rotation << std::endl;
-  std::cout << "Error (deg): " << rot_error_quatro << std::endl;
+  std::cout << "Error (rad): " << rot_error_quatro << std::endl;
   std::cout << "Expected translation: " << std::endl;
   std::cout << T.topRightCorner(3, 1) << std::endl;
   std::cout << "Estimated translation: " << std::endl;
@@ -175,7 +175,7 @@ int main() {
   std::cout << T.topLeftCorner(3, 3) << std::endl;
   std::cout << "Estimated rotation: " << std::endl;
   std::cout << solution_by_teaser.rotation << std::endl;
-  std::cout << "Error (deg): " << rot_error_teaser << std::endl;
+  std::cout << "Error (rad): " << rot_error_teaser << std::endl;
   std::cout << "Expected translation: " << std::endl;
   std::cout << T.topRightCorner(3, 1) << std::endl;
   std::cout << "Estimated translation: " << std::endl;
