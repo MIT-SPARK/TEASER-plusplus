@@ -435,7 +435,7 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
   src_tims_ = computeTIMs(src, &src_tims_map_);
   dst_tims_ = computeTIMs(dst, &dst_tims_map_);
   TEASER_DEBUG_INFO_MSG(
-      "Starting scale solver (only selecting inliers if scale estimation has been disabled.");
+      "Starting scale solver (only selecting inliers if scale estimation has been disabled).");
   solveForScale(src_tims_, dst_tims_);
   TEASER_DEBUG_INFO_MSG("Scale estimation complete.");
 
