@@ -133,6 +133,45 @@ TEST(RegistrationTest, SolveForRotation) {
     auto rotation_solution = solver.getSolution();
     EXPECT_TRUE(teaser::test::getAngularError(expected_R, rotation_solution.rotation) < 1e-5);
   }
+  // Robust solver to solve for rotation with QUATRO
+  {
+    // Set up parameters
+    teaser::RobustRegistrationSolver::Params params;
+    params.noise_bound = 0.0067364;
+    params.cbar2 = 1;
+    params.estimate_scaling = true;
+    params.rotation_max_iterations = 100;
+    params.rotation_gnc_factor = 1.4;
+    params.rotation_estimation_algorithm =
+        teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::QUATRO;
+    params.inlier_selection_mode ==
+        teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_HEU;
+    params.rotation_cost_threshold = 0.005;
+
+    teaser::RobustRegistrationSolver solver(params);
+
+    // Read in data
+    std::ifstream source_file("./data/registration_test/rotation_only_src.csv");
+    Eigen::Matrix<double, Eigen::Dynamic, 3> source_points =
+        teaser::test::readFileToEigenMatrix<double, Eigen::Dynamic, 3>(source_file);
+    Eigen::Matrix<double, 3, Eigen::Dynamic> src = source_points.transpose();
+
+    // Generate rotated points
+    Eigen::Matrix3d expected_R;
+    // clang-format off
+    // Note that the Quatro only estimates relative yaw direction
+    expected_R << 0.997379773225804, -0.072343541246221, 0.0,
+                  0.072343541246221,  0.997379773225804, 0.0,
+                                0.0,                0.0, 1.0;
+    // clang-format on
+    Eigen::Matrix<double, 3, Eigen::Dynamic> dst = expected_R * src;
+
+    // Solve & check for answer
+    solver.solveForRotation(src, dst);
+    auto rotation_solution = solver.getSolution();
+    std::cout << teaser::test::getAngularError(expected_R, rotation_solution.rotation) << std::endl;
+    EXPECT_TRUE(teaser::test::getAngularError(expected_R, rotation_solution.rotation) < 1e-5);
+  }
   // Robust solver to solve for rotation with GNC-TLS
   {
     // Set up parameters
