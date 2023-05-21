@@ -9,7 +9,7 @@
 #include <teaser/registration.h>
 
 // Macro constants for generating noise and outliers
-#define NOISE_BOUND 0.05
+#define NOISE_BOUND 0.001
 #define N_OUTLIERS 1700
 #define OUTLIER_TRANSLATION_LB 5
 #define OUTLIER_TRANSLATION_UB 10

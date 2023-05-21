@@ -136,6 +136,30 @@ inline Eigen::Matrix3d svdRot(const Eigen::Matrix<double, 3, Eigen::Dynamic>& X,
 }
 
 /**
+ * Modified helper function to use svd to estimate SO(2) rotation.
+ * Method described here: http://igl.ethz.ch/projects/ARAP/svd_rot.pdf
+ * @param X
+ * @param Y
+ * @return a rotation matrix R whose dimension is 2D
+ */
+inline Eigen::Matrix2d svdRot2d(const Eigen::Matrix<double, 2, Eigen::Dynamic>& X,
+                                const Eigen::Matrix<double, 2, Eigen::Dynamic>& Y,
+                                const Eigen::Matrix<double, 1, Eigen::Dynamic>& W) {
+  // Assemble the correlation matrix H = X * Y'
+  Eigen::Matrix2d H = X * W.asDiagonal() * Y.transpose();
+
+  Eigen::JacobiSVD<Eigen::Matrix2d> svd(H, Eigen::ComputeFullU | Eigen::ComputeFullV);
+  Eigen::Matrix2d U = svd.matrixU();
+  Eigen::Matrix2d V = svd.matrixV();
+
+  if (U.determinant() * V.determinant() < 0) {
+    V.col(1) *= -1;
+  }
+
+  return V * U.transpose();
+}
+
+/**
  * Use an boolean Eigen matrix to mask a vector
  * @param mask a 1-by-N boolean Eigen matrix
  * @param elements vector to be masked
