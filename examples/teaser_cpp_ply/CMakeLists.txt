@@ -11,6 +11,7 @@ add_executable(teaser_cpp_ply teaser_cpp_ply.cc)
 
 # Link to teaserpp & Eigen3
 target_link_libraries(teaser_cpp_ply Eigen3::Eigen teaserpp::teaser_registration teaserpp::teaser_io)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 
 # Copy the data files to build directory
 file(COPY ../example_data/
