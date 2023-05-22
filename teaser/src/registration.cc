@@ -32,13 +32,14 @@ void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd& X,
 
   int N = X.cols();
   std::vector<std::pair<double, int>> h;
-  for (size_t i= 0 ;i < N ;++i){
-    h.push_back(std::make_pair(X(i) - ranges(i), i+1));
-    h.push_back(std::make_pair(X(i) + ranges(i), -i-1));
+  for (size_t i = 0; i < N; ++i) {
+    h.push_back(std::make_pair(X(i) - ranges(i), i + 1));
+    h.push_back(std::make_pair(X(i) + ranges(i), -i - 1));
   }
 
   // ascending order
-  std::sort(h.begin(), h.end(), [](std::pair<double, int> a, std::pair<double, int> b) { return a.first < b.first; });
+  std::sort(h.begin(), h.end(),
+            [](std::pair<double, int> a, std::pair<double, int> b) { return a.first < b.first; });
 
   // calculate weights
   Eigen::RowVectorXd weights = ranges.array().square();
@@ -51,10 +52,10 @@ void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd& X,
   double dot_X_weights = 0;
   double dot_weights_consensus = 0;
   int consensus_set_cardinal = 0;
-  double sum_xi = 0; 
+  double sum_xi = 0;
   double sum_xi_square = 0;
 
-  for (size_t i = 0 ; i < nr_centers ; ++i){
+  for (size_t i = 0; i < nr_centers; ++i) {
 
     int idx = int(std::abs(h.at(i).second)) - 1; // Indices starting at 1
     int epsilon = (h.at(i).second > 0) ? 1 : -1;
@@ -68,9 +69,9 @@ void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd& X,
 
     x_hat(i) = dot_X_weights / dot_weights_consensus;
 
-    double residual = consensus_set_cardinal * x_hat(i) * x_hat(i) + sum_xi_square  - 2 * sum_xi * x_hat(i);
+    double residual =
+        consensus_set_cardinal * x_hat(i) * x_hat(i) + sum_xi_square - 2 * sum_xi * x_hat(i);
     x_cost(i) = residual + ranges_inverse_sum;
-      
   }
 
   size_t min_idx;
@@ -565,7 +566,8 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
    */
   src_tims_ = computeTIMs(src, &src_tims_map_);
   dst_tims_ = computeTIMs(dst, &dst_tims_map_);
-  TEASER_DEBUG_INFO_MSG("Starting scale solver.");
+  TEASER_DEBUG_INFO_MSG(
+      "Starting scale solver (only selecting inliers if scale estimation has been disabled).");
   solveForScale(src_tims_, dst_tims_);
   TEASER_DEBUG_INFO_MSG("Scale estimation complete.");
 
@@ -595,6 +597,7 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
     }
     clique_params.time_limit = params_.max_clique_time_limit;
     clique_params.kcore_heuristic_threshold = params_.kcore_heuristic_threshold;
+    clique_params.num_threads = params_.max_clique_num_threads;
 
     teaser::MaxCliqueSolver clique_solver(clique_params);
     max_clique_ = clique_solver.findMaxClique(inlier_graph_);
@@ -638,10 +641,10 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
       pruned_dst_tims_.col(i) = dst.col(leaf) - dst.col(root);
 
       // populate the TIMs map
-      dst_tims_map_rotation_(0,i) = leaf;
-      dst_tims_map_rotation_(1,i) = root;
-      src_tims_map_rotation_(0,i) = leaf;
-      src_tims_map_rotation_(1,i) = root;
+      dst_tims_map_rotation_(0, i) = leaf;
+      dst_tims_map_rotation_(1, i) = root;
+      src_tims_map_rotation_(0, i) = leaf;
+      src_tims_map_rotation_(1, i) = root;
     }
   } else {
     // complete graph

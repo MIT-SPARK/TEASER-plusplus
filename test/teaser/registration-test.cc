@@ -47,6 +47,50 @@ TEST(RegistrationTest, LargeModel) {
   params.rotation_estimation_algorithm =
       teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::FGR;
   params.rotation_cost_threshold = 0.005;
+  params.max_clique_num_threads = 15;
+
+  // Prepare the solver object
+  teaser::RobustRegistrationSolver solver(params);
+
+  // Solve
+  solver.solve(eigen_src, eigen_dst);
+
+  // Stop the timer
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  std::cout << "Time spent: " << duration.count() << std::endl;
+}
+
+TEST(RegistrationTest, LargeModelSingleThreaded) {
+
+  std::string model_file = "./data/registration_test/1000point_model.ply";
+  std::string scene_file = "./data/registration_test/1000point_scene.ply";
+
+  teaser::PLYReader reader;
+  teaser::PointCloud src_cloud;
+  auto status = reader.read(model_file, src_cloud);
+  EXPECT_EQ(status, 0);
+  auto eigen_src = teaser::test::teaserPointCloudToEigenMatrix<double>(src_cloud);
+
+  teaser::PointCloud dst_cloud;
+  status = reader.read(scene_file, dst_cloud);
+  EXPECT_EQ(status, 0);
+  auto eigen_dst = teaser::test::teaserPointCloudToEigenMatrix<double>(dst_cloud);
+
+  // Start the timer
+  auto start = std::chrono::high_resolution_clock::now();
+
+  // Prepare the solver object
+  teaser::RobustRegistrationSolver::Params params;
+  params.noise_bound = 0.0337;
+  params.cbar2 = 1;
+  params.estimate_scaling = false;
+  params.rotation_max_iterations = 100;
+  params.rotation_gnc_factor = 1.4;
+  params.rotation_estimation_algorithm =
+      teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::FGR;
+  params.rotation_cost_threshold = 0.005;
+  params.max_clique_num_threads = 1;
 
   // Prepare the solver object
   teaser::RobustRegistrationSolver solver(params);
