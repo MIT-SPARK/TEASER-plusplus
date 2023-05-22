@@ -1,0 +1,40 @@
+package:
+  name: teaserpp-python
+  version: 2.0.1
+
+source:
+  - path: ../../cmake
+    folder: cmake
+  - path: ../../python
+    folder: python
+  - path: ../../teaser
+    folder: teaser
+  - path: ../../doc
+    folder: doc
+  - path: ../../test
+    folder: test
+  - path: ../../CMakeLists.txt
+
+# TODO build for different python versions
+# TODO try without llvm-openmp
+
+requirements:
+  build:
+    - boost
+    - python {{ python }}
+    - setuptools
+    - cmake
+    - make
+    - eigen
+    - {{ compiler('c') }}
+    - {{ compiler('cxx') }}
+    - llvm-openmp
+  host:
+    - python {{ python }}
+  run:
+    - python {{ python }}
+  
+about:
+  home: https://github.com/MIT-SPARK/TEASER-plusplus
+  license: GPL3
+  summary: Python binding for TEASER++
