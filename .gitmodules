@@ -1,4 +1,5 @@
 [submodule "Eigen3"]
-     path = Eigen3
-     url = https://gitlab.com/libeigen/eigen.git
-     branch = 3.4
+	path = Eigen3
+	url = https://gitlab.com/libeigen/eigen.git
+	branch = 3.4
+	shallow = true
