@@ -34,7 +34,8 @@ endif ()
 
 # Find dependencies
 # Eigen3
-find_package(Eigen3 3.2 QUIET REQUIRED NO_MODULE)
+set(EIGEN_BUILD_DOC OFF CACHE BOOL "Enable creation of Eigen documentation" FORCE)
+add_subdirectory(Eigen3)
 if (ENABLE_MKL)
     find_package(MKL)
     if (MKL_FOUND)
