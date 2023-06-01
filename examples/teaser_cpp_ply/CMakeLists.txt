@@ -7,14 +7,17 @@ set(CMAKE_CXX_COMPILER clang++)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(Eigen3 REQUIRED PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../install)
+# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/lucky/Code/TEASER-plusplus/install/lib/ 
 find_package(teaserpp REQUIRED PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../install)
+find_package(PCL REQUIRED)
 find_package(OpenMP)
 
 # Change this line to include your own executable file
 add_executable(teaser_cpp_ply teaser_cpp_ply.cc)
 
 # Link to teaserpp & Eigen3
-target_link_libraries(teaser_cpp_ply Eigen3::Eigen teaserpp::teaser_registration teaserpp::teaser_io OpenMP::OpenMP_CXX)
+target_link_libraries(teaser_cpp_ply Eigen3::Eigen teaserpp::teaser_registration teaserpp::teaser_io OpenMP::OpenMP_CXX ${PCL_LIBRARIES})
+target_include_directories(teaser_cpp_ply PUBLIC ${PCL_INCLUDE_DIRS})
 
 # Copy the data files to build directory
 file(COPY ../example_data/

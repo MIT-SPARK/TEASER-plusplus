@@ -35,9 +35,10 @@ Run the following script to show a minimal C++ example:
 sudo apt install cmake libeigen3-dev libboost-all-dev
 git clone https://github.com/MIT-SPARK/TEASER-plusplus.git
 cd TEASER-plusplus && mkdir build && cd build
-cmake .. && make
-sudo make install
-sudo ldconfig
+cmake -DCMAKE_INSTALL_PREFIX=../install .. && make
+make install
+# replace the path with your own path
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/lucky/Code/TEASER-plusplus/install/lib/
 cd .. && cd examples/teaser_cpp_ply && mkdir build && cd build
 cmake .. && make
 ./teaser_cpp_ply

@@ -8,6 +8,13 @@
 #include <teaser/ply_io.h>
 #include <teaser/registration.h>
 
+#include <pcl/point_cloud.h>
+#include <pcl/common/utils.h> // pcl::utils::ignore
+#include <pcl/features/normal_3d.h>
+#include <pcl/features/normal_3d_omp.h>
+#include <pcl/features/integral_image_normal.h>
+#include <pcl/io/pcd_io.h>
+
 // Macro constants for generating noise and outliers
 #define NOISE_BOUND 0.001
 #define N_OUTLIERS 1700
