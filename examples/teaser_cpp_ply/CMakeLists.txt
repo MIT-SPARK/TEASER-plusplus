@@ -2,9 +2,12 @@ cmake_minimum_required(VERSION 3.10)
 project(teaser_cpp_ply)
 
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_C_COMPILER clang)
+set(CMAKE_CXX_COMPILER clang++)
 
-find_package(Eigen3 REQUIRED)
-find_package(teaserpp REQUIRED)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+find_package(Eigen3 REQUIRED PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../install)
+find_package(teaserpp REQUIRED PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../install)
 find_package(OpenMP)
 
 # Change this line to include your own executable file
