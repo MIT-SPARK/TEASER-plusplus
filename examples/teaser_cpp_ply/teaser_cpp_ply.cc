@@ -1,6 +1,9 @@
 // An example showing TEASER++ registration with the Stanford bunny model
 #include <chrono>
+#include <cstddef>
 #include <iostream>
+#include <pcl/impl/point_types.hpp>
+#include <pcl/search/kdtree.h>
 #include <random>
 
 #include <Eigen/Core>
@@ -17,7 +20,7 @@
 
 // Macro constants for generating noise and outliers
 #define NOISE_BOUND 0.001
-#define N_OUTLIERS 1700
+#define N_OUTLIERS 400
 #define OUTLIER_TRANSLATION_LB 5
 #define OUTLIER_TRANSLATION_UB 10
 
@@ -59,6 +62,22 @@ int main() {
     src.col(i) << src_cloud[i].x, src_cloud[i].y, src_cloud[i].z;
   }
 
+  // convet Eigen matrix to pcl::PointCloud
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pc (new pcl::PointCloud<pcl::PointXYZ>);
+  pc->resize(N);
+  for (size_t i = 0; i < N; i++) {
+    pc->points[i].getVector3fMap() = src.col(i).cast<float>();
+  }
+
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree;
+  pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
+  n.setInputCloud(pc);
+  n.setSearchMethod(tree);
+  n.setKSearch(10);
+
+  pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
+  n.compute(*normals);
+
   // Homogeneous coordinates
   Eigen::Matrix<double, 4, Eigen::Dynamic> src_h;
   src_h.resize(4, src.cols());
@@ -80,6 +99,24 @@ int main() {
 
   // Add some noise & outliers
   addNoiseAndOutliers(tgt);
+
+  // convet Eigen matrix to pcl::PointCloud
+  pcl::PointCloud<pcl::PointXYZ>::Ptr tgt_pc (new pcl::PointCloud<pcl::PointXYZ>);
+  tgt_pc->resize(N);
+  for (size_t i = 0; i < N; i++) {
+    tgt_pc->points[i].getVector3fMap() = tgt.col(i).cast<float>();
+  }
+
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr tgt_tree;
+  pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> tgt_n;
+  tgt_n.setInputCloud(tgt_pc);
+  tgt_n.setSearchMethod(tgt_tree);
+  tgt_n.setKSearch(10);
+
+  pcl::PointCloud<pcl::Normal>::Ptr tgt_normals (new pcl::PointCloud<pcl::Normal>);
+  tgt_n.compute(*tgt_normals);
+
+  std::cout << "origin size: " << normals->size() << "\ntarget size: " << tgt_normals->size() << std::endl;
 
   // Run TEASER++ registration
   // Prepare solver parameters
