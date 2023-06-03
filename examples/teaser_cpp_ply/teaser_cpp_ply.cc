@@ -63,7 +63,7 @@ int main() {
   }
 
   // convet Eigen matrix to pcl::PointCloud
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pc (new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
   pc->resize(N);
   for (size_t i = 0; i < N; i++) {
     pc->points[i].getVector3fMap() = src.col(i).cast<float>();
@@ -75,7 +75,7 @@ int main() {
   n.setSearchMethod(tree);
   n.setKSearch(10);
 
-  pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
+  pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
   n.compute(*normals);
 
   // Homogeneous coordinates
@@ -101,7 +101,7 @@ int main() {
   addNoiseAndOutliers(tgt);
 
   // convet Eigen matrix to pcl::PointCloud
-  pcl::PointCloud<pcl::PointXYZ>::Ptr tgt_pc (new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr tgt_pc(new pcl::PointCloud<pcl::PointXYZ>);
   tgt_pc->resize(N);
   for (size_t i = 0; i < N; i++) {
     tgt_pc->points[i].getVector3fMap() = tgt.col(i).cast<float>();
@@ -113,10 +113,21 @@ int main() {
   tgt_n.setSearchMethod(tgt_tree);
   tgt_n.setKSearch(10);
 
-  pcl::PointCloud<pcl::Normal>::Ptr tgt_normals (new pcl::PointCloud<pcl::Normal>);
+  pcl::PointCloud<pcl::Normal>::Ptr tgt_normals(new pcl::PointCloud<pcl::Normal>);
   tgt_n.compute(*tgt_normals);
 
-  std::cout << "origin size: " << normals->size() << "\ntarget size: " << tgt_normals->size() << std::endl;
+  std::cout << "origin size: " << normals->size() << "\ntarget size: " << tgt_normals->size()
+            << std::endl;
+
+  Eigen::Matrix<double, 3, Eigen::Dynamic> src_normal(3, N);
+  Eigen::Matrix<double, 3, Eigen::Dynamic> tgt_normal(3, N);
+  for (size_t i = 0; i < N; i++) {
+    src_normal.col(i) << normals->points[i].getNormalVector3fMap()[0],
+        normals->points[i].getNormalVector3fMap()[1], normals->points[i].getNormalVector3fMap()[2];
+    tgt_normal.col(i) << tgt_normals->points[i].getNormalVector3fMap()[0],
+        tgt_normals->points[i].getNormalVector3fMap()[1],
+        tgt_normals->points[i].getNormalVector3fMap()[2];
+  }
 
   // Run TEASER++ registration
   // Prepare solver parameters
@@ -124,16 +135,16 @@ int main() {
   params.noise_bound = NOISE_BOUND;
   params.cbar2 = 1;
   params.estimate_scaling = false;
-  params.rotation_max_iterations = 100;
+  params.rotation_max_iterations = 1000;
   params.rotation_gnc_factor = 1.4;
   params.rotation_estimation_algorithm =
       teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS;
   params.rotation_cost_threshold = 0.005;
 
   // Solve with TEASER++
-  teaser::RobustRegistrationSolver solver(params);
+  teaser::RobustNormalRegistrationSolver solver(params);
   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-  solver.solve(src, tgt);
+  solver.solve(src_normal, tgt_normal);
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
   auto solution = solver.getSolution();

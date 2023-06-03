@@ -321,8 +321,9 @@ public:
  * H. Lim et al., "A Single Correspondence Is Enough: Robust Global Registration
  * to Avoid Degeneracy in Urban Environments," in Robotics - ICRA 2022,
  * Accepted. To appear. arXiv:2203.06612 [cs], Mar. 2022.
- * Quatro and TEASER++ differ in the estimation of rotation. Quatro forgoes roll and pitch estimation,
- * yet it is empirically found that it makes the algorithm more robust against degeneracy.
+ * Quatro and TEASER++ differ in the estimation of rotation. Quatro forgoes roll and pitch
+ * estimation, yet it is empirically found that it makes the algorithm more robust against
+ * degeneracy.
  */
 class QuatroSolver : public GNCRotationSolver {
 public:
@@ -833,9 +834,10 @@ public:
    */
   Params getParams() { return params_; }
 
+  RegistrationSolution solution_;
+
 private:
   Params params_;
-  RegistrationSolution solution_;
 
   // Inlier Binary Vectors
   Eigen::Matrix<bool, 1, Eigen::Dynamic> scale_inliers_mask_;
@@ -874,6 +876,28 @@ private:
   std::unique_ptr<AbstractScaleSolver> scale_solver_;
   std::unique_ptr<GNCRotationSolver> rotation_solver_;
   std::unique_ptr<AbstractTranslationSolver> translation_solver_;
+};
+
+class RobustNormalRegistrationSolver : public RobustRegistrationSolver {
+
+public:
+  /**
+   * A constructor that takes in parameters and initialize the estimators accordingly.
+   *
+   * This is the preferred way of initializing the different estimators, instead of setting
+   * each estimator one by one.
+   * @param params
+   */
+  RobustNormalRegistrationSolver(const Params& params) : RobustRegistrationSolver(params) {};
+
+  /**
+   * Solve for scale, translation and rotation. Assumes dst is src after transformation.
+   * @param src
+   * @param dst
+   */
+
+  RegistrationSolution solve(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                             const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst);
 };
 
 } // namespace teaser

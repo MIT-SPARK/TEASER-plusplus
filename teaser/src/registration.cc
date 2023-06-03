@@ -832,3 +832,18 @@ void teaser::GNCTLSRotationSolver::solveForRotation(
     }
   }
 }
+
+teaser::RegistrationSolution
+teaser::RobustNormalRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                                        const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst) {
+  assert(scale_solver_ && rotation_solver_ && translation_solver_);
+  // Solve for rotation
+  TEASER_DEBUG_INFO_MSG("Starting rotation solver.");
+  solveForRotation(src, dst);
+  TEASER_DEBUG_INFO_MSG("Rotation estimation complete.");
+  
+  // Update validity flag
+  solution_.valid = true;
+
+  return solution_;
+}
