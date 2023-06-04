@@ -277,6 +277,29 @@ public:
                         Eigen::Matrix<bool, 1, Eigen::Dynamic>* inliers) override;
 };
 
+class GNCTLSNormalRotationSolver : public GNCRotationSolver {
+public:
+  GNCTLSNormalRotationSolver() = delete;
+
+  /**
+   * Parametrized constructor
+   * @param params
+   */
+  explicit GNCTLSNormalRotationSolver(Params params) : GNCRotationSolver(params){};
+
+  /**
+   * Estimate rotation between src & dst using GNC-TLS method
+   * @param src
+   * @param dst
+   * @param rotation
+   * @param inliers
+   */
+  void solveForRotation(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                        const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
+                        Eigen::Matrix3d* rotation,
+                        Eigen::Matrix<bool, 1, Eigen::Dynamic>* inliers) override;
+};
+
 /**
  * Use Fast Global Registration to solve for pairwise registration problems
  *
@@ -836,7 +859,6 @@ public:
 
   RegistrationSolution solution_;
 
-private:
   Params params_;
 
   // Inlier Binary Vectors

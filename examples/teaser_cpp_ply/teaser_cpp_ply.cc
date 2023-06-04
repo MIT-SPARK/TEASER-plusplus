@@ -160,11 +160,11 @@ int main() {
   std::cout << "Error (rad): " << getAngularError(T.topLeftCorner(3, 3), solution.rotation)
             << std::endl;
   std::cout << std::endl;
-  std::cout << "Expected translation: " << std::endl;
-  std::cout << T.topRightCorner(3, 1) << std::endl;
-  std::cout << "Estimated translation: " << std::endl;
-  std::cout << solution.translation << std::endl;
-  std::cout << "Error (m): " << (T.topRightCorner(3, 1) - solution.translation).norm() << std::endl;
+  // std::cout << "Expected translation: " << std::endl;
+  // std::cout << T.topRightCorner(3, 1) << std::endl;
+  // std::cout << "Estimated translation: " << std::endl;
+  // std::cout << solution.translation << std::endl;
+  // std::cout << "Error (m): " << (T.topRightCorner(3, 1) - solution.translation).norm() << std::endl;
   std::cout << std::endl;
   std::cout << "Number of correspondences: " << N << std::endl;
   std::cout << "Number of outliers: " << N_OUTLIERS << std::endl;
@@ -172,4 +172,19 @@ int main() {
             << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() /
                    1000000.0
             << std::endl;
+
+  Eigen::Matrix<double, 3, Eigen::Dynamic> tgt_bar = solution.rotation * src;
+  Eigen::Matrix<double, 3, Eigen::Dynamic> tgt_diff = tgt_bar - tgt;
+  Eigen::Matrix<double, 3, Eigen::Dynamic> r_inverse = solution.rotation.inverse();
+  Eigen::Matrix<double, 3, Eigen::Dynamic> src_bar = r_inverse * tgt;
+  Eigen::Matrix<double, 3, Eigen::Dynamic> src_diff = src_bar - src;
+
+  std::cout << "(" << tgt_diff.rows() << ", " << tgt_diff.cols() << ")" << std::endl;
+  std::cout << "(" << src_diff.rows() << ", " << src_diff.cols() << ")" << std::endl;
+
+  Eigen::Matrix<double, 3, Eigen::Dynamic> B = Eigen::MatrixXd::Zero(3, 3);
+  for (size_t i = 0; i < N; i++) {
+    B += tgt_diff.col(i) * src_diff.col(i).transpose();
+  }
+
 }
