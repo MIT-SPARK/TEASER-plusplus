@@ -773,6 +773,11 @@ void teaser::GNCTLSRotationSolver::solveForRotation(
   // Loop for performing GNC-TLS
   for (size_t i = 0; i < params_.max_iterations; ++i) {
 
+    if (i == params_.max_iterations - 1) {
+      TEASER_DEBUG_INFO_MSG(
+            "GNC-TLS terminated because maximum iteration.");
+    }
+
     // Fix weights and perform SVD rotation estimation
     *rotation = teaser::utils::svdRot(src, dst, weights);
 

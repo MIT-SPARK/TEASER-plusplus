@@ -121,8 +121,8 @@ int main() {
   std::cout << "origin size: " << normals->size() << "\ntarget size: " << tgt_normals->size()
             << std::endl;
 
-  Eigen::Matrix<double, 3, Eigen::Dynamic> src_normal(3, N);
-  Eigen::Matrix<double, 3, Eigen::Dynamic> tgt_normal(3, N);
+  Eigen::Matrix<double, 3, Eigen::Dynamic> src_normal(3, 2 * N);
+  Eigen::Matrix<double, 3, Eigen::Dynamic> tgt_normal(3, 2 * N);
   for (size_t i = 0; i < N; i++) {
     src_normal.col(i) << normals->points[i].getNormalVector3fMap()[0],
         normals->points[i].getNormalVector3fMap()[1], normals->points[i].getNormalVector3fMap()[2];
@@ -130,13 +130,13 @@ int main() {
         tgt_normals->points[i].getNormalVector3fMap()[1],
         tgt_normals->points[i].getNormalVector3fMap()[2];
   }
-  // for (size_t i = N; i < 2 * N; i++) {
-  //   src_normal.col(i) << normals->points[i].getNormalVector3fMap()[0],
-  //       normals->points[i].getNormalVector3fMap()[1], normals->points[i].getNormalVector3fMap()[2];
-  //   tgt_normal.col(i) << -tgt_normals->points[i].getNormalVector3fMap()[0],
-  //       -tgt_normals->points[i].getNormalVector3fMap()[1],
-  //       -tgt_normals->points[i].getNormalVector3fMap()[2];
-  // }
+  for (size_t i = N; i < 2 * N; i++) {
+    src_normal.col(i) << normals->points[i].getNormalVector3fMap()[0],
+        normals->points[i].getNormalVector3fMap()[1], normals->points[i].getNormalVector3fMap()[2];
+    tgt_normal.col(i) << -tgt_normals->points[i].getNormalVector3fMap()[0],
+        -tgt_normals->points[i].getNormalVector3fMap()[1],
+        -tgt_normals->points[i].getNormalVector3fMap()[2];
+  }
 
   // Run TEASER++ registration
   // Prepare solver parameters
@@ -182,7 +182,7 @@ int main() {
                    1000000.0
             << std::endl;
   
-  std::cout << "inliner size: " << solver.getRotationInliers().size() / 2 << std::endl;
+  std::cout << "inliner size: " << solver.getRotationInliers().size() << std::endl;
 
   Eigen::Vector<double, 3> tgt_avg = tgt.rowwise().sum();
   std::cout << "target average shape: (" << tgt_avg.rows() << ", " << tgt_avg.cols() << ")" << std::endl;
