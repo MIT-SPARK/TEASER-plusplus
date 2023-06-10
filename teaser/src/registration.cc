@@ -841,7 +841,17 @@ teaser::RobustNormalRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eig
   TEASER_DEBUG_INFO_MSG("Starting rotation solver.");
   solveForRotation(src, dst);
   TEASER_DEBUG_INFO_MSG("Rotation estimation complete.");
-  
+
+  // Save indices of inlier TIMs from GNC rotation estimation
+  for (size_t i = 0; i < rotation_inliers_mask_.cols(); ++i) {
+    if (rotation_inliers_mask_[i]) {
+      rotation_inliers_.emplace_back(i);
+    }
+    else {
+      // std::cout << "rotation inliers mask: " << rotation_inliers_mask_[i] << std::endl;
+    }
+  }
+
   // Update validity flag
   solution_.valid = true;
 

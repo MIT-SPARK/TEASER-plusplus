@@ -1,4 +1,5 @@
 // An example showing TEASER++ registration with the Stanford bunny model
+
 #include <chrono>
 #include <cstddef>
 #include <iostream>
@@ -7,6 +8,7 @@
 #include <random>
 
 #include <Eigen/Core>
+#include <Eigen/SVD>
 
 #include <teaser/ply_io.h>
 #include <teaser/registration.h>
@@ -135,11 +137,11 @@ int main() {
   params.noise_bound = NOISE_BOUND;
   params.cbar2 = 1;
   params.estimate_scaling = false;
-  params.rotation_max_iterations = 1000;
+  params.rotation_max_iterations = 100;
   params.rotation_gnc_factor = 1.4;
   params.rotation_estimation_algorithm =
       teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS;
-  params.rotation_cost_threshold = 0.005;
+  params.rotation_cost_threshold = 0.00005;
 
   // Solve with TEASER++
   teaser::RobustNormalRegistrationSolver solver(params);
@@ -172,19 +174,34 @@ int main() {
             << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() /
                    1000000.0
             << std::endl;
+  
+  std::cout << "inliner size: " << solver.getTranslationInliers().size() << std::endl;
 
-  Eigen::Matrix<double, 3, Eigen::Dynamic> tgt_bar = solution.rotation * src;
-  Eigen::Matrix<double, 3, Eigen::Dynamic> tgt_diff = tgt_bar - tgt;
-  Eigen::Matrix<double, 3, Eigen::Dynamic> r_inverse = solution.rotation.inverse();
-  Eigen::Matrix<double, 3, Eigen::Dynamic> src_bar = r_inverse * tgt;
-  Eigen::Matrix<double, 3, Eigen::Dynamic> src_diff = src_bar - src;
+  Eigen::Vector<double, 3> tgt_avg = tgt.rowwise().sum();
+  std::cout << "target average shape: ()" << tgt_avg.rows() << ", " << tgt_avg.cols() << ")" << std::endl;
+  Eigen::Matrix<double, 3, Eigen::Dynamic> tgt_diff = tgt.colwise() - tgt_avg;
+  Eigen::Vector<double, 3> src_avg = src.rowwise().sum();
+  Eigen::Matrix<double, 3, Eigen::Dynamic> src_diff = src.colwise() - src_avg;
 
-  std::cout << "(" << tgt_diff.rows() << ", " << tgt_diff.cols() << ")" << std::endl;
-  std::cout << "(" << src_diff.rows() << ", " << src_diff.cols() << ")" << std::endl;
+  std::cout << "target shape: (" << tgt_diff.rows() << ", " << tgt_diff.cols() << ")" << std::endl;
+  std::cout << "source shape: (" << src_diff.rows() << ", " << src_diff.cols() << ")" << std::endl;
 
   Eigen::Matrix<double, 3, Eigen::Dynamic> B = Eigen::MatrixXd::Zero(3, 3);
   for (size_t i = 0; i < N; i++) {
     B += tgt_diff.col(i) * src_diff.col(i).transpose();
   }
 
+  std::cout << "Matrix B shape: (" << B.rows() << " " << B.cols() << ")" << std::endl;
+  Eigen::JacobiSVD<Eigen::Matrix<double, 3, Eigen::Dynamic>> svd(B, Eigen::ComputeThinU | Eigen::ComputeThinV);
+
+  Eigen::Matrix<double, 3, Eigen::Dynamic> matrix_u = svd.matrixU();
+  Eigen::Matrix<double, 3, Eigen::Dynamic> matrix_v = svd.matrixV();
+  Eigen::Matrix<double, 3, Eigen::Dynamic> matrix_sigma = svd.singularValues();
+
+  auto det_u = matrix_u.determinant();
+  auto det_v = matrix_v.determinant();
+
+  std::cout << B << std::endl;
+
+  std::cout << det_u << " " << det_v << std::endl;
 }
