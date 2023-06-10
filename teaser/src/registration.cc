@@ -399,7 +399,7 @@ void teaser::QuatroSolver::solveForRotation(
 
   if (inliers) {
     for (size_t i = 0; i < weights.cols(); ++i) {
-      (*inliers)(0, i) = weights(0, i) >= 0.4;
+      (*inliers)(0, i) = weights(0, i) >= 0.5;
     }
   }
 
@@ -846,9 +846,6 @@ teaser::RobustNormalRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eig
   for (size_t i = 0; i < rotation_inliers_mask_.cols(); ++i) {
     if (rotation_inliers_mask_[i]) {
       rotation_inliers_.emplace_back(i);
-    }
-    else {
-      // std::cout << "rotation inliers mask: " << rotation_inliers_mask_[i] << std::endl;
     }
   }
 
