@@ -22,7 +22,7 @@
 
 // Macro constants for generating noise and outliers
 #define NOISE_BOUND 0.001
-#define N_OUTLIERS 400
+#define N_OUTLIERS 800
 #define OUTLIER_TRANSLATION_LB 5
 #define OUTLIER_TRANSLATION_UB 10
 
@@ -131,11 +131,8 @@ int main() {
         tgt_normals->points[i].getNormalVector3fMap()[2];
   }
   for (size_t i = N; i < 2 * N; i++) {
-    src_normal.col(i) << normals->points[i].getNormalVector3fMap()[0],
-        normals->points[i].getNormalVector3fMap()[1], normals->points[i].getNormalVector3fMap()[2];
-    tgt_normal.col(i) << -tgt_normals->points[i].getNormalVector3fMap()[0],
-        -tgt_normals->points[i].getNormalVector3fMap()[1],
-        -tgt_normals->points[i].getNormalVector3fMap()[2];
+    src_normal.col(i) = src_normal.col(i - N);
+    tgt_normal.col(i) = -tgt_normal.col(i - N);
   }
 
   // Run TEASER++ registration
@@ -157,6 +154,16 @@ int main() {
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
   auto solution = solver.getSolution();
+  size_t solver_inliner = 0;
+  size_t common_inliner = 0;
+  for (auto i: solver.rotation_inliers_) {
+    if (i > N)
+      solver_inliner += 1;
+    if (std::find(solver.rotation_inliers_.begin(), solver.rotation_inliers_.end(), i - N) != solver.rotation_inliers_.end() || std::find(solver.rotation_inliers_.begin(), solver.rotation_inliers_.end(), i + N) != solver.rotation_inliers_.end())
+      common_inliner += 1;
+  }
+
+  common_inliner /= 2;
 
   // Compare results
   std::cout << "=====================================" << std::endl;
@@ -168,7 +175,6 @@ int main() {
   std::cout << solution.rotation << std::endl;
   std::cout << "Error (rad): " << getAngularError(T.topLeftCorner(3, 3), solution.rotation)
             << std::endl;
-  std::cout << std::endl;
   // std::cout << "Expected translation: " << std::endl;
   // std::cout << T.topRightCorner(3, 1) << std::endl;
   // std::cout << "Estimated translation: " << std::endl;
@@ -183,6 +189,8 @@ int main() {
             << std::endl;
   
   std::cout << "inliner size: " << solver.getRotationInliers().size() << std::endl;
+  std::cout << "rotation inliner greater than " << N << ": " << solver_inliner << std::endl;
+  std::cout << "common inliner: " << common_inliner << std::endl;
 
   Eigen::Vector<double, 3> tgt_avg = tgt.rowwise().sum();
   std::cout << "target average shape: (" << tgt_avg.rows() << ", " << tgt_avg.cols() << ")" << std::endl;
@@ -207,8 +215,13 @@ int main() {
 
   auto det_u = matrix_u.determinant();
   auto det_v = matrix_v.determinant();
+  auto det = det_u * det_v;
 
-  std::cout << B << std::endl;
-
-  std::cout << det_u << " " << det_v << std::endl;
+  Eigen::DiagonalMatrix<double, 3> m(1, 1, det);
+  Eigen::Matrix3d rotation_matrix = matrix_v * m * matrix_u.transpose();
+  auto translation_matrix = tgt_avg - rotation_matrix * src_avg;
+  std::cout << "rotation_matrix: " << std::endl;
+  std::cout << rotation_matrix << std::endl;
+  std::cout << "Error (rad): " << getAngularError(T.topLeftCorner(3, 3), rotation_matrix)
+            << std::endl;
 }
