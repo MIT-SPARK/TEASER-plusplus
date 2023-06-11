@@ -22,7 +22,7 @@
 
 // Macro constants for generating noise and outliers
 #define NOISE_BOUND 0.001
-#define N_OUTLIERS 800
+#define N_OUTLIERS 400
 #define OUTLIER_TRANSLATION_LB 5
 #define OUTLIER_TRANSLATION_UB 10
 
@@ -192,17 +192,30 @@ int main() {
   std::cout << "rotation inliner greater than " << N << ": " << solver_inliner << std::endl;
   std::cout << "common inliner: " << common_inliner << std::endl;
 
-  Eigen::Vector<double, 3> tgt_avg = tgt.rowwise().sum();
+  Eigen::Matrix<double, 3, Eigen::Dynamic> tgt_inliner(3, solver.getRotationInliers().size());
+  Eigen::Matrix<double, 3, Eigen::Dynamic> src_inliner(3, solver.getRotationInliers().size());
+
+  for (size_t i = 0; i < solver.getRotationInliers().size(); i++){
+    if (solver.getRotationInliers()[i] < N) {
+      tgt_inliner.col(i) = tgt.col(solver.getRotationInliers()[i]);
+      src_inliner.col(i) = src.col(solver.getRotationInliers()[i]);
+    } else {
+      tgt_inliner.col(i) = tgt.col(solver.getRotationInliers()[i] - N);
+      src_inliner.col(i) = src.col(solver.getRotationInliers()[i] - N);
+    }
+  }
+
+  Eigen::Vector<double, 3> tgt_avg = tgt_inliner.rowwise().mean();
   std::cout << "target average shape: (" << tgt_avg.rows() << ", " << tgt_avg.cols() << ")" << std::endl;
-  Eigen::Matrix<double, 3, Eigen::Dynamic> tgt_diff = tgt.colwise() - tgt_avg;
-  Eigen::Vector<double, 3> src_avg = src.rowwise().sum();
-  Eigen::Matrix<double, 3, Eigen::Dynamic> src_diff = src.colwise() - src_avg;
+  Eigen::Matrix<double, 3, Eigen::Dynamic> tgt_diff = tgt_inliner.colwise() - tgt_avg;
+  Eigen::Vector<double, 3> src_avg = src_inliner.rowwise().mean();
+  Eigen::Matrix<double, 3, Eigen::Dynamic> src_diff = src_inliner.colwise() - src_avg;
 
   std::cout << "target shape: (" << tgt_diff.rows() << ", " << tgt_diff.cols() << ")" << std::endl;
   std::cout << "source shape: (" << src_diff.rows() << ", " << src_diff.cols() << ")" << std::endl;
 
   Eigen::Matrix<double, 3, Eigen::Dynamic> B = Eigen::MatrixXd::Zero(3, 3);
-  for (size_t i = 0; i < N; i++) {
+  for (size_t i = 0; i < tgt_diff.cols(); i++) {
     B += tgt_diff.col(i) * src_diff.col(i).transpose();
   }
 
@@ -219,9 +232,14 @@ int main() {
 
   Eigen::DiagonalMatrix<double, 3> m(1, 1, det);
   Eigen::Matrix3d rotation_matrix = matrix_v * m * matrix_u.transpose();
-  auto translation_matrix = tgt_avg - rotation_matrix * src_avg;
+  Eigen::Vector3d translation = tgt_avg - rotation_matrix * src_avg;
   std::cout << "rotation_matrix: " << std::endl;
   std::cout << rotation_matrix << std::endl;
   std::cout << "Error (rad): " << getAngularError(T.topLeftCorner(3, 3), rotation_matrix)
             << std::endl;
+  std::cout << "Expected translation: " << std::endl;
+  std::cout << T.topRightCorner(3, 1) << std::endl;
+  std::cout << "Estimated translation: " << std::endl;
+  std::cout << translation << std::endl;
+  std::cout << "Error (m): " << (T.topRightCorner(3, 1) - translation).norm() << std::endl;
 }
