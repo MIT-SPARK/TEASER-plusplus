@@ -23,8 +23,8 @@
 // Macro constants for generating noise and outliers
 #define NOISE_BOUND 0.001
 #define N_OUTLIERS 400
-#define OUTLIER_TRANSLATION_LB 5
-#define OUTLIER_TRANSLATION_UB 10
+#define OUTLIER_TRANSLATION_LB 0
+#define OUTLIER_TRANSLATION_UB 1.0
 
 inline double getAngularError(Eigen::Matrix3d R_exp, Eigen::Matrix3d R_est) {
   return std::abs(std::acos(fmin(fmax(((R_exp.transpose() * R_est).trace() - 1) / 2, -1.0), 1.0)));
@@ -138,7 +138,7 @@ int main() {
   // Run TEASER++ registration
   // Prepare solver parameters
   teaser::RobustRegistrationSolver::Params params;
-  params.noise_bound = 0.05;
+  params.noise_bound = 0.1;
   params.cbar2 = 1;
   params.estimate_scaling = false;
   params.rotation_max_iterations = 1000;
@@ -156,18 +156,25 @@ int main() {
   auto solution = solver.getSolution();
   size_t solver_inliner = 0;
   size_t common_inliner = 0;
-  for (auto i: solver.rotation_inliers_) {
-    if (i > N)
+  for (auto i : solver.getRotationInliers()) {
+    if (i > N) {
       solver_inliner += 1;
-    if (std::find(solver.rotation_inliers_.begin(), solver.rotation_inliers_.end(), i - N) != solver.rotation_inliers_.end() || std::find(solver.rotation_inliers_.begin(), solver.rotation_inliers_.end(), i + N) != solver.rotation_inliers_.end())
+    }
+    if (std::find(solver.rotation_inliers_.begin(), solver.rotation_inliers_.end(), i - N) !=
+            solver.rotation_inliers_.end() ||
+        std::find(solver.rotation_inliers_.begin(), solver.rotation_inliers_.end(), i + N) !=
+            solver.rotation_inliers_.end())
       common_inliner += 1;
   }
+
+
+  std::cout << (solver.getRotationInliers() == solver.rotation_inliers_) << std::endl;
 
   common_inliner /= 2;
 
   // Compare results
   std::cout << "=====================================" << std::endl;
-  std::cout << "          TEASER++ Results           " << std::endl;
+  std::cout << "          Our Results           " << std::endl;
   std::cout << "=====================================" << std::endl;
   std::cout << "Expected rotation: " << std::endl;
   std::cout << T.topLeftCorner(3, 3) << std::endl;
@@ -175,11 +182,6 @@ int main() {
   std::cout << solution.rotation << std::endl;
   std::cout << "Error (rad): " << getAngularError(T.topLeftCorner(3, 3), solution.rotation)
             << std::endl;
-  // std::cout << "Expected translation: " << std::endl;
-  // std::cout << T.topRightCorner(3, 1) << std::endl;
-  // std::cout << "Estimated translation: " << std::endl;
-  // std::cout << solution.translation << std::endl;
-  // std::cout << "Error (m): " << (T.topRightCorner(3, 1) - solution.translation).norm() << std::endl;
   std::cout << std::endl;
   std::cout << "Number of correspondences: " << N << std::endl;
   std::cout << "Number of outliers: " << N_OUTLIERS << std::endl;
@@ -187,7 +189,7 @@ int main() {
             << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() /
                    1000000.0
             << std::endl;
-  
+
   std::cout << "inliner size: " << solver.getRotationInliers().size() << std::endl;
   std::cout << "rotation inliner greater than " << N << ": " << solver_inliner << std::endl;
   std::cout << "common inliner: " << common_inliner << std::endl;
@@ -195,7 +197,7 @@ int main() {
   Eigen::Matrix<double, 3, Eigen::Dynamic> tgt_inliner(3, solver.getRotationInliers().size());
   Eigen::Matrix<double, 3, Eigen::Dynamic> src_inliner(3, solver.getRotationInliers().size());
 
-  for (size_t i = 0; i < solver.getRotationInliers().size(); i++){
+  for (size_t i = 0; i < solver.getRotationInliers().size(); i++) {
     if (solver.getRotationInliers()[i] < N) {
       tgt_inliner.col(i) = tgt.col(solver.getRotationInliers()[i]);
       src_inliner.col(i) = src.col(solver.getRotationInliers()[i]);
@@ -206,7 +208,8 @@ int main() {
   }
 
   Eigen::Vector<double, 3> tgt_avg = tgt_inliner.rowwise().mean();
-  std::cout << "target average shape: (" << tgt_avg.rows() << ", " << tgt_avg.cols() << ")" << std::endl;
+  std::cout << "target average shape: (" << tgt_avg.rows() << ", " << tgt_avg.cols() << ")"
+            << std::endl;
   Eigen::Matrix<double, 3, Eigen::Dynamic> tgt_diff = tgt_inliner.colwise() - tgt_avg;
   Eigen::Vector<double, 3> src_avg = src_inliner.rowwise().mean();
   Eigen::Matrix<double, 3, Eigen::Dynamic> src_diff = src_inliner.colwise() - src_avg;
@@ -220,7 +223,8 @@ int main() {
   }
 
   std::cout << "Matrix B shape: (" << B.rows() << " " << B.cols() << ")" << std::endl;
-  Eigen::JacobiSVD<Eigen::Matrix<double, 3, Eigen::Dynamic>> svd(B, Eigen::ComputeThinU | Eigen::ComputeThinV);
+  Eigen::JacobiSVD<Eigen::Matrix<double, 3, Eigen::Dynamic>> svd(B, Eigen::ComputeFullU |
+                                                                        Eigen::ComputeFullV);
 
   Eigen::Matrix<double, 3, Eigen::Dynamic> matrix_u = svd.matrixU();
   Eigen::Matrix<double, 3, Eigen::Dynamic> matrix_v = svd.matrixV();
@@ -232,7 +236,7 @@ int main() {
 
   Eigen::DiagonalMatrix<double, 3> m(1, 1, det);
   Eigen::Matrix3d rotation_matrix = matrix_v * m * matrix_u.transpose();
-  Eigen::Vector3d translation = tgt_avg - rotation_matrix * src_avg;
+  Eigen::Vector3d translation = tgt_avg - T.topLeftCorner(3, 3) * src_avg;
   std::cout << "rotation_matrix: " << std::endl;
   std::cout << rotation_matrix << std::endl;
   std::cout << "Error (rad): " << getAngularError(T.topLeftCorner(3, 3), rotation_matrix)
@@ -242,4 +246,63 @@ int main() {
   std::cout << "Estimated translation: " << std::endl;
   std::cout << translation << std::endl;
   std::cout << "Error (m): " << (T.topRightCorner(3, 1) - translation).norm() << std::endl;
+
+  std::cout << "\n\n\n==========================================================\n\n\n";
+  // Run TEASER++ registration
+  // Prepare solver parameters
+  teaser::RobustRegistrationSolver::Params params_points;
+  params_points.noise_bound = NOISE_BOUND;
+  params_points.cbar2 = 1;
+  params_points.estimate_scaling = false;
+  params_points.rotation_max_iterations = 100;
+  params_points.rotation_gnc_factor = 1.4;
+  params_points.rotation_estimation_algorithm =
+      teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS;
+  params_points.rotation_cost_threshold = 0.005;
+
+  // Solve with TEASER++
+  teaser::RobustRegistrationSolver solver_points(params_points);
+  std::chrono::steady_clock::time_point begin_points = std::chrono::steady_clock::now();
+  solver_points.solve(src_inliner, tgt_inliner);
+  std::chrono::steady_clock::time_point end_points = std::chrono::steady_clock::now();
+
+  auto solution_points = solver_points.getSolution();
+
+  // Compare results
+  std::cout << "=====================================" << std::endl;
+  std::cout << "          TEASER++ Results           " << std::endl;
+  std::cout << "=====================================" << std::endl;
+  std::cout << "Expected rotation: " << std::endl;
+  std::cout << T.topLeftCorner(3, 3) << std::endl;
+  std::cout << "Estimated rotation: " << std::endl;
+  std::cout << solution_points.rotation << std::endl;
+  std::cout << "Error (rad): " << getAngularError(T.topLeftCorner(3, 3), solution_points.rotation)
+            << std::endl;
+  std::cout << std::endl;
+  std::cout << "Expected translation: " << std::endl;
+  std::cout << T.topRightCorner(3, 1) << std::endl;
+  std::cout << "Estimated translation: " << std::endl;
+  std::cout << solution_points.translation << std::endl;
+  std::cout << "Error (m): " << (T.topRightCorner(3, 1) - solution_points.translation).norm()
+            << std::endl;
+  std::cout << std::endl;
+  std::cout << "Number of correspondences: " << N << std::endl;
+  std::cout << "Number of outliers: " << N_OUTLIERS << std::endl;
+  std::cout << "Time taken (s): "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() /
+                   1000000.0
+            << std::endl;
+
+  std::cout << "Teaser inliner: " << solver_points.getTranslationInliers().size() << std::endl;
+  size_t inliner_count = 0;
+  for (auto i : solver_points.getTranslationInliers()) {
+    if (std::find(solver.getRotationInliers().begin(), solver.getRotationInliers().end(), i) !=
+            solver.getRotationInliers().end() ||
+        std::find(solver.getRotationInliers().begin(), solver.getRotationInliers().end(), i + N) !=
+            solver.getRotationInliers().end()) {
+      inliner_count += 1;
+    }
+  }
+
+  std::cout << "Teaser inliner in Ours: " << inliner_count << std::endl;
 }

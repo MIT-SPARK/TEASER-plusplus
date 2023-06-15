@@ -9,6 +9,7 @@
 #include "teaser/registration.h"
 
 #include <cmath>
+#include <cstddef>
 #include <functional>
 #include <iostream>
 #include <limits>
@@ -831,10 +832,15 @@ void teaser::GNCTLSRotationSolver::solveForRotation(
     }
   }
 
+  size_t weight_equal_1 = 0;
   if (inliers) {
     for (size_t i = 0; i < weights.cols(); ++i) {
       (*inliers)(0, i) = weights(0, i) >= 0.5;
+      if (std::fabs(weights(0, i) - 1) < 1e-8) {
+        weight_equal_1++;
+      }
     }
+    std::cout << "GNC-TLS weight equal to 1: " << weight_equal_1 << std::endl;
   }
 }
 
