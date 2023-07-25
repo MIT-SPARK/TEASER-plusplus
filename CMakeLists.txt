@@ -81,7 +81,7 @@ execute_process(COMMAND "${CMAKE_COMMAND}" --build .
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download")
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 add_subdirectory("${CMAKE_BINARY_DIR}/googletest-src"
-        "${CMAKE_BINARY_DIR}/googletest-build")
+        "${CMAKE_BINARY_DIR}/googletest-build" EXCLUDE_FROM_ALL)
 
 # pmc (Parallel Maximum Clique)
 configure_file(cmake/pmc.CMakeLists.txt.in pmc-download/CMakeLists.txt)
