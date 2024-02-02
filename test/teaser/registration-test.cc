@@ -61,6 +61,98 @@ TEST(RegistrationTest, LargeModel) {
   std::cout << "Time spent: " << duration.count() << std::endl;
 }
 
+TEST(RegistrationTest, LargeModelNoMaxClique) {
+
+  std::string model_file = "./data/registration_test/1000point_model.ply";
+  std::string scene_file = "./data/registration_test/1000point_scene.ply";
+
+  teaser::PLYReader reader;
+  teaser::PointCloud src_cloud;
+  auto status = reader.read(model_file, src_cloud);
+  EXPECT_EQ(status, 0);
+  auto eigen_src = teaser::test::teaserPointCloudToEigenMatrix<double>(src_cloud);
+
+  teaser::PointCloud dst_cloud;
+  status = reader.read(scene_file, dst_cloud);
+  EXPECT_EQ(status, 0);
+  auto eigen_dst = teaser::test::teaserPointCloudToEigenMatrix<double>(dst_cloud);
+
+  // Start the timer
+  auto start = std::chrono::high_resolution_clock::now();
+
+  for (int i = 0; i < 25; ++i) {
+    // Prepare the solver object
+    teaser::RobustRegistrationSolver::Params params;
+    params.noise_bound = 0.0337;
+    params.cbar2 = 1;
+    params.estimate_scaling = false;
+    params.rotation_max_iterations = 100;
+    params.rotation_gnc_factor = 1.4;
+    params.rotation_estimation_algorithm =
+        teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::FGR;
+    params.rotation_cost_threshold = 0.005;
+    params.max_clique_num_threads = 15;
+    params.inlier_selection_mode = teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::NONE;
+
+    // Prepare the solver object
+    teaser::RobustRegistrationSolver solver(params);
+
+    // Solve
+    solver.solve(eigen_src, eigen_dst);
+  }
+  // Stop the timer
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  std::cout << "Time spent: " << duration.count() << std::endl;
+}
+
+TEST(RegistrationTest, LargeModelParallel) {
+
+  std::string model_file = "./data/registration_test/1000point_model.ply";
+  std::string scene_file = "./data/registration_test/1000point_scene.ply";
+
+  teaser::PLYReader reader;
+  teaser::PointCloud src_cloud;
+  auto status = reader.read(model_file, src_cloud);
+  EXPECT_EQ(status, 0);
+  auto eigen_src = teaser::test::teaserPointCloudToEigenMatrix<double>(src_cloud);
+
+  teaser::PointCloud dst_cloud;
+  status = reader.read(scene_file, dst_cloud);
+  EXPECT_EQ(status, 0);
+  auto eigen_dst = teaser::test::teaserPointCloudToEigenMatrix<double>(dst_cloud);
+
+  // Start the timer
+  auto start = std::chrono::high_resolution_clock::now();
+
+#pragma omp parallel for default(none) shared(eigen_src, eigen_dst)
+  for (int i = 0; i < 25; ++i) {
+    // Prepare the solver object
+    teaser::RobustRegistrationSolver::Params params;
+    params.noise_bound = 0.0337;
+    params.cbar2 = 1;
+    params.estimate_scaling = false;
+    params.rotation_max_iterations = 100;
+    params.rotation_gnc_factor = 1.4;
+    params.rotation_estimation_algorithm =
+        teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::FGR;
+    params.rotation_cost_threshold = 0.005;
+    params.max_clique_num_threads = 15;
+    params.inlier_selection_mode = teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::NONE;
+
+    // Prepare the solver object
+    teaser::RobustRegistrationSolver solver(params);
+
+    // Solve
+    solver.solve(eigen_src, eigen_dst);
+  }
+
+  // Stop the timer
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  std::cout << "Time spent: " << duration.count() << std::endl;
+}
+
 TEST(RegistrationTest, LargeModelSingleThreaded) {
 
   std::string model_file = "./data/registration_test/1000point_model.ply";
