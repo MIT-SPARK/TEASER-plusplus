@@ -8,10 +8,10 @@ message(STATUS "Python Interpreter Version: ${PYTHON_VERSION_MAJOR}.${PYTHON_VER
 if (NOT (PYTHON_VERSION_MAJOR EQUAL 2 AND PYTHON_VERSION_MINOR EQUAL 7))
     # Hack: VTK used in PCL might add /usr/include/python2.7 to all targets'
     # INCLUDE_DIRECTORIES properties. We need to remove it.
-    get_target_property(TEASERPY_NEW_INCLUDE_DIRS teaserpp_python INCLUDE_DIRECTORIES)
+    get_target_property(TEASERPY_NEW_INCLUDE_DIRS teaserpp_python INTERFACE_INCLUDE_DIRECTORIES)
     list(FILTER TEASERPY_NEW_INCLUDE_DIRS EXCLUDE REGEX ".*python2.7$")
     set_target_properties(teaserpp_python
-            PROPERTIES INCLUDE_DIRECTORIES "${TEASERPY_NEW_INCLUDE_DIRS}")
+            PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${TEASERPY_NEW_INCLUDE_DIRS}")
 endif ()
 
 target_link_libraries(teaserpp_python PUBLIC teaser_registration)
