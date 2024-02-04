@@ -8,6 +8,7 @@
 
 #include <string>
 #include <sstream>
+#include <chrono>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
@@ -17,6 +18,52 @@
 #include "teaser/certification.h"
 
 namespace py = pybind11;
+
+/**
+ * Convenience function for solving a batch of registration problems with TEASER++.
+ * Suitable for PyTorch users who want to use TEASER++. This function does not use maximum clique.
+ */
+std::vector<std::pair<teaser::RegistrationSolution, Eigen::Matrix<bool, 1, Eigen::Dynamic>>>
+batch_gnc_solve(const std::vector<py::EigenDRef<Eigen::Matrix<double, 3, Eigen::Dynamic>>>& src,
+                const std::vector<py::EigenDRef<Eigen::Matrix<double, 3, Eigen::Dynamic>>>& dst,
+                const std::vector<double>& noise_bound, bool estimate_scale) {
+
+  // Start the timer
+  auto start = std::chrono::high_resolution_clock::now();
+
+  size_t B = src.size();
+  assert(B == noise_bound.size());
+
+  std::vector<std::pair<teaser::RegistrationSolution, Eigen::Matrix<bool, 1, Eigen::Dynamic>>> sols;
+  sols.resize(B);
+#pragma omp parallel for default(none) shared(B, noise_bound, src, dst, sols) private(estimate_scale)
+  for (size_t i = 0; i < B; ++i) {
+    teaser::RobustRegistrationSolver::Params params;
+    params.cbar2 = 1;
+    params.estimate_scaling = estimate_scale;
+    params.rotation_max_iterations = 100;
+    params.rotation_gnc_factor = 1.4;
+    params.rotation_estimation_algorithm =
+        teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::FGR;
+    params.rotation_cost_threshold = 0.005;
+    params.max_clique_num_threads = 15;
+    params.inlier_selection_mode = teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::NONE;
+    params.noise_bound = noise_bound[i];
+
+    // Prepare the solver object
+    teaser::RobustRegistrationSolver solver(params);
+
+    // Solve
+    sols[i].first = solver.solve(src[i], dst[i]);
+    sols[i].second = solver.getTranslationInliersMask();
+  }
+
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  std::cout << "Solver time spent: " << duration.count() << std::endl;
+
+  return sols;
+}
 
 /**
  * Python interface with pybind11
@@ -157,6 +204,10 @@ PYBIND11_MODULE(teaserpp_python, m) {
                      << ">";
         return print_string.str();
       });
+
+  // Convenience function for solving batched problems with TEASER++ in parallel
+  m.def("batch_gnc_solve", &batch_gnc_solve, "Solve a batch of problems in parallel",
+        py::arg("src"), py::arg("dst"), py::arg("noise_bound"), py::arg("estimate_scale"));
 
   // Python bound for CertificationResult
   py::class_<teaser::CertificationResult>(m, "CertificationResult")
