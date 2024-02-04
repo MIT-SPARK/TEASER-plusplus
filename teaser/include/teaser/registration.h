@@ -321,8 +321,9 @@ public:
  * H. Lim et al., "A Single Correspondence Is Enough: Robust Global Registration
  * to Avoid Degeneracy in Urban Environments," in Robotics - ICRA 2022,
  * Accepted. To appear. arXiv:2203.06612 [cs], Mar. 2022.
- * Quatro and TEASER++ differ in the estimation of rotation. Quatro forgoes roll and pitch estimation,
- * yet it is empirically found that it makes the algorithm more robust against degeneracy.
+ * Quatro and TEASER++ differ in the estimation of rotation. Quatro forgoes roll and pitch
+ * estimation, yet it is empirically found that it makes the algorithm more robust against
+ * degeneracy.
  */
 class QuatroSolver : public GNCRotationSolver {
 public:
