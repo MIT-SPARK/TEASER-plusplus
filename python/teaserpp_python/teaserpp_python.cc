@@ -28,15 +28,13 @@ batch_gnc_solve(const std::vector<py::EigenDRef<Eigen::Matrix<double, 3, Eigen::
                 const std::vector<py::EigenDRef<Eigen::Matrix<double, 3, Eigen::Dynamic>>>& dst,
                 const std::vector<double>& noise_bound, bool estimate_scale) {
 
-  // Start the timer
-  auto start = std::chrono::high_resolution_clock::now();
-
   size_t B = src.size();
   assert(B == noise_bound.size());
 
   std::vector<std::pair<teaser::RegistrationSolution, Eigen::Matrix<bool, 1, Eigen::Dynamic>>> sols;
   sols.resize(B);
-#pragma omp parallel for default(none) shared(B, noise_bound, src, dst, sols) private(estimate_scale)
+#pragma omp parallel for default(none) shared(B, noise_bound, src, dst, sols, std::cout)           \
+    firstprivate(estimate_scale)
   for (size_t i = 0; i < B; ++i) {
     teaser::RobustRegistrationSolver::Params params;
     params.cbar2 = 1;
@@ -57,10 +55,6 @@ batch_gnc_solve(const std::vector<py::EigenDRef<Eigen::Matrix<double, 3, Eigen::
     sols[i].first = solver.solve(src[i], dst[i]);
     sols[i].second = solver.getTranslationInliersMask();
   }
-
-  auto stop = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-  std::cout << "Solver time spent: " << duration.count() << std::endl;
 
   return sols;
 }
