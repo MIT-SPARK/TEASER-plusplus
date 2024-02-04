@@ -791,9 +791,11 @@ public:
 
     // Initialize the scale estimator
     if (params_.estimate_scaling) {
+      TEASER_DEBUG_INFO_MSG("Uses TLSScaleSolver.");
       setScaleEstimator(
           std::make_unique<teaser::TLSScaleSolver>(params_.noise_bound, params_.cbar2));
     } else {
+      TEASER_DEBUG_INFO_MSG("Uses inlier selector (no scaling).");
       setScaleEstimator(
           std::make_unique<teaser::ScaleInliersSelector>(params_.noise_bound, params_.cbar2));
     }
