@@ -37,8 +37,8 @@ public:
    * @return
    */
   std::vector<std::pair<int, int>>
-  calculateCorrespondences(teaser::PointCloud& source_points, teaser::PointCloud& target_points,
-                           teaser::FPFHCloud& source_features, teaser::FPFHCloud& target_features,
+  calculateCorrespondences(const teaser::PointCloud& source_points, const teaser::PointCloud& target_points,
+                           const teaser::FPFHCloud& source_features, const teaser::FPFHCloud& target_features,
                            bool use_absolute_scale = true, bool use_crosscheck = true,
                            bool use_tuple_test = true, float tuple_scale = 0);
 
