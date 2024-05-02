@@ -128,26 +128,26 @@ public:
    * Get the number of vertices
    * @return total number of vertices
    */
-  [[nodiscard]] int numVertices() const { return adj_list_.size(); }
+  int numVertices() const { return adj_list_.size(); }
 
   /**
    * Get the number of edges
    * @return total number of edges
    */
-  [[nodiscard]] int numEdges() const { return num_edges_; }
+  int numEdges() const { return num_edges_; }
 
   /**
    * Get edges originated from a specific vertex
    * @param [in] id
    * @return an unordered set of edges
    */
-  [[nodiscard]] const std::vector<int>& getEdges(int id) const { return adj_list_[id]; }
+  const std::vector<int>& getEdges(int id) const { return adj_list_[id]; }
 
   /**
    * Get all vertices
    * @return a vector of all vertices
    */
-  [[nodiscard]] std::vector<int> getVertices() const {
+  std::vector<int> getVertices() const {
     std::vector<int> v;
     for (int i = 0; i < adj_list_.size(); ++i) {
       v.push_back(i);
@@ -155,7 +155,7 @@ public:
     return v;
   }
 
-  [[nodiscard]] Eigen::MatrixXi getAdjMatrix() const {
+  Eigen::MatrixXi getAdjMatrix() const {
     const int num_v = numVertices();
     Eigen::MatrixXi adj_matrix(num_v, num_v);
     for (size_t i = 0; i < num_v; ++i) {
@@ -171,7 +171,7 @@ public:
     return adj_matrix;
   }
 
-  [[nodiscard]] std::vector<std::vector<int>> getAdjList() const { return adj_list_; }
+  std::vector<std::vector<int>> getAdjList() const { return adj_list_; }
 
   /**
    * Preallocate spaces for vertices
