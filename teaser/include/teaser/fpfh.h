@@ -11,6 +11,7 @@
 #include <boost/smart_ptr/shared_ptr.hpp>
 #include <pcl/features/fpfh.h>
 #include <pcl/features/fpfh_omp.h>
+#include <pcl/features/normal_3d_omp.h>
 
 #include "teaser/geometry.h"
 

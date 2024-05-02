@@ -25,7 +25,7 @@ teaser::FPFHCloudPtr teaser::FPFHEstimation::computeFPFHFeatures(
   }
 
   // Estimate normals
-  pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normalEstimation;
+  pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> normalEstimation;
   normalEstimation.setInputCloud(pcl_input_cloud);
   normalEstimation.setRadiusSearch(normal_search_radius);
   pcl::search::KdTree<pcl::PointXYZ>::Ptr kdtree(new pcl::search::KdTree<pcl::PointXYZ>);
