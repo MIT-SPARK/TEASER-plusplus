@@ -138,9 +138,8 @@ void Matcher::advancedMatching(bool use_crosscheck, bool use_tuple_test, float t
   KDTree feature_tree_j(flann::KDTreeSingleIndexParams(15));
   buildKDTree(features_[fj], &feature_tree_j);
 
-  std::vector<int> corres_K, corres_K2;
+  std::vector<int> corres_K;
   std::vector<float> dis;
-  std::vector<int> ind;
 
   std::vector<std::pair<int, int>> corres;
   std::vector<std::pair<int, int>> corres_cross;
