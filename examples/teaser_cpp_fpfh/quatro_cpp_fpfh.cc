@@ -32,11 +32,11 @@ inline void getParams(const double noise_bound, const std::string reg_type,
   if (reg_type == "Quatro") {
     params.rotation_estimation_algorithm =
         teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::QUATRO;
-    params.inlier_selection_mode == teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_HEU;
+    params.inlier_selection_mode = teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_HEU;
   } else if  (reg_type == "TEASER") {
     params.rotation_estimation_algorithm =
         teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS;
-    params.inlier_selection_mode == teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_EXACT;
+    params.inlier_selection_mode = teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_EXACT;
   } else {
     throw std::invalid_argument("Not implemented!");
   }
