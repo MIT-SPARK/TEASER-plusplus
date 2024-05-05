@@ -69,5 +69,4 @@ private:
   std::vector<PointXYZ> points_;
 };
 
-
 } // namespace teaser

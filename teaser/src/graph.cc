@@ -74,7 +74,7 @@ vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
     for (int i = 1; i < k_cores->size(); ++i) {
       // Note: k_core has size equals to num vertices + 1
       if ((*k_cores)[i] >= max_core) {
-        C.push_back(i-1);
+        C.push_back(i - 1);
       }
     }
     return C;

@@ -16,8 +16,8 @@ inline double getAngularError(Eigen::Matrix3d R_exp, Eigen::Matrix3d R_est) {
   return std::abs(std::acos(fmin(fmax(((R_exp.transpose() * R_est).trace() - 1) / 2, -1.0), 1.0)));
 }
 
-inline void calcErrors(const Eigen::Matrix4d& T, const Eigen::Matrix3d est_rot, const Eigen::Vector3d est_ts,
-                double &rot_error, double& ts_error) {
+inline void calcErrors(const Eigen::Matrix4d& T, const Eigen::Matrix3d est_rot,
+                       const Eigen::Vector3d est_ts, double& rot_error, double& ts_error) {
   rot_error = getAngularError(T.topLeftCorner(3, 3), est_rot);
   ts_error = (T.topRightCorner(3, 1) - est_ts).norm();
 }
@@ -32,11 +32,11 @@ inline void getParams(const double noise_bound, const std::string reg_type,
   if (reg_type == "Quatro") {
     params.rotation_estimation_algorithm =
         teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::QUATRO;
-    params.inlier_selection_mode == teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_HEU;
-  } else if  (reg_type == "TEASER") {
+    params.inlier_selection_mode = teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_HEU;
+  } else if (reg_type == "TEASER") {
     params.rotation_estimation_algorithm =
         teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS;
-    params.inlier_selection_mode == teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_EXACT;
+    params.inlier_selection_mode = teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_EXACT;
   } else {
     throw std::invalid_argument("Not implemented!");
   }

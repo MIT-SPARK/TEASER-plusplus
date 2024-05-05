@@ -67,7 +67,7 @@ TEST(FPFHMatcherTest, MatchCase1) {
     ASSERT_EQ(tokens.size(), 2);
     ref_correspondences.emplace_back(
         // -1 because the ref correspondences use 1-index (MATLAB)
-        std::pair<int, int>{std::stoi(tokens[0])-1, std::stoi(tokens[1])-1});
+        std::pair<int, int>{std::stoi(tokens[0]) - 1, std::stoi(tokens[1]) - 1});
   }
 
   // compare calculated correspondences with reference correspondences

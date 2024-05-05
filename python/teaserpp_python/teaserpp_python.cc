@@ -80,7 +80,8 @@ PYBIND11_MODULE(teaserpp_python, m) {
   py::enum_<teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM>(
       solver, "ROTATION_ESTIMATION_ALGORITHM")
       .value("GNC_TLS", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS)
-      .value("FGR", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::FGR);
+      .value("FGR", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::FGR)
+      .value("QUATRO", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::QUATRO);
 
   // Python bound for teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION
   py::enum_<teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION>(solver,
@@ -125,11 +126,19 @@ PYBIND11_MODULE(teaserpp_python, m) {
       .def("__repr__", [](const teaser::RobustRegistrationSolver::Params& a) {
         std::ostringstream print_string;
 
-        std::string rot_alg =
-            a.rotation_estimation_algorithm ==
-                    teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::FGR
-                ? "FGR"
-                : "GNC-TLS";
+        std::string rot_alg;
+        if (a.rotation_estimation_algorithm ==
+            teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::FGR) {
+          rot_alg = "FGR";
+        }
+        if (a.rotation_estimation_algorithm ==
+            teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS) {
+          rot_alg = "GNC_TLS";
+        }
+        if (a.rotation_estimation_algorithm ==
+            teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::QUATRO) {
+          rot_alg = "QUATRO";
+        }
 
         std::string inlier_selection_alg;
         if (a.inlier_selection_mode ==

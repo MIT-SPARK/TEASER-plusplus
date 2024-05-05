@@ -109,7 +109,7 @@ def visualize_correspondences(
     frag2_temp.translate(translate)
 
     # estimate normals
-    vis_list = [target, source, frag1_temp, frag2_temp];
+    vis_list = [target, source, frag1_temp, frag2_temp]
     for ii in vis_list:
         ii.estimate_normals()
     vis_list.extend([*inlier_line_mesh_geoms, *outlier_line_mesh_geoms])

@@ -31,7 +31,7 @@ TEST(RotationSolverTest, FGRRotation) {
     Eigen::Matrix<double, 3, Eigen::Dynamic> dst_points = src_points;
 
     // Set up FGR
-    teaser::FastGlobalRegistrationSolver::Params params{1000, 0.0337, 1.4,  1e-3};
+    teaser::FastGlobalRegistrationSolver::Params params{1000, 0.0337, 1.4, 1e-3};
     teaser::FastGlobalRegistrationSolver fgr_solver(params);
 
     Eigen::Matrix3d result;

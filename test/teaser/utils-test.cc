@@ -115,8 +115,8 @@ TEST(UtilsTest, CalculatePointClusterDiameter) {
   {
     Eigen::Matrix<float, 3, Eigen::Dynamic> test_mat(3,3);
     test_mat << -1, 0, 1,
-        -1, 0, 1,
-        -1, 0, 1;
+                -1, 0, 1,
+                -1, 0, 1;
     float d = teaser::utils::calculateDiameter<float, 3>(test_mat);
     EXPECT_NEAR(d, 3.4641, 0.0001);
   }

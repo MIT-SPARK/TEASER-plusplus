@@ -16,7 +16,6 @@ teaser::FPFHCloudPtr teaser::FPFHEstimation::computeFPFHFeatures(
     const teaser::PointCloud& input_cloud, double normal_search_radius, double fpfh_search_radius) {
 
   // Intermediate variables
-  pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
   teaser::FPFHCloudPtr descriptors(new pcl::PointCloud<pcl::FPFHSignature33>());
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_input_cloud(new pcl::PointCloud<pcl::PointXYZ>);
   for (auto& i : input_cloud) {
@@ -25,16 +24,17 @@ teaser::FPFHCloudPtr teaser::FPFHEstimation::computeFPFHFeatures(
   }
 
   // Estimate normals
-  pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normalEstimation;
+  normals_->clear();
+  pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> normalEstimation;
   normalEstimation.setInputCloud(pcl_input_cloud);
   normalEstimation.setRadiusSearch(normal_search_radius);
   pcl::search::KdTree<pcl::PointXYZ>::Ptr kdtree(new pcl::search::KdTree<pcl::PointXYZ>);
   normalEstimation.setSearchMethod(kdtree);
-  normalEstimation.compute(*normals);
+  normalEstimation.compute(*normals_);
 
   // Estimate FPFH
   setInputCloud(pcl_input_cloud);
-  setInputNormals(normals);
+  setInputNormals(normals_);
   setSearchMethod(kdtree);
   setRadiusSearch(fpfh_search_radius);
   compute(*descriptors);
@@ -59,3 +59,5 @@ void teaser::FPFHEstimation::compute(pcl::PointCloud<pcl::FPFHSignature33>& outp
   fpfh_estimation_->compute(output_cloud);
 }
 void teaser::FPFHEstimation::setRadiusSearch(double r) { fpfh_estimation_->setRadiusSearch(r); }
+
+pcl::PointCloud<pcl::Normal> teaser::FPFHEstimation::getNormals() { return *normals_; }
