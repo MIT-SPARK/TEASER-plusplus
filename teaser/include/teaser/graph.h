@@ -258,7 +258,7 @@ public:
     /**
      * Number of threads to use for the solver
      */
-     int num_threads = 1;
+    int num_threads = 1;
   };
 
   MaxCliqueSolver() = default;

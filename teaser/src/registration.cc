@@ -378,12 +378,10 @@ void teaser::QuatroSolver::solveForRotation(
         weights(j) = sqrt(noise_bound_sq * mu * (mu + 1) / residuals_sq(j)) - mu;
         assert(weights(j) >= 0 && weights(j) <= 1);
       }
-
     }
 
     // Calculate cost
     double cost_diff = std::abs(cost_ - prev_cost);
-
 
     // Increase mu
     mu = mu * params_.gnc_factor;

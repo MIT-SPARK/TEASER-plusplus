@@ -6,7 +6,6 @@
  * See LICENSE for the license information
  */
 
-
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <flann/flann.hpp>

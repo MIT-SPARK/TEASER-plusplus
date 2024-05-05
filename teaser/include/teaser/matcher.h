@@ -36,11 +36,11 @@ public:
    * @param use_tuple_test
    * @return
    */
-  std::vector<std::pair<int, int>>
-  calculateCorrespondences(const teaser::PointCloud& source_points, const teaser::PointCloud& target_points,
-                           const teaser::FPFHCloud& source_features, const teaser::FPFHCloud& target_features,
-                           bool use_absolute_scale = true, bool use_crosscheck = true,
-                           bool use_tuple_test = true, float tuple_scale = 0);
+  std::vector<std::pair<int, int>> calculateCorrespondences(
+      const teaser::PointCloud& source_points, const teaser::PointCloud& target_points,
+      const teaser::FPFHCloud& source_features, const teaser::FPFHCloud& target_features,
+      bool use_absolute_scale = true, bool use_crosscheck = true, bool use_tuple_test = true,
+      float tuple_scale = 0);
 
 private:
   template <typename T> void buildKDTree(const std::vector<T>& data, KDTree* tree);
@@ -56,7 +56,7 @@ private:
   std::vector<std::pair<int, int>> corres_;
   std::vector<teaser::PointCloud> pointcloud_;
   std::vector<Feature> features_;
-  std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f> > means_; // for normalization
+  std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> means_; // for normalization
   float global_scale_;
 };
 
