@@ -58,4 +58,5 @@ void teaser::FPFHEstimation::setSearchMethod(
 void teaser::FPFHEstimation::compute(pcl::PointCloud<pcl::FPFHSignature33>& output_cloud) {
   fpfh_estimation_->compute(output_cloud);
 }
+
 void teaser::FPFHEstimation::setRadiusSearch(double r) { fpfh_estimation_->setRadiusSearch(r); }
