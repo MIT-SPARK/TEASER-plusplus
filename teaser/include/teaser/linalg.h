@@ -78,7 +78,7 @@ Eigen::Matrix<NumT, Eigen::Dynamic, 1> vectorKron(const Eigen::Matrix<NumT, N, 1
  *
  * @tparam NumT numerical type for Eigen matrices (double, float, etc.)
  * @param A [in] input matrix
- * @param nearestPSD [out] output neaest positive semi-definite matrix
+ * @param nearestPSD [out] output nearest positive semi-definite matrix
  * @param eig_threshold [in] optional threshold of determining the smallest eigen values
  */
 template <typename NumT>

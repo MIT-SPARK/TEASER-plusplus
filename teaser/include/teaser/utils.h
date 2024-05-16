@@ -22,7 +22,7 @@ namespace utils {
  * randsample()
  * @tparam T A number type
  * @tparam URBG A UniformRandomBitGenerator type
- * @param input A input vector containing the whole population
+ * @param input An input vector containing the whole population
  * @param num_samples Number of samples we want
  * @param g
  * @return
@@ -56,7 +56,7 @@ std::vector<T> randomSample(std::vector<T> input, size_t num_samples, URBG&& g) 
 }
 
 /**
- * Remove one row from matrix.
+ * Remove one row from a matrix.
  * Credit to: https://stackoverflow.com/questions/13290395
  * @param matrix an Eigen::Matrix.
  * @param rowToRemove index of row to remove. If >= matrix.rows(), no operation will be taken
@@ -78,7 +78,7 @@ void removeRow(Eigen::Matrix<T, R, C>& matrix, unsigned int rowToRemove) {
 }
 
 /**
- * Remove one column from matrix.
+ * Remove one column from a matrix.
  * Credit to: https://stackoverflow.com/questions/13290395
  * @param matrix
  * @param colToRemove index of col to remove. If >= matrix.cols(), no operation will be taken
@@ -112,7 +112,7 @@ template <class T, int D> float calculateDiameter(const Eigen::Matrix<T, D, Eige
 }
 
 /**
- * Helper function to use svd to estimate rotation.
+ * Helper function to use SVD to estimate rotation.
  * Method described here: http://igl.ethz.ch/projects/ARAP/svd_rot.pdf
  * @param X
  * @param Y
@@ -160,7 +160,7 @@ inline Eigen::Matrix2d svdRot2d(const Eigen::Matrix<double, 2, Eigen::Dynamic>& 
 }
 
 /**
- * Use an boolean Eigen matrix to mask a vector
+ * Use a boolean Eigen matrix to mask a vector
  * @param mask a 1-by-N boolean Eigen matrix
  * @param elements vector to be masked
  * @return

@@ -35,7 +35,7 @@ public:
    * vertices v1 & v2, we assume that v2 exists in v1's list, and v1 also exists in v2's list. This
    * condition is not enforced. If violated, removeEdge() function might exhibit undefined
    * behaviors.
-   * @param [in] adj_list an map representing an adjacency list
+   * @param [in] adj_list a map representing an adjacency list
    */
   explicit Graph(const std::map<int, std::vector<int>>& adj_list) {
     adj_list_.resize(adj_list.size());

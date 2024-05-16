@@ -22,7 +22,7 @@
 #include "teaser/geometry.h"
 
 // TODO: might be a good idea to template Eigen::Vector3f and Eigen::VectorXf such that later on we
-// can decide to use doulbe if we want. Double vs float might give nontrivial differences..
+// can decide to use double if we want. Double vs float might give nontrivial differences..
 
 namespace teaser {
 
@@ -283,7 +283,7 @@ public:
  * For more information, please see the original paper on FGR:
  * Q.-Y. Zhou, J. Park, and V. Koltun, “Fast Global Registration,” in Computer Vision – ECCV 2016,
  * Cham, 2016, vol. 9906, pp. 766–782.
- * Notice that our implementation differ from the paper on the estimation of T matrix. We
+ * Notice that our implementation differs from the paper on the estimation of T matrix. We
  * only estimate rotation, instead of rotation and translation.
  *
  */
@@ -317,7 +317,7 @@ public:
 /**
  * Use Quatro to solve for pairwise registration problems avoiding degeneracy
  *
- * For more information, please see the original paper on FGR:
+ * For more information, please see the original paper on Quatro:
  * H. Lim et al., "A Single Correspondence Is Enough: Robust Global Registration
  * to Avoid Degeneracy in Urban Environments," in Robotics - ICRA 2022,
  * Accepted. To appear. arXiv:2203.06612 [cs], Mar. 2022.
@@ -714,9 +714,9 @@ public:
   }
 
   /**
-   * Return inliers from rotation estimation
+   * Return inliers from translation estimation
    *
-   * @return a vector of indices of measurements deemed as inliers by rotation estimation
+   * @return a vector of indices of measurements deemed as inliers by translation estimation
    */
   inline std::vector<int> getTranslationInliers() { return translation_inliers_; }
 
