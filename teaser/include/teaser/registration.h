@@ -721,6 +721,25 @@ public:
   inline std::vector<int> getTranslationInliers() { return translation_inliers_; }
 
   /**
+   * Return input-ordered inliers from translation estimation
+   *
+   * @return a vector of indices of given input correspondences deemed as inliers
+   * by translation estimation.
+   */
+  inline std::vector<int> getInputOrderedTranslationInliers() {
+    if (params_.rotation_estimation_algorithm == ROTATION_ESTIMATION_ALGORITHM::FGR) {
+      throw std::runtime_error(
+          "This function is not supported when using FGR since FGR does not use max clique.");
+    }
+    std::vector<int> translation_inliers;
+    translation_inliers.reserve(translation_inliers_.size());
+    for (const auto& i : translation_inliers_) {
+      translation_inliers.emplace_back(max_clique_[i]);
+    }
+    return translation_inliers;
+  }
+
+  /**
    * Return a boolean Eigen row vector indicating whether specific measurements are inliers
    * according to translation measurements.
    * @return
