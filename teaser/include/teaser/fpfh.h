@@ -48,6 +48,12 @@ public:
     return fpfh_estimation_;
   }
 
+   /**
+   * Return the normal vectors of the input cloud that are used in the calculation of FPFH
+   * @return
+   */
+  inline pcl::PointCloud<pcl::Normal> getNormals() { return *normals_; }
+
 private:
   // pcl::FPFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33>::Ptr fpfh_estimation_;
   pcl::FPFHEstimationOMP<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33>::Ptr fpfh_estimation_;
@@ -82,12 +88,6 @@ private:
    * Wrapper function for the corresponding PCL function.
    */
   void setRadiusSearch(double);
-
-  /**
-   * Return the normal vectors of the input cloud that are used in the calculation of FPFH
-   * @return
-   */
-  pcl::PointCloud<pcl::Normal> getNormals();
 };
 
 } // namespace teaser
