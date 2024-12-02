@@ -12,6 +12,10 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
             STRING "Choose the type of build." FORCE)
 endif ()
 
+if (DEFINED SKBUILD)
+    message(STATUS "Building with Scikit-Build")
+endif ()
+
 # Options
 option(BUILD_TESTS "Build tests" ON)
 option(BUILD_TEASER_FPFH "Build TEASER++ wrappers for PCL FPFH estimation." OFF)
