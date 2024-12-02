@@ -1,0 +1,58 @@
+[build-system]
+requires = ["scikit_build_core", "pybind11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "teaserpp_python"
+version = "1.1.0"
+description = "Python binding for TEASER++"
+readme = "README.md"
+authors = [
+    { name = "Jingnan Shi", email = "jnshi@mit.edu" },
+]
+keywords = [
+    "Point cloud",
+    "Registration",
+    "Non-minimal solver",
+    "Solver",
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Other Audience",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Unix",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "numpy",
+]
+
+[project.urls]
+Homepage = "https://github.com/MIT-SPARK/TEASER-plusplus"
+
+[tool.scikit-build]
+build-dir = "build/{wheel_tag}"
+build.verbose = false
+cmake.version = ">=3.16"
+wheel.install-dir = "teaserpp_python.libs"
+
+[tool.cibuildwheel]
+archs = ["auto64"]
+skip = ["*-musllinux*",  "pp*", "cp36-*"]
+
+[tool.cibuildwheel.macos]
+environment = "MACOSX_DEPLOYMENT_TARGET=10.14"
+archs = ["auto64", "arm64"]

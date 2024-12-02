@@ -1,6 +1,11 @@
 project(teaser_source)
 include(GNUInstallDirs)
 
+if (DEFINED SKBUILD)
+    set(CMAKE_INSTALL_RPATH "$ORIGIN")
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+endif ()
+
 # teaser_io library
 add_library(teaser_io SHARED src/ply_io.cc)
 target_link_libraries(teaser_io PRIVATE tinyply)
@@ -88,11 +93,13 @@ endif ()
 set(TEASERPP_EXPORTED_TARGETS "${TEASERPP_EXPORTED_TARGETS}" PARENT_SCOPE)
 
 # installation
-install(EXPORT teaserpp-export 
+install(EXPORT teaserpp-export
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/teaserpp
     NAMESPACE teaserpp::
     FILE teaserppTargets.cmake
 )
 
-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(DIRECTORY ${SPECTRA_INCLUDE_DIRS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+if (NOT DEFINED SKBUILD)
+  install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  install(DIRECTORY ${SPECTRA_INCLUDE_DIRS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+endif ()
