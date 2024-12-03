@@ -515,6 +515,29 @@ public:
 
   RobustRegistrationSolver() = default;
 
+
+  /**
+   * A constructor that takes in parameters and initialize the estimators
+   * accordingly. If the parameters need to be reused consider instantiating
+   * a Params struct.
+   */
+  RobustRegistrationSolver(
+      double noise_bound,
+      double cbar2,
+      bool estimate_scaling,
+      ROTATION_ESTIMATION_ALGORITHM rotation_estimation_algorithm,
+      double rotation_gnc_factor,
+      size_t rotation_max_iterations,
+      double rotation_cost_threshold,
+      INLIER_GRAPH_FORMULATION rotation_tim_graph,
+      INLIER_SELECTION_MODE inlier_selection_mode,
+      double kcore_heuristic_threshold,
+      bool use_max_clique, // deprecated
+      bool max_clique_exact_solution, // deprecated
+      double max_clique_time_limit,
+      int max_clique_num_threads = 0
+  );
+
   /**
    * A constructor that takes in parameters and initialize the estimators accordingly.
    *
@@ -804,46 +827,84 @@ public:
    * Reset the solver using the provided params
    * @param params a Params struct
    */
-  void reset(const Params& params) {
-    params_ = params;
-
+  void reset(
+      const double noise_bound,
+      const double cbar2,
+      const bool estimate_scaling,
+      const ROTATION_ESTIMATION_ALGORITHM rotation_estimation_algorithm,
+      const double rotation_gnc_factor,
+      const size_t rotation_max_iterations,
+      const double rotation_cost_threshold,
+      const INLIER_GRAPH_FORMULATION rotation_tim_graph,
+      const INLIER_SELECTION_MODE inlier_selection_mode,
+      const double kcore_heuristic_threshold,
+      const bool use_max_clique , // deprecated
+      const bool max_clique_exact_solution, // deprecated
+      const double max_clique_time_limit,
+      const int max_clique_num_threads
+  ) {
     // Initialize the scale estimator
-    if (params_.estimate_scaling) {
+    if (estimate_scaling) {
       setScaleEstimator(
-          std::make_unique<teaser::TLSScaleSolver>(params_.noise_bound, params_.cbar2));
+          std::make_unique<teaser::TLSScaleSolver>(noise_bound, cbar2));
     } else {
       setScaleEstimator(
-          std::make_unique<teaser::ScaleInliersSelector>(params_.noise_bound, params_.cbar2));
+          std::make_unique<teaser::ScaleInliersSelector>(noise_bound, cbar2));
     }
 
     // Initialize the rotation estimator
-    teaser::GNCRotationSolver::Params rotation_params{
-        params_.rotation_max_iterations, params_.rotation_cost_threshold,
-        params_.rotation_gnc_factor, params_.noise_bound};
-    switch (params_.rotation_estimation_algorithm) {
-    case ROTATION_ESTIMATION_ALGORITHM::GNC_TLS: { // GNC-TLS method
-      setRotationEstimator(std::make_unique<teaser::GNCTLSRotationSolver>(rotation_params));
-      break;
-    }
-    case ROTATION_ESTIMATION_ALGORITHM::FGR: { // FGR method
-      setRotationEstimator(std::make_unique<teaser::FastGlobalRegistrationSolver>(rotation_params));
-      break;
-    }
-    case ROTATION_ESTIMATION_ALGORITHM::QUATRO: { // Quatro method
-      setRotationEstimator(std::make_unique<teaser::QuatroSolver>(rotation_params));
-      break;
-    }
+    teaser::GNCRotationSolver::Params rotation_params {
+      rotation_max_iterations, rotation_cost_threshold,
+      rotation_gnc_factor, noise_bound
+    };
+
+    switch (rotation_estimation_algorithm) {
+      case ROTATION_ESTIMATION_ALGORITHM::GNC_TLS: { // GNC-TLS method
+        setRotationEstimator(std::make_unique<teaser::GNCTLSRotationSolver>(rotation_params));
+        break;
+      }
+      case ROTATION_ESTIMATION_ALGORITHM::FGR: { // FGR method
+        setRotationEstimator(std::make_unique<teaser::FastGlobalRegistrationSolver>(rotation_params));
+        break;
+      }
+      case ROTATION_ESTIMATION_ALGORITHM::QUATRO: { // Quatro method
+        setRotationEstimator(std::make_unique<teaser::QuatroSolver>(rotation_params));
+        break;
+      }
     }
 
     // Initialize the translation estimator
     setTranslationEstimator(
-        std::make_unique<teaser::TLSTranslationSolver>(params_.noise_bound, params_.cbar2));
+        std::make_unique<teaser::TLSTranslationSolver>(noise_bound, cbar2));
 
     // Clear member variables
     max_clique_.clear();
     rotation_inliers_.clear();
     translation_inliers_.clear();
     inlier_graph_.clear();
+  }
+
+  /**
+   * Reset the solver using the provided params
+   * @param params a Params struct
+   */
+  void reset(const Params& params) {
+    reset(
+      params.noise_bound,
+      params.cbar2,
+      params.estimate_scaling,
+      params.rotation_estimation_algorithm,
+      params.rotation_gnc_factor,
+      params.rotation_max_iterations,
+      params.rotation_cost_threshold,
+      params.rotation_tim_graph,
+      params.inlier_selection_mode,
+      params.kcore_heuristic_threshold,
+      params.use_max_clique,
+      params.max_clique_exact_solution,
+      params.max_clique_time_limit,
+      params.max_clique_num_threads
+    );
   }
 
   /**

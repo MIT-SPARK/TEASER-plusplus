@@ -6,6 +6,7 @@
  * See LICENSE for the license information
  */
 
+#include <omp.h>
 #include <string>
 #include <sstream>
 
@@ -21,7 +22,7 @@ namespace py = pybind11;
 /**
  * Python interface with pybind11
  */
-PYBIND11_MODULE(teaserpp_python, m) {
+PYBIND11_MODULE(_teaserpp, m) {
   m.doc() = "Python binding for TEASER++";
 
   // Python bound for teaser::RegistrationSolution
@@ -41,14 +42,66 @@ PYBIND11_MODULE(teaserpp_python, m) {
         return print_string.str();
       });
 
+  m.attr("OMP_MAX_THREADS") = omp_get_max_threads();
+
+  // Python bound for teaser::RobustRegistrationSolver::ROTATION_ESTIMATE_ALGORITHM
+  py::enum_<teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM>(
+        m, "RotationEstimationAlgorithm"
+      )
+      .value("GNC_TLS", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS)
+      .value("FGR", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::FGR)
+      .value("QUATRO", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::QUATRO);
+
+  // Python bound for teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION
+  py::enum_<teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION>(
+        m, "InlierGraphFormulation"
+      )
+      .value("CHAIN", teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION::CHAIN)
+      .value("COMPLETE", teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION::COMPLETE);
+
+  // Python bound for teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE
+  py::enum_<teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE>(
+        m, "InlierSelectionMode"
+      )
+      .value("PMC_EXACT", teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_EXACT)
+      .value("PMC_HEU", teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_HEU)
+      .value("KCORE_HEU", teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::KCORE_HEU)
+      .value("NONE", teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::NONE);
+
+  // Python bound for DRSCertifier::EIG_SOLVER_TYPE
+  py::enum_<teaser::DRSCertifier::EIG_SOLVER_TYPE>(m, "EigSolverType")
+      .value("EIGEN", teaser::DRSCertifier::EIG_SOLVER_TYPE::EIGEN)
+      .value("SPECTRA", teaser::DRSCertifier::EIG_SOLVER_TYPE::SPECTRA);
+
   // Python bound for teaser::RobustRegistraionSolver
   py::class_<teaser::RobustRegistrationSolver> solver(m, "RobustRegistrationSolver");
 
   // Python bound for teaser::RobustRegistrationSolver functions
-  solver.def(py::init<>())
-      .def(py::init<const teaser::RobustRegistrationSolver::Params&>())
+  solver.def(py::init<double, double, bool,
+                    teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM,
+                    double, size_t, double,
+                    teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION,
+                    teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE,
+                    double, bool, bool,
+                    double, int>(),
+           py::arg("noise_bound") = 0.01,
+           py::arg("cbar2") = 1,
+           py::arg("estimate_scaling") = true,
+           py::arg("rotation_estimation_algorithm") =
+             teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS,
+           py::arg("rotation_gnc_factor") = 1.4,
+           py::arg("rotation_max_iterations") = 100,
+           py::arg("rotation_cost_threshold") = 1e-6,
+           py::arg("rotation_tim_graph") =
+             teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION::CHAIN,
+           py::arg("inlier_selection_mode") =
+             teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_EXACT,
+           py::arg("kcore_heuristic_threshold") = 0.5,
+           py::arg("use_max_clique") = true,
+           py::arg("max_clique_exact_solution") = true,
+           py::arg("max_clique_time_limit") = 3000,
+           py::arg("max_clique_num_threads") = omp_get_max_threads())
       .def("getParams", &teaser::RobustRegistrationSolver::getParams)
-      .def("reset", &teaser::RobustRegistrationSolver::reset)
       .def("solve", py::overload_cast<const Eigen::Matrix<double, 3, Eigen::Dynamic>&,
                                       const Eigen::Matrix<double, 3, Eigen::Dynamic>&>(
                         &teaser::RobustRegistrationSolver::solve))

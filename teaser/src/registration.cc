@@ -471,6 +471,40 @@ void teaser::TLSTranslationSolver::solveForTranslation(
 }
 
 teaser::RobustRegistrationSolver::RobustRegistrationSolver(
+  double noise_bound,
+  double cbar2,
+  bool estimate_scaling,
+  ROTATION_ESTIMATION_ALGORITHM rotation_estimation_algorithm,
+  double rotation_gnc_factor,
+  size_t rotation_max_iterations,
+  double rotation_cost_threshold,
+  INLIER_GRAPH_FORMULATION rotation_tim_graph,
+  INLIER_SELECTION_MODE inlier_selection_mode,
+  double kcore_heuristic_threshold,
+  bool use_max_clique, // deprecated
+  bool max_clique_exact_solution, // deprecated
+  double max_clique_time_limit,
+  int max_clique_num_threads
+) {
+  reset(
+    noise_bound,
+    cbar2,
+    estimate_scaling,
+    rotation_estimation_algorithm,
+    rotation_gnc_factor,
+    rotation_max_iterations,
+    rotation_cost_threshold,
+    rotation_tim_graph,
+    inlier_selection_mode,
+    kcore_heuristic_threshold,
+    use_max_clique,
+    max_clique_exact_solution,
+    max_clique_time_limit,
+    max_clique_num_threads ? max_clique_num_threads : omp_get_max_threads()
+  );
+}
+
+teaser::RobustRegistrationSolver::RobustRegistrationSolver(
     const teaser::RobustRegistrationSolver::Params& params) {
   reset(params);
 }
