@@ -27,7 +27,7 @@ SET_TARGET_PROPERTIES(teaserpp_python
     PROPERTIES
     PREFIX ""
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/teaserpp_python"
-    INSTALL_RPATH "$ORIGIN/../teaserpp_python.libs/lib"
+    INSTALL_RPATH "$ORIGIN/../teaserpp_python.libs/lib;$ORIGIN/../../teaser/"
     BUILD_WITH_INSTALL_RPATH TRUE
 )
 

@@ -1,5 +1,6 @@
 project(teaser_source)
 include(GNUInstallDirs)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if (DEFINED SKBUILD)
     set(CMAKE_INSTALL_RPATH "$ORIGIN")
@@ -13,6 +14,13 @@ target_include_directories(teaser_io PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
+
+SET_TARGET_PROPERTIES(teaser_io
+    PROPERTIES
+    INSTALL_RPATH "$ORIGIN;$ORIGIN/../tinyply-build"
+    BUILD_WITH_INSTALL_RPATH TRUE
+)
 
 install(TARGETS teaser_io
         EXPORT teaserpp-export
@@ -28,6 +36,12 @@ add_library(teaser_registration SHARED
         src/registration.cc
         src/graph.cc
         )
+
+SET_TARGET_PROPERTIES(teaser_registration
+    PROPERTIES
+    INSTALL_RPATH "$ORIGIN;$ORIGIN/../pmc-build"
+    BUILD_WITH_INSTALL_RPATH TRUE
+)
 target_link_libraries(teaser_registration
         PUBLIC Eigen3::Eigen
         PRIVATE pmc ${TEASERPP_BLAS_LAPACK_LIBS}
