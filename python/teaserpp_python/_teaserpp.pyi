@@ -82,6 +82,10 @@ class RobustRegistrationSolver:
     Registration,” arXiv:2001.07715 [cs, math], Jan. 2020.
     """
 
+    ROTATION_ESTIMATION_ALGORITHM = RotationEstimationAlgorithm
+    INLIER_SELECTION_MODE = InlierSelectionMode
+    INLIER_GRAPH_FORMULATION = InlierGraphFormulation
+
     class Params:
          noise_bound: float = 0.01
          cbar2: float = 1
@@ -385,6 +389,8 @@ class CertificationResult:
     def __repr__(self) -> str: ...
 
 class DRSCertifier:
+    EIG_SOLVER_TYPE = EigSolverType
+
     class Params:
         noise_bound: float
         cbar2: float

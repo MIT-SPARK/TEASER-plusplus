@@ -13,6 +13,12 @@ from ._teaserpp import (
      RotationEstimationAlgorithm,
 )
 
+# Backwards compatibility with v1.0 so we don't break code
+RobustRegistrationSolver.ROTATION_ESTIMATION_ALGORITHM = RotationEstimationAlgorithm
+RobustRegistrationSolver.INLIER_SELECTION_MODE = InlierSelectionMode
+RobustRegistrationSolver.INLIER_GRAPH_FORMULATION = InlierGraphFormulation
+DRSCertifier.EIG_SOLVER_TYPE = EigSolverType
+
 
 class RobustRegistrationSolverParams(NamedTuple):
      noise_bound: float = 0.01

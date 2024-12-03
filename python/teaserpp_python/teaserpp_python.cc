@@ -129,27 +129,6 @@ PYBIND11_MODULE(_teaserpp, m) {
       .def("getSrcTIMs", &teaser::RobustRegistrationSolver::getSrcTIMs)
       .def("getDstTIMs", &teaser::RobustRegistrationSolver::getDstTIMs);
 
-  // Python bound for teaser::RobustRegistrationSolver::ROTATION_ESTIMATE_ALGORITHM
-  py::enum_<teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM>(
-      solver, "ROTATION_ESTIMATION_ALGORITHM")
-      .value("GNC_TLS", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS)
-      .value("FGR", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::FGR)
-      .value("QUATRO", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::QUATRO);
-
-  // Python bound for teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION
-  py::enum_<teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION>(solver,
-                                                                        "INLIER_GRAPH_FORMULATION")
-      .value("CHAIN", teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION::CHAIN)
-      .value("COMPLETE", teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION::COMPLETE);
-
-  // Python bound for teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE
-  py::enum_<teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE>(solver,
-                                                                     "INLIER_SELECTION_MODE")
-      .value("PMC_EXACT", teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_EXACT)
-      .value("PMC_HEU", teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_HEU)
-      .value("KCORE_HEU", teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::KCORE_HEU)
-      .value("NONE", teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::NONE);
-
   // Python bound for teaser::RobustRegistrationSolver::Params
   py::class_<teaser::RobustRegistrationSolver::Params>(solver, "Params")
       .def(py::init<>())
@@ -251,11 +230,6 @@ PYBIND11_MODULE(_teaserpp, m) {
                             const Eigen::Matrix<double, 3, Eigen::Dynamic>&,
                             const Eigen::Matrix<double, 1, Eigen::Dynamic>&>(
               &teaser::DRSCertifier::certify));
-
-  // Python bound for DRSCertifier::EIG_SOLVER_TYPE
-  py::enum_<teaser::DRSCertifier::EIG_SOLVER_TYPE>(certifier, "EIG_SOLVER_TYPE")
-      .value("EIGEN", teaser::DRSCertifier::EIG_SOLVER_TYPE::EIGEN)
-      .value("SPECTRA", teaser::DRSCertifier::EIG_SOLVER_TYPE::SPECTRA);
 
   // Python bound for DRSCertifier parameter struct
   py::class_<teaser::DRSCertifier::Params>(certifier, "Params")
