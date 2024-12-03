@@ -47,5 +47,11 @@ file(COPY .
         PATTERN *.py)
 
 if (DEFINED SKBUILD)
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/teaserpp/
+            DESTINATION "../teaserpp"
+            FILES_MATCHING PATTERN "*.py"
+            PATTERN "*.pyi"
+            PATTERN "*.so"
+    )
     install(TARGETS teaserpp_python DESTINATION "../teaserpp_python")
 endif ()
