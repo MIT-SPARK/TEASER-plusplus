@@ -20,19 +20,15 @@ if __name__ == "__main__":
     # Add two outliers
     dst[:, 1] += 10
     dst[:, 9] += 15
-
-    # Populating the parameters
-    solver_params = teaserpp_python.RobustRegistrationSolver.Params()
-    solver_params.cbar2 = 1
-    solver_params.noise_bound = 0.01
-    solver_params.estimate_scaling = True
-    solver_params.rotation_estimation_algorithm = teaserpp_python.RobustRegistrationSolver.ROTATION_ESTIMATION_ALGORITHM.GNC_TLS
-    solver_params.rotation_gnc_factor = 1.4
-    solver_params.rotation_max_iterations = 100
-    solver_params.rotation_cost_threshold = 1e-12
-    print("Parameters are:", solver_params)
-
-    solver = teaserpp_python.RobustRegistrationSolver(solver_params)
+    solver = teaserpp_python.RobustRegistrationSolver(
+            cbar2=1,
+            noise_bound=1,
+            estimate_scaling=True,
+            rotation_estimation_algorithm=teaserpp_python.RotationEstimationAlgorithm.GNC_TLS,
+            rotation_gnc_factor=1.4,
+            rotation_max_iterations=100,
+            rotation_cost_threshold=1e-12
+    )
     solver.solve(src, dst)
 
     solution = solver.getSolution()
