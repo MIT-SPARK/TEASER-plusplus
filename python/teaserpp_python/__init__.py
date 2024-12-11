@@ -1,5 +1,5 @@
-from enum import IntEnum
-from typing import NamedTuple
+from functools import wraps
+from typing import Callable, NamedTuple
 
 from ._teaserpp import (
     OMP_MAX_THREADS,
@@ -37,3 +37,22 @@ class RobustRegistrationSolverParams(NamedTuple):
     max_clique_exact_solution: bool = True
     max_clique_time_limit: int = 3000
     max_clique_num_threads: int = OMP_MAX_THREADS
+
+
+# Do some Python magic
+def __init_deco(f: Callable[..., None]):
+    @wraps(f)
+    def wrapper(self, *args, **kwargs):
+        f(self, *args, **kwargs)
+        self._params = args
+
+    return wrapper
+
+
+@property
+def __params_getter(self) -> RobustRegistrationSolverParams:
+    return self._params
+
+
+RobustRegistrationSolver.__init__ = __init_deco(RobustRegistrationSolver.__init__)
+setattr(RobustRegistrationSolver, "params", __params_getter)

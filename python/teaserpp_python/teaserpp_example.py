@@ -20,34 +20,29 @@ if __name__ == "__main__":
     # Add two outliers
     dst[:, 1] += 10
     dst[:, 9] += 15
-    solver = teaserpp_python.RobustRegistrationSolver(
-            cbar2=1,
-            noise_bound=1,
-            estimate_scaling=True,
-            rotation_estimation_algorithm=teaserpp_python.RotationEstimationAlgorithm.GNC_TLS,
-            rotation_gnc_factor=1.4,
-            rotation_max_iterations=100,
-            rotation_cost_threshold=1e-12
+
+
+    params = teaserpp_python.RobustRegistrationSolverParams(
+        cbar2=1,
+        noise_bound=1,
+        estimate_scaling=True,
+        rotation_estimation_algorithm=teaserpp_python.RotationEstimationAlgorithm.GNC_TLS,
+        rotation_gnc_factor=1.4,
+        rotation_max_iterations=100,
+        rotation_cost_threshold=1e-12
     )
+
+    solver = teaserpp_python.RobustRegistrationSolver(*params)
     solver.solve(src, dst)
 
-    solution = solver.getSolution()
 
-    # Print the solution
-    print("Solution is:", solution)
-
-    # Print the inliers
-    scale_inliers = solver.getScaleInliers()
-    scale_inliers_map = solver.getScaleInliersMap()
-    translation_inliers = solver.getTranslationInliers()
-    translation_inliers_map = solver.getTranslationInliersMap()
-
+    print("Solution is:", solver.solution)
     print("=======================================")
     print("Scale inliers (TIM pairs) are:")
     print("Note: they should not include the outlier points.")
-    for i in range(len(scale_inliers)):
-        print(scale_inliers[i], end=',')
+    for i in range(len(solver.scale_inliers)):
+        print(solver.scale_inliers[i], end=',')
     print("\n=======================================")
 
-    print("Translation inliers are:", translation_inliers)
-    print("Translation inliers map is:", translation_inliers_map)
+    print("Translation inliers are:", solver.translation_inliers)
+    print("Translation inliers map is:", solver.translation_inliers_map)

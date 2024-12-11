@@ -208,6 +208,8 @@ class RobustRegistrationSolver:
         """
         ...
 
+    @property
+    def params(self) -> RobustRegistrationSolverParams: ...
     def getParams(self) -> Params: ...
     def reset(self) -> None: ...
     def solve(self, src: np.ndarray, dst: np.ndarray) -> None:
@@ -216,8 +218,11 @@ class RobustRegistrationSolver:
         """
         ...
 
+    @property
+    def solution(self) -> RegistrationSolution: ...
     def getSolution(self) -> RegistrationSolution: ...
-
+    @property
+    def gnc_rotation_cost_at_termination(self): ...
     def getGNCRotationCostAtTermination(self) -> float:
         """
         Return the cost at termination of the GNC rotation solver. Can be used
@@ -225,10 +230,26 @@ class RobustRegistrationSolver:
         """
         ...
 
+    @property
+    def scale_inliers_mask(self) -> np.ndarray:
+        """
+        A boolean ndarray indicating whether specific measurements are
+        scale inliers according to scales.
+        """
+        ...
+
     def getScaleInliersMask(self) -> np.ndarray:
         """
         Return a boolean ndarray indicating whether specific measurements are
         scale inliers according to scales.
+        """
+        ...
+
+    @property
+    def scale_inliers_map(self) -> np.ndarray:
+        """
+        The index map for scale inliers (equivalent to the index map for
+        TIMs).
         """
         ...
 
@@ -245,6 +266,8 @@ class RobustRegistrationSolver:
         """
         ...
 
+    @property
+    def scale_inliers(self) -> List[int]: ...
     def getScaleInliers(self) -> List[int]:
         """
         Return inlier TIMs from scale estimation
@@ -257,6 +280,8 @@ class RobustRegistrationSolver:
         """
         ...
 
+    @property
+    def rotation_inliers_mask(self) -> np.ndarray: ...
     def getRotationInliersMask(self) -> np.ndarray:
         """
         Return a boolean ndarray indicating whether specific
@@ -284,7 +309,14 @@ class RobustRegistrationSolver:
         """
         ...
 
-    def getRotationInliers(self) -> List[int]:
+    @property
+    def rotation_inliers(self) -> List[int]:
+        """
+        The index map for translation inliers (equivalent to max clique).
+        """
+        ...
+
+    def getRotationInliers(self) -> np.ndarray:
         """
         Return a boolean ndarray indicating whether specific
         measurements are inliers according to translation measurements.
@@ -294,6 +326,15 @@ class RobustRegistrationSolver:
         A 1-by-(size of max clique) boolean ndarray. It is equivalent to a
         binary mask on the inlier max clique, with true representing that the
         measurement is an inlier after translation estimation.
+        """
+        ...
+
+    @property
+    def translation_inliers_mask(self) -> np.ndarray:
+        """
+        A boolean ndarray indicating whether specific
+        measurements are inliers according to translation measurements.
+
         """
         ...
 
@@ -308,6 +349,13 @@ class RobustRegistrationSolver:
         """
         ...
 
+    @property
+    def translation_inliers_map(self) -> np.ndarray:
+        """
+        The index map for translation inliers (equivalent to max clique).
+        """
+        ...
+
     def getTranslationInliersMap(self) -> np.ndarray:
         """
         Return the index map for translation inliers (equivalent to max clique).
@@ -317,6 +365,14 @@ class RobustRegistrationSolver:
         A 1-by-(size of max clique) ndarray. Entries represent the indices of
         the  original measurements.
         """
+        ...
+
+    @property
+    def translation_inliers(self) -> List[int]:
+        """
+        Inliers from translation estimation
+        """
+
         ...
 
     def getTranslationInliers(self) -> List[int]:
@@ -330,6 +386,13 @@ class RobustRegistrationSolver:
         """
         ...
 
+    @property
+    def inlier_max_clique(self) -> np.ndarray:
+        """
+        A boolean ndarray indicating whether specific measurements are
+        inliers according to translation measurements.
+        """
+        ...
 
     def getInlierMaxClique(self) -> np.ndarray:
         """
@@ -338,7 +401,15 @@ class RobustRegistrationSolver:
         """
         ...
 
+    @property
+    def inlier_graph(self) -> np.ndarray: ...
     def getInlierGraph(self) -> np.ndarray: ...
+    @property
+    def src_tims_map(self) -> np.ndarray:
+        """
+        The index map of the TIMs built from the source point cloud.
+        """
+        ...
 
     def getSrcTIMsMap(self) -> np.ndarray:
         """
@@ -346,9 +417,24 @@ class RobustRegistrationSolver:
         """
         ...
 
+    @property
+    def dst_tims_map(self) -> np.ndarray:
+        """
+        The index map of the TIMs built from the target point cloud.
+        """
+        ...
+
     def getDstTIMsMap(self) -> np.ndarray:
         """
         Get the index map of the TIMs built from the target point cloud.
+        """
+        ...
+
+    @property
+    def src_tims_map_for_rotation(self) -> np.ndarray:
+        """
+        The index map of the TIMs used in rotation estimation from
+        the source point cloud.
         """
         ...
 
@@ -359,10 +445,25 @@ class RobustRegistrationSolver:
         """
         ...
 
+    @property
+    def dst_tims_map_for_rotation(self) -> np.ndarray:
+        """
+        The index map of the TIMs used in rotation estimation from
+        the target point cloud.
+        """
+        ...
+
     def getDstTIMsMapForRotation(self) -> np.ndarray:
         """
         Get the index map of the TIMs used in rotation estimation from the
         target point cloud.
+        """
+        ...
+
+    @property
+    def max_clique_src_tims(self) -> np.ndarray:
+        """
+        Source TIMs built after max clique pruning.
         """
         ...
 
@@ -372,15 +473,36 @@ class RobustRegistrationSolver:
         """
         ...
 
+    @property
+    def max_clique_dst_tims(self) -> np.ndarray:
+        """
+        Target TIMs built after max clique pruning.
+        """
+        ...
+
     def getMaxCliqueDstTIMs(self) -> List[int]:
         """
         Get dst TIMs built after max clique pruning.
         """
         ...
 
+    @property
+    def src_tims(self) -> np.ndarray:
+        """
+        TIMs built from source point cloud.
+        """
+        ...
+
     def getSrcTIMs(self) -> np.ndarray:
         """
         Get TIMs built from source point cloud.
+        """
+        ...
+
+    @property
+    def dst_tims(self) -> np.ndarray:
+        """
+        TIMs built from source target point cloud.
         """
         ...
 
