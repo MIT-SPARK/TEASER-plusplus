@@ -77,7 +77,8 @@ PYBIND11_MODULE(_teaserpp, m) {
   py::class_<teaser::RobustRegistrationSolver> solver(m, "RobustRegistrationSolver");
 
   // Python bound for teaser::RobustRegistrationSolver functions
-  solver.def(py::init<double, double, bool,
+  solver.def(py::init<const teaser::RobustRegistrationSolver::Params&>())
+        .def(py::init<double, double, bool,
                     teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM,
                     double, size_t, double,
                     teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION,

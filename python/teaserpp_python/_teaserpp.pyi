@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List
+from typing import List, overload
 
 import numpy as np
 from typing_extensions import Final
@@ -111,6 +111,10 @@ class RobustRegistrationSolver:
         max_clique_time_limit: int = 3000
         max_clique_num_threads: int = OMP_MAX_THREADS
 
+    @overload
+    def __init__(self, params: Params): ...
+
+    @overload
     def __init__(
         self,
         noise_bound: float = 0.01,
