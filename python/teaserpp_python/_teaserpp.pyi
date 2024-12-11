@@ -2,8 +2,11 @@ from enum import Enum
 from typing import List
 
 import numpy as np
+from typing_extensions import Final
 
-OMP_MAX_THREADS: int
+from . import RobustRegistrationSolverParams
+
+OMP_MAX_THREADS: Final[int]
 
 class RegistrationSolution:
     scale: float
@@ -11,7 +14,6 @@ class RegistrationSolution:
     rotation: np.ndarray
 
     def __repr__(self) -> str: ...
-
 
 class RotationEstimationAlgorithm(Enum):
     """
@@ -36,7 +38,6 @@ class RotationEstimationAlgorithm(Enum):
     #: Registration to Avoid Degeneracy in Urban Environments," in Robotics -
     #: ICRA 2022, pp. 8010-8017 arXiv:2203.06612 [cs], Mar. 2022.
     QUARTO = 2
-
 
 class InlierGraphFormulation(Enum):
     """
@@ -68,10 +69,16 @@ class InlierSelectionMode(Enum):
     #: No inlier selection
     NONE = 3
 
-
 class EigSolverType(Enum):
     EIGEN = 0
     SPECTRA = 1
+
+class CertificationResult:
+    is_optimal: bool
+    best_suboptimality: float
+    suboptimality_traj: List[float]
+
+    def __repr__(self) -> str: ...
 
 class RobustRegistrationSolver:
     """
@@ -87,42 +94,42 @@ class RobustRegistrationSolver:
     INLIER_GRAPH_FORMULATION = InlierGraphFormulation
 
     class Params:
-         noise_bound: float = 0.01
-         cbar2: float = 1
-         estimate_scaling: bool = True
-         rotation_estimation_algorithm: RotationEstimationAlgorithm = \
+        noise_bound: float = 0.01
+        cbar2: float = 1
+        estimate_scaling: bool = True
+        rotation_estimation_algorithm: RotationEstimationAlgorithm = (
             RotationEstimationAlgorithm.GNC_TLS
-         rotation_gnc_factor: float = 1.4
-         rotation_max_iterations: int = 100
-         rotation_cost_threshold: float = 1e-6
-         rotation_tim_graph: InlierGraphFormulation = \
-                 InlierGraphFormulation.CHAIN
-         inlier_selection_mode: InlierSelectionMode = \
-                 InlierSelectionMode.PMC_EXACT
-         kcore_heuristic_threshold: float = 0.5
-         use_max_clique: bool = True
-         max_clique_exact_solution: bool = True
-         max_clique_time_limit: int = 3000
-         max_clique_num_threads: int = OMP_MAX_THREADS
+        )
+        rotation_gnc_factor: float = 1.4
+        rotation_max_iterations: int = 100
+        rotation_cost_threshold: float = 1e-6
+        rotation_tim_graph: InlierGraphFormulation = InlierGraphFormulation.CHAIN
+        inlier_selection_mode: InlierSelectionMode = InlierSelectionMode.PMC_EXACT
+        kcore_heuristic_threshold: float = 0.5
+        use_max_clique: bool = True
+        max_clique_exact_solution: bool = True
+        max_clique_time_limit: int = 3000
+        max_clique_num_threads: int = OMP_MAX_THREADS
 
-    def __init__(self,
-                 noise_bound: float = 0.01,
-                 cbar2: float = 1,
-                 estimate_scaling: bool = True,
-                 rotation_estimation_algorithm: RotationEstimationAlgorithm =
-                    RotationEstimationAlgorithm.GNC_TLS,
-                 rotation_gnc_factor: float = 1.4,
-                 rotation_max_iterations: int = 100,
-                 rotation_cost_threshold: float = 1e-6,
-                 rotation_tim_graph: InlierGraphFormulation=
-                    InlierGraphFormulation.CHAIN,
-                 inlier_selection_mode: InlierSelectionMode =
-                    InlierSelectionMode.PMC_EXACT,
-                 kcore_heuristic_threshold: float = 0.5,
-                 use_max_clique: bool = True,
-                 max_clique_exact_solution: bool = True,
-                 max_clique_time_limit: int = 3000,
-                 max_clique_num_threads: int = OMP_MAX_THREADS) -> None:
+    def __init__(
+        self,
+        noise_bound: float = 0.01,
+        cbar2: float = 1,
+        estimate_scaling: bool = True,
+        rotation_estimation_algorithm: RotationEstimationAlgorithm = (
+            RotationEstimationAlgorithm.GNC_TLS
+        ),
+        rotation_gnc_factor: float = 1.4,
+        rotation_max_iterations: int = 100,
+        rotation_cost_threshold: float = 1e-6,
+        rotation_tim_graph: InlierGraphFormulation = InlierGraphFormulation.CHAIN,
+        inlier_selection_mode: InlierSelectionMode = InlierSelectionMode.PMC_EXACT,
+        kcore_heuristic_threshold: float = 0.5,
+        use_max_clique: bool = True,
+        max_clique_exact_solution: bool = True,
+        max_clique_time_limit: int = 3000,
+        max_clique_num_threads: int = OMP_MAX_THREADS,
+    ) -> None:
         """
         Parameters
         ----------
@@ -198,9 +205,7 @@ class RobustRegistrationSolver:
         ...
 
     def getParams(self) -> Params: ...
-
     def reset(self) -> None: ...
-
     def solve(self, src: np.ndarray, dst: np.ndarray) -> None:
         """
         Solve for scale, translation and rotation from src to dst.
@@ -322,7 +327,7 @@ class RobustRegistrationSolver:
         ...
 
 
-    def getInlierMaxClique(self) -> List[int]:
+    def getInlierMaxClique(self) -> np.ndarray:
         """
         Return a boolean ndarray indicating whether specific measurements are
         inliers according to translation measurements.
@@ -381,13 +386,6 @@ class RobustRegistrationSolver:
         """
         ...
 
-class CertificationResult:
-    is_optimal: bool
-    best_suboptimality: float
-    suboptimality_traj: List[float]
-
-    def __repr__(self) -> str: ...
-
 class DRSCertifier:
     EIG_SOLVER_TYPE = EigSolverType
 
@@ -402,4 +400,6 @@ class DRSCertifier:
         def __init__(self) -> None: ...
 
     def __init__(self, params: Params) -> None: ...
-    def certify(self, rotation: np.ndarray, src: np.ndarray, dst: np.ndarray, mask: np.ndarray) -> CertificationResult: ...
+    def certify(
+        self, rotation: np.ndarray, src: np.ndarray, dst: np.ndarray, mask: np.ndarray
+    ) -> CertificationResult: ...

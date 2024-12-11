@@ -38,6 +38,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
+    "typing-extensions~=4.2",
 ]
 
 [project.urls]
@@ -138,7 +139,7 @@ line-ending = "auto"
 #
 # This is currently disabled by default, but it is planned for this
 # to be opt-out in the future.
-docstring-code-format = false
+docstring-code-format = true
 
 # Set the line length limit used when formatting code snippets in
 # docstrings.
