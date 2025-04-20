@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(teaser_python_bindings)
 
@@ -24,14 +25,21 @@ endif ()
 
 # make sure to output the build file to teaserpp_python folder
 SET_TARGET_PROPERTIES(teaserpp_python
-        PROPERTIES
-        PREFIX ""
-        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/teaserpp_python"
-        )
+    PROPERTIES
+    OUTPUT_NAME "_teaserpp"
+    PREFIX ""
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/teaserpp_python"
+    INSTALL_RPATH "$ORIGIN/../teaserpp_python.libs/lib;$ORIGIN/../../teaser/"
+    BUILD_WITH_INSTALL_RPATH TRUE
+)
 
 # copy package __init__.py file
 configure_file(teaserpp_python/__init__.py
         ${CMAKE_CURRENT_BINARY_DIR}/teaserpp_python/__init__.py
+        )
+
+configure_file(teaserpp_python/__init__.py
+        ${CMAKE_CURRENT_BINARY_DIR}/teaserpp_python/_teaserpp.pyi
         )
 
 # copy setup.py file
@@ -43,3 +51,13 @@ file(COPY .
         DESTINATION .
         FILES_MATCHING
         PATTERN *.py)
+
+if (DEFINED SKBUILD)
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/teaserpp/
+            DESTINATION "../teaserpp"
+            FILES_MATCHING PATTERN "*.py"
+            PATTERN "*.pyi"
+            PATTERN "*.so"
+    )
+    install(TARGETS teaserpp_python DESTINATION "../teaserpp_python")
+endif ()

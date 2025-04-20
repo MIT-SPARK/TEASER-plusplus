@@ -6,6 +6,7 @@
  * See LICENSE for the license information
  */
 
+#include <omp.h>
 #include <string>
 #include <sstream>
 
@@ -21,7 +22,7 @@ namespace py = pybind11;
 /**
  * Python interface with pybind11
  */
-PYBIND11_MODULE(teaserpp_python, m) {
+PYBIND11_MODULE(_teaserpp, m) {
   m.doc() = "Python binding for TEASER++";
 
   // Python bound for teaser::RegistrationSolution
@@ -41,61 +42,139 @@ PYBIND11_MODULE(teaserpp_python, m) {
         return print_string.str();
       });
 
-  // Python bound for teaser::RobustRegistraionSolver
-  py::class_<teaser::RobustRegistrationSolver> solver(m, "RobustRegistrationSolver");
-
-  // Python bound for teaser::RobustRegistrationSolver functions
-  solver.def(py::init<>())
-      .def(py::init<const teaser::RobustRegistrationSolver::Params&>())
-      .def("getParams", &teaser::RobustRegistrationSolver::getParams)
-      .def("reset", &teaser::RobustRegistrationSolver::reset)
-      .def("solve", py::overload_cast<const Eigen::Matrix<double, 3, Eigen::Dynamic>&,
-                                      const Eigen::Matrix<double, 3, Eigen::Dynamic>&>(
-                        &teaser::RobustRegistrationSolver::solve))
-      .def("getSolution", &teaser::RobustRegistrationSolver::getSolution)
-      .def("getGNCRotationCostAtTermination",
-           &teaser::RobustRegistrationSolver::getGNCRotationCostAtTermination)
-      .def("getScaleInliersMask", &teaser::RobustRegistrationSolver::getScaleInliersMask)
-      .def("getScaleInliersMap", &teaser::RobustRegistrationSolver::getScaleInliersMap)
-      .def("getScaleInliers", &teaser::RobustRegistrationSolver::getScaleInliers)
-      .def("getRotationInliersMask", &teaser::RobustRegistrationSolver::getRotationInliersMask)
-      .def("getRotationInliersMap", &teaser::RobustRegistrationSolver::getRotationInliersMap)
-      .def("getRotationInliers", &teaser::RobustRegistrationSolver::getRotationInliers)
-      .def("getTranslationInliersMask",
-           &teaser::RobustRegistrationSolver::getTranslationInliersMask)
-      .def("getTranslationInliersMap", &teaser::RobustRegistrationSolver::getTranslationInliersMap)
-      .def("getTranslationInliers", &teaser::RobustRegistrationSolver::getTranslationInliers)
-      .def("getInlierMaxClique", &teaser::RobustRegistrationSolver::getInlierMaxClique)
-      .def("getInlierGraph", &teaser::RobustRegistrationSolver::getInlierGraph)
-      .def("getSrcTIMsMap", &teaser::RobustRegistrationSolver::getSrcTIMsMap)
-      .def("getDstTIMsMap", &teaser::RobustRegistrationSolver::getDstTIMsMap)
-      .def("getSrcTIMsMapForRotation", &teaser::RobustRegistrationSolver::getSrcTIMsMapForRotation)
-      .def("getDstTIMsMapForRotation", &teaser::RobustRegistrationSolver::getDstTIMsMapForRotation)
-      .def("getMaxCliqueSrcTIMs", &teaser::RobustRegistrationSolver::getMaxCliqueSrcTIMs)
-      .def("getMaxCliqueDstTIMs", &teaser::RobustRegistrationSolver::getMaxCliqueDstTIMs)
-      .def("getSrcTIMs", &teaser::RobustRegistrationSolver::getSrcTIMs)
-      .def("getDstTIMs", &teaser::RobustRegistrationSolver::getDstTIMs);
+  m.attr("OMP_MAX_THREADS") = omp_get_max_threads();
 
   // Python bound for teaser::RobustRegistrationSolver::ROTATION_ESTIMATE_ALGORITHM
   py::enum_<teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM>(
-      solver, "ROTATION_ESTIMATION_ALGORITHM")
+        m, "RotationEstimationAlgorithm"
+      )
       .value("GNC_TLS", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS)
       .value("FGR", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::FGR)
       .value("QUATRO", teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::QUATRO);
 
   // Python bound for teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION
-  py::enum_<teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION>(solver,
-                                                                        "INLIER_GRAPH_FORMULATION")
+  py::enum_<teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION>(
+        m, "InlierGraphFormulation"
+      )
       .value("CHAIN", teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION::CHAIN)
       .value("COMPLETE", teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION::COMPLETE);
 
   // Python bound for teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE
-  py::enum_<teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE>(solver,
-                                                                     "INLIER_SELECTION_MODE")
+  py::enum_<teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE>(
+        m, "InlierSelectionMode"
+      )
       .value("PMC_EXACT", teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_EXACT)
       .value("PMC_HEU", teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_HEU)
       .value("KCORE_HEU", teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::KCORE_HEU)
       .value("NONE", teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::NONE);
+
+  // Python bound for DRSCertifier::EIG_SOLVER_TYPE
+  py::enum_<teaser::DRSCertifier::EIG_SOLVER_TYPE>(m, "EigSolverType")
+      .value("EIGEN", teaser::DRSCertifier::EIG_SOLVER_TYPE::EIGEN)
+      .value("SPECTRA", teaser::DRSCertifier::EIG_SOLVER_TYPE::SPECTRA);
+
+  // Python bound for teaser::RobustRegistraionSolver
+  py::class_<teaser::RobustRegistrationSolver> solver(
+      m, "RobustRegistrationSolver", py::dynamic_attr()
+  );
+
+  // Python bound for teaser::RobustRegistrationSolver functions
+  solver.def(py::init<const teaser::RobustRegistrationSolver::Params&>())
+        .def(py::init<double, double, bool,
+                    teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM,
+                    double, size_t, double,
+                    teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION,
+                    teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE,
+                    double, bool, bool,
+                    double, int>(),
+           py::arg("noise_bound") = 0.01,
+           py::arg("cbar2") = 1,
+           py::arg("estimate_scaling") = true,
+           py::arg("rotation_estimation_algorithm") =
+             teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS,
+           py::arg("rotation_gnc_factor") = 1.4,
+           py::arg("rotation_max_iterations") = 100,
+           py::arg("rotation_cost_threshold") = 1e-6,
+           py::arg("rotation_tim_graph") =
+             teaser::RobustRegistrationSolver::INLIER_GRAPH_FORMULATION::CHAIN,
+           py::arg("inlier_selection_mode") =
+             teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_EXACT,
+           py::arg("kcore_heuristic_threshold") = 0.5,
+           py::arg("use_max_clique") = true,
+           py::arg("max_clique_exact_solution") = true,
+           py::arg("max_clique_time_limit") = 3000,
+           py::arg("max_clique_num_threads") = omp_get_max_threads())
+      .def("getParams", &teaser::RobustRegistrationSolver::getParams)
+      .def("solve", py::overload_cast<const Eigen::Matrix<double, 3, Eigen::Dynamic>&,
+                                      const Eigen::Matrix<double, 3, Eigen::Dynamic>&>(
+                        &teaser::RobustRegistrationSolver::solve))
+
+      .def_property_readonly("solution", &teaser::RobustRegistrationSolver::getSolution)
+      .def("getSolution", &teaser::RobustRegistrationSolver::getSolution)
+
+      .def_property_readonly("gnc_rotation_cost_at_termination",
+           &teaser::RobustRegistrationSolver::getGNCRotationCostAtTermination)
+      .def("getGNCRotationCostAtTermination",
+           &teaser::RobustRegistrationSolver::getGNCRotationCostAtTermination)
+
+      .def_property_readonly("scale_inliers_mask", &teaser::RobustRegistrationSolver::getScaleInliersMask)
+      .def("getScaleInliersMask", &teaser::RobustRegistrationSolver::getScaleInliersMask)
+
+      .def_property_readonly("scale_inliers_map", &teaser::RobustRegistrationSolver::getScaleInliersMap)
+      .def("getScaleInliersMap", &teaser::RobustRegistrationSolver::getScaleInliersMap)
+
+      .def_property_readonly("scale_inliers", &teaser::RobustRegistrationSolver::getScaleInliers)
+      .def("getScaleInliers", &teaser::RobustRegistrationSolver::getScaleInliers)
+
+      .def_property_readonly("rotation_inliers_mask", &teaser::RobustRegistrationSolver::getRotationInliersMask)
+      .def("getRotationInliersMask", &teaser::RobustRegistrationSolver::getRotationInliersMask)
+
+      .def("getRotationInliersMap", &teaser::RobustRegistrationSolver::getRotationInliersMap)
+
+      .def_property_readonly("rotation_inliers", &teaser::RobustRegistrationSolver::getRotationInliers)
+      .def("getRotationInliers", &teaser::RobustRegistrationSolver::getRotationInliers)
+
+      .def_property_readonly("translation_inliers_mask",
+           &teaser::RobustRegistrationSolver::getTranslationInliersMask)
+      .def("getTranslationInliersMask",
+           &teaser::RobustRegistrationSolver::getTranslationInliersMask)
+
+
+      .def_property_readonly("translation_inliers_map", &teaser::RobustRegistrationSolver::getTranslationInliersMap)
+      .def("getTranslationInliersMap", &teaser::RobustRegistrationSolver::getTranslationInliersMap)
+
+      .def_property_readonly("translation_inliers", &teaser::RobustRegistrationSolver::getTranslationInliers)
+      .def("getTranslationInliers", &teaser::RobustRegistrationSolver::getTranslationInliers)
+
+      .def_property_readonly("inlier_max_clique", &teaser::RobustRegistrationSolver::getInlierMaxClique)
+      .def("getInlierMaxClique", &teaser::RobustRegistrationSolver::getInlierMaxClique)
+
+      .def_property_readonly("inlier_graph", &teaser::RobustRegistrationSolver::getInlierGraph)
+      .def("getInlierGraph", &teaser::RobustRegistrationSolver::getInlierGraph)
+
+      .def_property_readonly("src_tims_map", &teaser::RobustRegistrationSolver::getSrcTIMsMap)
+      .def("getSrcTIMsMap", &teaser::RobustRegistrationSolver::getSrcTIMsMap)
+
+      .def_property_readonly("dst_tims_map", &teaser::RobustRegistrationSolver::getDstTIMsMap)
+      .def("getDstTIMsMap", &teaser::RobustRegistrationSolver::getDstTIMsMap)
+
+      .def_property_readonly("src_tims_map_for_rotation", &teaser::RobustRegistrationSolver::getSrcTIMsMapForRotation)
+      .def("getSrcTIMsMapForRotation", &teaser::RobustRegistrationSolver::getSrcTIMsMapForRotation)
+
+      .def_property_readonly("dst_tims_map_for_rotation", &teaser::RobustRegistrationSolver::getSrcTIMsMapForRotation)
+      .def("getDstTIMsMapForRotation", &teaser::RobustRegistrationSolver::getDstTIMsMapForRotation)
+
+      .def_property_readonly("max_clique_src_tims", &teaser::RobustRegistrationSolver::getMaxCliqueSrcTIMs)
+      .def("getMaxCliqueSrcTIMs", &teaser::RobustRegistrationSolver::getMaxCliqueSrcTIMs)
+
+      .def_property_readonly("max_clique_dst_tims", &teaser::RobustRegistrationSolver::getMaxCliqueSrcTIMs)
+      .def("getMaxCliqueDstTIMs", &teaser::RobustRegistrationSolver::getMaxCliqueDstTIMs)
+
+      .def_property_readonly("src_tims", &teaser::RobustRegistrationSolver::getSrcTIMs)
+      .def("getSrcTIMs", &teaser::RobustRegistrationSolver::getSrcTIMs)
+
+      .def_property_readonly("dst_tims", &teaser::RobustRegistrationSolver::getSrcTIMs)
+      .def("getDstTIMs", &teaser::RobustRegistrationSolver::getDstTIMs);
 
   // Python bound for teaser::RobustRegistrationSolver::Params
   py::class_<teaser::RobustRegistrationSolver::Params>(solver, "Params")
@@ -198,11 +277,6 @@ PYBIND11_MODULE(teaserpp_python, m) {
                             const Eigen::Matrix<double, 3, Eigen::Dynamic>&,
                             const Eigen::Matrix<double, 1, Eigen::Dynamic>&>(
               &teaser::DRSCertifier::certify));
-
-  // Python bound for DRSCertifier::EIG_SOLVER_TYPE
-  py::enum_<teaser::DRSCertifier::EIG_SOLVER_TYPE>(certifier, "EIG_SOLVER_TYPE")
-      .value("EIGEN", teaser::DRSCertifier::EIG_SOLVER_TYPE::EIGEN)
-      .value("SPECTRA", teaser::DRSCertifier::EIG_SOLVER_TYPE::SPECTRA);
 
   // Python bound for DRSCertifier parameter struct
   py::class_<teaser::DRSCertifier::Params>(certifier, "Params")

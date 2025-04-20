@@ -4,12 +4,17 @@ project(teaserpp VERSION 1.0.0)
 set(CMAKE_CXX_STANDARD 14)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/" ${CMAKE_MODULE_PATH})
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Check build types
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     message(STATUS "Setting build type to 'Release' as none was specified.")
     set(CMAKE_BUILD_TYPE "Release" CACHE
             STRING "Choose the type of build." FORCE)
+endif ()
+
+if (DEFINED SKBUILD)
+    message(STATUS "Building with Scikit-Build")
 endif ()
 
 # Options

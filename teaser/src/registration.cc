@@ -159,7 +159,7 @@ void teaser::ScalarTLSEstimator::estimate_tiled(const Eigen::RowVectorXd& X,
     }
   };
 
-#pragma omp parallel for default(none) shared(                                                     \
+#pragma omp parallel for shared(                                                                   \
     jh_bound, ih_bound, ranges_inverse_sum_vec, dot_X_weights_vec, dot_weights_consensus_vec,      \
     X_consensus_table, h_centers, weights, N, X, x_hat, x_cost, s, ranges, inner_loop_f)
   for (size_t ih = 0; ih < ih_bound; ih += s) {
@@ -173,7 +173,7 @@ void teaser::ScalarTLSEstimator::estimate_tiled(const Eigen::RowVectorXd& X,
 
   // finish the left over entries
   // 1. Finish the unfinished js
-#pragma omp parallel for default(none)                                                             \
+#pragma omp parallel for                                                                           \
     shared(jh_bound, ih_bound, ranges_inverse_sum_vec, dot_X_weights_vec,                          \
            dot_weights_consensus_vec, X_consensus_table, h_centers, weights, N, X, x_hat, x_cost,  \
            s, ranges, nr_centers, inner_loop_f)
@@ -182,7 +182,7 @@ void teaser::ScalarTLSEstimator::estimate_tiled(const Eigen::RowVectorXd& X,
   }
 
   // 2. Finish the unfinished is
-#pragma omp parallel for default(none)                                                             \
+#pragma omp parallel for                                                                           \
     shared(jh_bound, ih_bound, ranges_inverse_sum_vec, dot_X_weights_vec,                          \
            dot_weights_consensus_vec, X_consensus_table, h_centers, weights, N, X, x_hat, x_cost,  \
            s, ranges, nr_centers, inner_loop_f)
@@ -471,6 +471,40 @@ void teaser::TLSTranslationSolver::solveForTranslation(
 }
 
 teaser::RobustRegistrationSolver::RobustRegistrationSolver(
+  double noise_bound,
+  double cbar2,
+  bool estimate_scaling,
+  ROTATION_ESTIMATION_ALGORITHM rotation_estimation_algorithm,
+  double rotation_gnc_factor,
+  size_t rotation_max_iterations,
+  double rotation_cost_threshold,
+  INLIER_GRAPH_FORMULATION rotation_tim_graph,
+  INLIER_SELECTION_MODE inlier_selection_mode,
+  double kcore_heuristic_threshold,
+  bool use_max_clique, // deprecated
+  bool max_clique_exact_solution, // deprecated
+  double max_clique_time_limit,
+  int max_clique_num_threads
+) {
+  reset(
+    noise_bound,
+    cbar2,
+    estimate_scaling,
+    rotation_estimation_algorithm,
+    rotation_gnc_factor,
+    rotation_max_iterations,
+    rotation_cost_threshold,
+    rotation_tim_graph,
+    inlier_selection_mode,
+    kcore_heuristic_threshold,
+    use_max_clique,
+    max_clique_exact_solution,
+    max_clique_time_limit,
+    max_clique_num_threads ? max_clique_num_threads : omp_get_max_threads()
+  );
+}
+
+teaser::RobustRegistrationSolver::RobustRegistrationSolver(
     const teaser::RobustRegistrationSolver::Params& params) {
   reset(params);
 }
@@ -483,7 +517,7 @@ teaser::RobustRegistrationSolver::computeTIMs(const Eigen::Matrix<double, 3, Eig
   Eigen::Matrix<double, 3, Eigen::Dynamic> vtilde(3, N * (N - 1) / 2);
   map->resize(2, N * (N - 1) / 2);
 
-#pragma omp parallel for default(none) shared(N, v, vtilde, map)
+#pragma omp parallel for shared(N, v, vtilde, map)
   for (size_t i = 0; i < N - 1; i++) {
     // Calculate some important indices
     // For each measurement, we compute the TIMs between itself and all the measurements after it.
