@@ -5,7 +5,7 @@ project(pmc-download NONE)
 include(ExternalProject)
 # Notice that this project uses a forked version of PMC with minor fixes & changes
 ExternalProject_Add(pmc
-        GIT_REPOSITORY    https://github.com/jingnanshi/pmc.git
+        GIT_REPOSITORY    https://github.com/young-seoulrobotics/pmc.git
         SOURCE_DIR        "${CMAKE_CURRENT_BINARY_DIR}/pmc-src"
         BINARY_DIR        "${CMAKE_CURRENT_BINARY_DIR}/pmc-build"
         CONFIGURE_COMMAND ""
