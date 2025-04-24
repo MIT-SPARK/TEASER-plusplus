@@ -7,15 +7,14 @@
  */
 
 #include "gtest/gtest.h"
-#include "gmock/gmock.h"
 
 #include <iostream>
 #include <map>
 
 #include "pmc/pmc.h"
+#include "pmc/pmc_bool_vector.h"
 #include "pmc/pmc_input.h"
 #include "teaser/graph.h"
-#include "test_utils.h"
 
 /**
  * A helper function to generate mock input for testing PMC code
@@ -47,11 +46,11 @@ pmc::input generateMockInput() {
  * @param adj a bool** to the adjcency matrix
  * @param nodes number of nodes in the graph
  */
-void printAdjMatirx(const std::vector<std::vector<bool>>& adj, int nodes) {
+void printAdjMatirx(const std::vector<pmc::bool_vector>& adj, int nodes) {
   std::cout << "Adjacency matrix: " << std::endl;
-  for (auto& i : adj) {
-    for (auto j : i) {
-      std::cout << j << " ";
+  for (const auto& row : adj) {
+    for (std::size_t i = 0; i < row.size(); ++i) {
+      std::cout << row[i] << " ";
     }
     std::cout << std::endl;
   }
@@ -158,7 +157,7 @@ TEST(PMCTest, FindMaximumClique1) {
   }
 
   // lower-bound of max clique
-  vector<int> C;
+  std::vector<int> C;
   if (in.lb == 0 && in.heu_strat != "0") { // skip if given as input
     pmc::pmc_heu maxclique(G, in);
     in.lb = maxclique.search(G, C);
@@ -202,7 +201,7 @@ TEST(PMCTest, FindMaximumClique2) {
   }
 
   // lower-bound of max clique
-  vector<int> C;
+  std::vector<int> C;
   if (in.lb == 0 && in.heu_strat != "0") { // skip if given as input
     pmc::pmc_heu maxclique(G, in);
     in.lb = maxclique.search(G, C);
@@ -245,7 +244,7 @@ TEST(PMCTest, FindMaximumClique3) {
   }
 
   // lower-bound of max clique
-  vector<int> C;
+  std::vector<int> C;
   if (in.lb == 0 && in.heu_strat != "0") { // skip if given as input
     pmc::pmc_heu maxclique(G, in);
     in.lb = maxclique.search(G, C);
@@ -335,7 +334,7 @@ TEST(PMCTest, FindMaximumCliqueSingleThreaded) {
   }
 
   // lower-bound of max clique
-  vector<int> C;
+  std::vector<int> C;
   if (in.lb == 0 && in.heu_strat != "0") { // skip if given as input
     pmc::pmc_heu maxclique(G, in);
     in.lb = maxclique.search(G, C);
@@ -387,7 +386,7 @@ TEST(PMCTest, FindMaximumCliqueMultiThreaded) {
   }
 
   // lower-bound of max clique
-  vector<int> C;
+  std::vector<int> C;
   if (in.lb == 0 && in.heu_strat != "0") { // skip if given as input
     pmc::pmc_heu maxclique(G, in);
     in.lb = maxclique.search(G, C);

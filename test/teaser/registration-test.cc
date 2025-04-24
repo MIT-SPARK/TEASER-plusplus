@@ -188,7 +188,7 @@ TEST(RegistrationTest, SolveForRotation) {
     params.rotation_gnc_factor = 1.4;
     params.rotation_estimation_algorithm =
         teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::QUATRO;
-    params.inlier_selection_mode ==
+    params.inlier_selection_mode =
         teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_HEU;
     params.rotation_cost_threshold = 0.005;
 

@@ -41,7 +41,6 @@ public:
     adj_list_.resize(adj_list.size());
     num_edges_ = 0;
     for (const auto& e_list : adj_list) {
-      const auto& v = e_list.first;
       adj_list_[e_list.first] = e_list.second;
       num_edges_ += e_list.second.size();
     }

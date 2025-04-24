@@ -9,6 +9,8 @@
 #include "teaser/graph.h"
 #include "pmc/pmc.h"
 
+using namespace std;
+
 vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
 
   // Handle deprecated field
