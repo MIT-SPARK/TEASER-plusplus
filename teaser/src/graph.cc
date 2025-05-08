@@ -9,7 +9,7 @@
 #include "teaser/graph.h"
 #include "pmc/pmc.h"
 
-vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
+std::vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
 
   // Handle deprecated field
   if (!params_.solve_exactly) {
@@ -17,8 +17,8 @@ vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
   }
 
   // Create a PMC graph from the TEASER graph
-  vector<int> edges;
-  vector<long long> vertices;
+  std::vector<int> edges;
+  std::vector<long long> vertices;
   vertices.push_back(edges.size());
 
   const auto all_vertices = graph.getVertices();
@@ -52,7 +52,7 @@ vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
   in.vertex_search_order = "deg";
 
   // vector to represent max clique
-  vector<int> C;
+  std::vector<int> C;
 
   // upper-bound of max clique
   G.compute_cores();
