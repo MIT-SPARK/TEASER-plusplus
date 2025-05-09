@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 project(teaserpp VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 14)
@@ -18,10 +18,11 @@ if (DEFINED SKBUILD)
 endif ()
 
 # Options
+option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(BUILD_TESTS "Build tests" ON)
 option(BUILD_TEASER_FPFH "Build TEASER++ wrappers for PCL FPFH estimation." OFF)
 option(BUILD_MATLAB_BINDINGS "Build MATLAB bindings" OFF)
-option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
+option(BUILD_PYTHON_BINDINGS "Build Python bindings" OFF)
 option(BUILD_DOC "Build documentation" ON)
 option(BUILD_WITH_MARCH_NATIVE "Build with flag march=native" OFF)
 option(ENABLE_MKL "Try to use Eigen with MKL" OFF)
@@ -30,11 +31,6 @@ option(ENABLE_DIAGNOSTIC_PRINT "Enable printing of diagnostic messages" ON)
 if (ENABLE_DIAGNOSTIC_PRINT)
     message(STATUS "Enable printing of diagnostic messages.")
     add_definitions(-DTEASER_DIAG_PRINT)
-endif ()
-
-# Cache Variables
-if (NOT TEASERPP_PYTHON_VERSION)
-    set(TEASERPP_PYTHON_VERSION "" CACHE STRING "Python version to use for TEASER++ bindings.")
 endif ()
 
 # Find dependencies
@@ -78,44 +74,6 @@ if (BUILD_TEASER_FPFH)
     endif()
 endif ()
 
-# googletest
-configure_file(cmake/GoogleTest.CMakeLists.txt.in googletest-download/CMakeLists.txt)
-execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download")
-execute_process(COMMAND "${CMAKE_COMMAND}" --build .
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download")
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-add_subdirectory("${CMAKE_BINARY_DIR}/googletest-src"
-        "${CMAKE_BINARY_DIR}/googletest-build" EXCLUDE_FROM_ALL)
-
-# pmc (Parallel Maximum Clique)
-configure_file(cmake/pmc.CMakeLists.txt.in pmc-download/CMakeLists.txt)
-execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/pmc-download")
-execute_process(COMMAND "${CMAKE_COMMAND}" --build .
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/pmc-download")
-add_subdirectory("${CMAKE_BINARY_DIR}/pmc-src"
-        "${CMAKE_BINARY_DIR}/pmc-build")
-
-# tinyply
-configure_file(cmake/tinyply.CMakeLists.txt.in tinyply-download/CMakeLists.txt)
-execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/tinyply-download")
-execute_process(COMMAND "${CMAKE_COMMAND}" --build .
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/tinyply-download")
-add_subdirectory("${CMAKE_BINARY_DIR}/tinyply-src"
-        "${CMAKE_BINARY_DIR}/tinyply-build")
-target_include_directories(tinyply PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/tinyply-src/source>)
-
-# spectra
-configure_file(cmake/spectra.CMakeLists.txt.in spectra-download/CMakeLists.txt)
-execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/spectra-download")
-execute_process(COMMAND "${CMAKE_COMMAND}" --build .
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/spectra-download")
-set(SPECTRA_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/spectra-src/include")
-
 # Building Targets
 set(TEASERPP_ROOT ${CMAKE_CURRENT_LIST_DIR})
 add_subdirectory(teaser)
@@ -135,17 +93,6 @@ if (BUILD_MATLAB_BINDINGS)
 endif ()
 
 if (BUILD_PYTHON_BINDINGS)
-    set(PYBIND11_PYTHON_VERSION ${TEASERPP_PYTHON_VERSION})
-
-    # download the pybind11 repo
-    configure_file(cmake/pybind11.CMakeLists.txt.in pybind11-download/CMakeLists.txt)
-    execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/pybind11-download")
-    execute_process(COMMAND "${CMAKE_COMMAND}" --build .
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/pybind11-download")
-    add_subdirectory("${CMAKE_BINARY_DIR}/pybind11-src"
-            "${CMAKE_BINARY_DIR}/pybind11-build")
-
     message(STATUS "TEASER++ Python binding will be built.")
     add_subdirectory(python)
 endif ()
