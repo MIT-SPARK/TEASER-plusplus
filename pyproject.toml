@@ -46,9 +46,14 @@ Homepage = "https://github.com/MIT-SPARK/TEASER-plusplus"
 
 [tool.scikit-build]
 build-dir = "build/{wheel_tag}"
-build.verbose = false
+build.verbose = true
 cmake.version = ">=3.16"
 wheel.install-dir = "teaserpp_python.libs"
+
+[tool.scikit-build.cmake.define]
+BUILD_PYTHON_BINDINGS = "ON"
+BUILD_TESTS = "OFF"
+BUILD_SHARED_LIBS = "OFF"
 
 [tool.cibuildwheel]
 archs = ["auto64"]
