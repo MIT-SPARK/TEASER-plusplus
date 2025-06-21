@@ -7,10 +7,12 @@
  */
 
 #include "teaser/graph.h"
+
+#include <cassert>
+
 #include "pmc/pmc.h"
 
 std::vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
-
   // Handle deprecated field
   if (!params_.solve_exactly) {
     params_.solver_mode = CLIQUE_SOLVER_MODE::PMC_HEU;
@@ -85,7 +87,7 @@ std::vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
   }
 
   // lower-bound of max clique
-  if (in.lb == 0 && in.heu_strat != "0") { // skip if given as input
+  if (in.lb == 0 && in.heu_strat != "0") {  // skip if given as input
     pmc::pmc_heu maxclique(G, in);
     in.lb = maxclique.search(G, C);
   }
@@ -108,9 +110,9 @@ std::vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
     // 2. neigh-core pruning/ordering
     // 3. dynamic coloring bounds/sort
     // see the original PMC paper and implementation for details:
-    // R. A. Rossi, D. F. Gleich, and A. H. Gebremedhin, “Parallel Maximum Clique Algorithms with
-    // Applications to Network Analysis,” SIAM J. Sci. Comput., vol. 37, no. 5, pp. C589–C616, Jan.
-    // 2015.
+    // R. A. Rossi, D. F. Gleich, and A. H. Gebremedhin, “Parallel Maximum
+    // Clique Algorithms with Applications to Network Analysis,” SIAM J. Sci.
+    // Comput., vol. 37, no. 5, pp. C589–C616, Jan. 2015.
     if (G.num_vertices() < in.adj_limit) {
       G.create_adj();
       pmc::pmcx_maxclique finder(G, in);

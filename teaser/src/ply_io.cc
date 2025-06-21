@@ -13,8 +13,6 @@
 #include <cstring>
 
 #include "teaser/ply_io.h"
-
-#define TINYPLY_IMPLEMENTATION
 #include "tinyply.h"
 
 // Internal datatypes for storing ply vertices

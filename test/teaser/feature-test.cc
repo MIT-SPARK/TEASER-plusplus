@@ -26,7 +26,7 @@ TEST(FPFHTest, CalculateFPFHFeaturesWithPCL) {
   // Read a PCD file from disk.
   pcl::PCLPointCloud2 cloud_blob;
   pcl::io::loadPCDFile("./data/bunny.pcd", cloud_blob);
-  pcl::fromPCLPointCloud2(cloud_blob, *cloud);
+  pcl::fromPCLPointCloud2 (cloud_blob, *cloud);
 
   // Estimate the normals.
   pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normalEstimation;
@@ -53,7 +53,7 @@ TEST(FPFHTest, CalculateFPFHFeaturesWithTeaserInterface) {
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PCLPointCloud2 cloud_blob;
   pcl::io::loadPCDFile("./data/bunny.pcd", cloud_blob);
-  pcl::fromPCLPointCloud2(cloud_blob, *pcl_cloud);
+  pcl::fromPCLPointCloud2 (cloud_blob, *pcl_cloud);
   teaser::PointCloud input_cloud;
   for (auto& p : *pcl_cloud) {
     input_cloud.push_back({p.x, p.y, p.z});
