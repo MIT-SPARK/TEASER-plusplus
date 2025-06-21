@@ -11,7 +11,6 @@
 #include <boost/smart_ptr/shared_ptr.hpp>
 #include <pcl/features/fpfh.h>
 #include <pcl/features/fpfh_omp.h>
-#include <pcl/features/normal_3d_omp.h>
 
 #include "teaser/geometry.h"
 
@@ -22,11 +21,10 @@ using FPFHCloudPtr = pcl::PointCloud<pcl::FPFHSignature33>::Ptr;
 
 class FPFHEstimation {
 public:
-  FPFHEstimation() {
-    fpfh_estimation_.reset(
-        new pcl::FPFHEstimationOMP<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33>());
-    normals_.reset(new pcl::PointCloud<pcl::Normal>());
-  }
+  FPFHEstimation()
+      : fpfh_estimation_(
+            new pcl::FPFHEstimationOMP<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33>){};
+
   /**
    * Compute FPFH features.
    *
@@ -48,17 +46,9 @@ public:
     return fpfh_estimation_;
   }
 
-   /**
-   * Return the normal vectors of the input cloud that are used in the calculation of FPFH
-   * @return
-   */
-  inline pcl::PointCloud<pcl::Normal> getNormals() { return *normals_; }
-
 private:
   // pcl::FPFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33>::Ptr fpfh_estimation_;
   pcl::FPFHEstimationOMP<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33>::Ptr fpfh_estimation_;
-
-  pcl::PointCloud<pcl::Normal>::Ptr normals_;
 
   /**
    * Wrapper function for the corresponding PCL function.

@@ -6,6 +6,7 @@
  * See LICENSE for the license information
  */
 
+
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <flann/flann.hpp>
@@ -19,9 +20,9 @@
 namespace teaser {
 
 std::vector<std::pair<int, int>> Matcher::calculateCorrespondences(
-    const teaser::PointCloud& source_points, const teaser::PointCloud& target_points,
-    const teaser::FPFHCloud& source_features, const teaser::FPFHCloud& target_features,
-    bool use_absolute_scale, bool use_crosscheck, bool use_tuple_test, float tuple_scale) {
+    teaser::PointCloud& source_points, teaser::PointCloud& target_points,
+    teaser::FPFHCloud& source_features, teaser::FPFHCloud& target_features, bool use_absolute_scale,
+    bool use_crosscheck, bool use_tuple_test, float tuple_scale) {
 
   Feature cloud_features;
   pointcloud_.push_back(source_points);
@@ -137,8 +138,9 @@ void Matcher::advancedMatching(bool use_crosscheck, bool use_tuple_test, float t
   KDTree feature_tree_j(flann::KDTreeSingleIndexParams(15));
   buildKDTree(features_[fj], &feature_tree_j);
 
-  std::vector<int> corres_K;
+  std::vector<int> corres_K, corres_K2;
   std::vector<float> dis;
+  std::vector<int> ind;
 
   std::vector<std::pair<int, int>> corres;
   std::vector<std::pair<int, int>> corres_cross;

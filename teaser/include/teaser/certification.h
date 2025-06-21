@@ -31,7 +31,7 @@ public:
 
   /**
    * Abstract function for certifying rotation estimation results
-   * @param rotation_solution [in] a solution to the rotation registration problem
+   * @param rotation_solution [in] a solution to the rotatoin registration problem
    * @param src [in] Assume dst = R * src
    * @param dst [in] Assume dst = R * src
    * @param theta [in] a binary vector indicating inliers vs. outliers
@@ -52,6 +52,7 @@ public:
  */
 class DRSCertifier : public AbstractRotationCertifier {
 public:
+
   /**
    * Solver for eigendecomposition solver / spectral decomposition.
    *
@@ -59,7 +60,7 @@ public:
    * For extremely large matrices, it may make sense to use Spectra instead.
    */
   enum class EIG_SOLVER_TYPE {
-    EIGEN = 0,   ///< Use solvers in the Eigen library
+    EIGEN = 0, ///< Use solvers in the Eigen library
     SPECTRA = 1, ///< Use solvers in the Spectra library
   };
 
@@ -185,7 +186,7 @@ public:
     (1) off-diagonal blocks must be skew-symmetric
     (2) diagonal blocks must satisfy W_00 = - sum(W_ii)
     (3) W_dual must also satisfy complementary slackness (because M_init satisfies complementary
-   slackness) This projection is optimal in the sense of minimum Frobenius norm
+   slackness) This projection is optimal in the sense of minimum Frobenious norm
    */
   void getOptimalDualProjection(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& W,
                                 const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended,

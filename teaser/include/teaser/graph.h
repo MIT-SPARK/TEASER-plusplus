@@ -35,7 +35,7 @@ public:
    * vertices v1 & v2, we assume that v2 exists in v1's list, and v1 also exists in v2's list. This
    * condition is not enforced. If violated, removeEdge() function might exhibit undefined
    * behaviors.
-   * @param [in] adj_list a map representing an adjacency list
+   * @param [in] adj_list an map representing an adjacency list
    */
   explicit Graph(const std::map<int, std::vector<int>>& adj_list) {
     adj_list_.resize(adj_list.size());
@@ -128,26 +128,26 @@ public:
    * Get the number of vertices
    * @return total number of vertices
    */
-  int numVertices() const { return adj_list_.size(); }
+  [[nodiscard]] int numVertices() const { return adj_list_.size(); }
 
   /**
    * Get the number of edges
    * @return total number of edges
    */
-  int numEdges() const { return num_edges_; }
+  [[nodiscard]] int numEdges() const { return num_edges_; }
 
   /**
    * Get edges originated from a specific vertex
    * @param [in] id
    * @return an unordered set of edges
    */
-  const std::vector<int>& getEdges(int id) const { return adj_list_[id]; }
+  [[nodiscard]] const std::vector<int>& getEdges(int id) const { return adj_list_[id]; }
 
   /**
    * Get all vertices
    * @return a vector of all vertices
    */
-  std::vector<int> getVertices() const {
+  [[nodiscard]] std::vector<int> getVertices() const {
     std::vector<int> v;
     for (int i = 0; i < adj_list_.size(); ++i) {
       v.push_back(i);
@@ -155,7 +155,7 @@ public:
     return v;
   }
 
-  Eigen::MatrixXi getAdjMatrix() const {
+  [[nodiscard]] Eigen::MatrixXi getAdjMatrix() const {
     const int num_v = numVertices();
     Eigen::MatrixXi adj_matrix(num_v, num_v);
     for (size_t i = 0; i < num_v; ++i) {
@@ -171,7 +171,7 @@ public:
     return adj_matrix;
   }
 
-  std::vector<std::vector<int>> getAdjList() const { return adj_list_; }
+  [[nodiscard]] std::vector<std::vector<int>> getAdjList() const { return adj_list_; }
 
   /**
    * Preallocate spaces for vertices
@@ -258,7 +258,7 @@ public:
     /**
      * Number of threads to use for the solver
      */
-    int num_threads = 1;
+     int num_threads = 1;
   };
 
   MaxCliqueSolver() = default;
