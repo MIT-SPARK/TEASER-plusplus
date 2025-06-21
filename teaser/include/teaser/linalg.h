@@ -8,11 +8,11 @@
 
 #pragma once
 
-#include <iostream>
-
 #include <Eigen/Core>
-#include <Eigen/SparseCore>
 #include <Eigen/Eigenvalues>
+#include <Eigen/SparseCore>
+#include <cassert>
+#include <iostream>
 
 namespace teaser {
 
@@ -41,7 +41,8 @@ Eigen::Matrix<double, 3, 3> hatmap(const Eigen::Matrix<double, 3, 1>& u) {
  * @param output [out] output vector
  */
 template <typename NumT, int N, int M>
-void vectorKron(const Eigen::Matrix<NumT, N, 1>& v1, const Eigen::Matrix<NumT, M, 1>& v2,
+void vectorKron(const Eigen::Matrix<NumT, N, 1>& v1,
+                const Eigen::Matrix<NumT, M, 1>& v2,
                 Eigen::Matrix<NumT, N * M, 1>* output) {
 #pragma omp parallel for collapse(2) shared(v1, v2, output) default(none)
   for (size_t i = 0; i < N; ++i) {
@@ -59,8 +60,8 @@ void vectorKron(const Eigen::Matrix<NumT, N, 1>& v1, const Eigen::Matrix<NumT, M
  * @return Result of kronecker product
  */
 template <typename NumT, int N, int M>
-Eigen::Matrix<NumT, Eigen::Dynamic, 1> vectorKron(const Eigen::Matrix<NumT, N, 1>& v1,
-                                                  const Eigen::Matrix<NumT, M, 1>& v2) {
+Eigen::Matrix<NumT, Eigen::Dynamic, 1> vectorKron(
+    const Eigen::Matrix<NumT, N, 1>& v1, const Eigen::Matrix<NumT, M, 1>& v2) {
   Eigen::Matrix<double, Eigen::Dynamic, 1> output(v1.rows() * v2.rows(), 1);
 #pragma omp parallel for collapse(2) shared(v1, v2, output) default(none)
   for (size_t i = 0; i < v1.rows(); ++i) {
@@ -79,11 +80,13 @@ Eigen::Matrix<NumT, Eigen::Dynamic, 1> vectorKron(const Eigen::Matrix<NumT, N, 1
  * @tparam NumT numerical type for Eigen matrices (double, float, etc.)
  * @param A [in] input matrix
  * @param nearestPSD [out] output neaest positive semi-definite matrix
- * @param eig_threshold [in] optional threshold of determining the smallest eigen values
+ * @param eig_threshold [in] optional threshold of determining the smallest
+ * eigen values
  */
 template <typename NumT>
-void getNearestPSD(const Eigen::Matrix<NumT, Eigen::Dynamic, Eigen::Dynamic>& A,
-                   Eigen::Matrix<NumT, Eigen::Dynamic, Eigen::Dynamic>* nearestPSD) {
+void getNearestPSD(
+    const Eigen::Matrix<NumT, Eigen::Dynamic, Eigen::Dynamic>& A,
+    Eigen::Matrix<NumT, Eigen::Dynamic, Eigen::Dynamic>* nearestPSD) {
   assert(A.rows() == A.cols());
   nearestPSD->resize(A.rows(), A.cols());
 
@@ -98,4 +101,4 @@ void getNearestPSD(const Eigen::Matrix<NumT, Eigen::Dynamic, Eigen::Dynamic>& A,
   *nearestPSD = Ve * De_positive * Ve.transpose();
 }
 
-} // namespace teaser
+}  // namespace teaser
