@@ -52,7 +52,7 @@ wheel.install-dir = "teaserpp_python.libs"
 
 [tool.scikit-build.cmake.define]
 BUILD_PYTHON_BINDINGS = "ON"
-BUILD_TESTS = "OFF"
+BUILD_TESTING = "OFF"
 BUILD_SHARED_LIBS = "OFF"
 
 [tool.cibuildwheel]
