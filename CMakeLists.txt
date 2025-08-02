@@ -19,7 +19,6 @@ endif ()
 
 # Options
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-option(BUILD_TESTS "Build tests" ON)
 option(BUILD_TEASER_FPFH "Build TEASER++ wrappers for PCL FPFH estimation." OFF)
 option(BUILD_MATLAB_BINDINGS "Build MATLAB bindings" OFF)
 option(BUILD_PYTHON_BINDINGS "Build Python bindings" OFF)
@@ -78,7 +77,8 @@ endif ()
 set(TEASERPP_ROOT ${CMAKE_CURRENT_LIST_DIR})
 add_subdirectory(teaser)
 
-if (BUILD_TESTS)
+include(CTest)
+if (BUILD_TESTING)
     enable_testing()
     add_subdirectory(test)
 endif ()
