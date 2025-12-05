@@ -14,6 +14,8 @@
 #include <limits>
 #include <iterator>
 
+#include <omp.h>
+
 #include "teaser/utils.h"
 #include "teaser/graph.h"
 #include "teaser/macros.h"

@@ -16,8 +16,6 @@
 #include <Eigen/SVD>
 #include <Eigen/Geometry>
 
-#include "omp.h"
-
 #include "teaser/graph.h"
 #include "teaser/geometry.h"
 
