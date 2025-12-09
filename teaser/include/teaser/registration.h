@@ -24,6 +24,8 @@
 
 namespace teaser {
 
+int teaser_default_max_threads();
+
 /**
  * Struct to hold solution to a registration problem
  */
@@ -416,7 +418,6 @@ public:
    * Note: the default values needed to be changed accordingly for best performance.
    */
   struct Params {
-
     /**
      * A bound on the noise of each provided measurement.
      */
@@ -509,7 +510,7 @@ public:
     /**
      * Number of threads used for the maximum clique solver
      */
-    int max_clique_num_threads = omp_get_max_threads();
+    int max_clique_num_threads = teaser_default_max_threads();
   };
 
   RobustRegistrationSolver() = default;

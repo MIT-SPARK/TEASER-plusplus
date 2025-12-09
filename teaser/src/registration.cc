@@ -20,6 +20,10 @@
 #include "teaser/graph.h"
 #include "teaser/macros.h"
 
+int teaser::teaser_default_max_threads() {
+ return omp_get_max_threads();
+}
+
 void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd& X,
                                           const Eigen::RowVectorXd& ranges, double* estimate,
                                           Eigen::Matrix<bool, 1, Eigen::Dynamic>* inliers) {
