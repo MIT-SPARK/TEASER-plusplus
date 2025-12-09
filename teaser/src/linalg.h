@@ -10,6 +10,8 @@
 
 #include <iostream>
 
+#include <omp.h>
+
 #include <Eigen/Core>
 #include <Eigen/SparseCore>
 #include <Eigen/Eigenvalues>
