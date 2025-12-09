@@ -17,7 +17,7 @@
 #include <Spectra/SymEigsShiftSolver.h>
 
 #include "teaser/certification.h"
-#include "teaser/linalg.h"
+#include "linalg.h" // private header for testing
 
 teaser::CertificationResult
 teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,

@@ -13,7 +13,7 @@
 
 #include <Eigen/Core>
 
-#include "teaser/linalg.h"
+#include "linalg.h"
 
 TEST(LinalgTest, HatMap) {
   {

@@ -35,6 +35,12 @@ endif ()
 # Executable for running unit tests
 add_executable(all_tests ${TEST_SRCS})
 target_link_libraries(all_tests ${TEST_LINK_LIBRARIES})
+target_include_directories(all_tests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../../teaser/src)
+
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(all_tests OpenMP::OpenMP_CXX)
+endif()
 
 gtest_add_tests(TARGET all_tests
         TEST_LIST allTests)

@@ -65,6 +65,7 @@ target_include_directories(teaser_registration
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     PRIVATE
         $<BUILD_INTERFACE:${spectra_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
 )
 if(NOT BUILD_SHARED_LIBS)
   set_property(TARGET teaser_registration PROPERTY POSITION_INDEPENDENT_CODE 1)
