@@ -116,23 +116,13 @@ Make sure you have compiled the project, then run:
 Installing Python bindings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-TEASER++ uses `pybind11 <https://github.com/pybind/pybind11>`_ to allow for minimal-effort interoperability between C++ and Python. To compile Python binding, run the following in the ``build`` folder you just created:
+TEASER++ uses `pybind11 <https://github.com/pybind/pybind11>`_ to allow for minimal-effort interoperability between C++ and Python. To compile Python binding, run the following in the cloned repository you just created:
 
 .. code-block:: sh
 
-   cmake -DTEASERPP_PYTHON_VERSION=3.6 ..
-   make teaserpp_python
-
-You can replace ``3.6`` with the desired Python version you want to use TEASER++ with.
-
-Then, in the `build` folder, there should be a folder named ``python``. You can use the following commands to install the binding with ``pip``:
-
-.. code-block:: sh
-
-   cd python
    pip install .
 
-If you are using virtual environments or Anaconda, make sure to activate your environment before compiling and during ``pip install``. Make sure the targeted Python interpreter is the one in your desired environment, or otherwise there might be segmentation faults.
+If you are using virtual environments or Anaconda, make sure to activate your environment before run ``pip install``.
 
 Installing MATLAB Bindings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
