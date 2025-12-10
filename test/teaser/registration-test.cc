@@ -188,7 +188,7 @@ TEST(RegistrationTest, SolveForRotation) {
     params.rotation_gnc_factor = 1.4;
     params.rotation_estimation_algorithm =
         teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::QUATRO;
-    params.inlier_selection_mode ==
+    params.inlier_selection_mode =
         teaser::RobustRegistrationSolver::INLIER_SELECTION_MODE::PMC_HEU;
     params.rotation_cost_threshold = 0.005;
 
@@ -454,13 +454,12 @@ TEST(RegistrationTest, OutlierDetection) {
 
   auto solution = solver.getSolution();
   EXPECT_LE(teaser::test::getAngularError(T.topLeftCorner(3, 3), solution.rotation), 0.2);
-  EXPECT_LE((T.topRightCorner(3, 1) - solution.translation).norm(), 0.1);
+  EXPECT_LE((T.topRightCorner(3, 1) - solution.translation).squaredNorm(), 0.01);
 
   auto final_inliers = solver.getInlierMaxClique();
-
-  EXPECT_EQ(expected_inliers.size(), final_inliers.size());
-  std::sort(expected_inliers.begin(), expected_inliers.end());
   std::sort(final_inliers.begin(), final_inliers.end());
+
+  ASSERT_EQ(expected_inliers.size(), final_inliers.size());
   for (size_t i = 0; i < expected_inliers.size(); ++i) {
     EXPECT_EQ(expected_inliers[i], final_inliers[i]);
   }

@@ -51,7 +51,7 @@ std::vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
   in.heu_strat = "kcore";
   in.vertex_search_order = "deg";
 
-  // vector to represent max clique
+  // std::vector to represent max clique
   std::vector<int> C;
 
   // upper-bound of max clique
@@ -69,7 +69,7 @@ std::vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
                                   static_cast<double>(all_vertices.size()))) {
     TEASER_DEBUG_INFO_MSG("Using K-core heuristic finder.");
     // remove all nodes with core number less than max core number
-    // k_cores is a vector saving the core number of each vertex
+    // k_cores is a std::vector saving the core number of each vertex
     auto k_cores = G.get_kcores();
     for (int i = 1; i < k_cores->size(); ++i) {
       // Note: k_core has size equals to num vertices + 1

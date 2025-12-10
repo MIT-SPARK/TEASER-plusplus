@@ -12,13 +12,15 @@ if (NOT pmc_POPULATED)
   add_subdirectory(${pmc_SOURCE_DIR} ${pmc_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
-FetchContent_Declare(tinyply
-    GIT_REPOSITORY https://github.com/ddiakopoulos/tinyply.git
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
-)
-if (NOT tinyply_POPULATED)
-  FetchContent_Populate(tinyply)
+if(NOT TEASERPP_USE_EXTERNAL_TINPLY)
+    FetchContent_Declare(tinyply
+        GIT_REPOSITORY https://github.com/ddiakopoulos/tinyply.git
+        BUILD_COMMAND ""
+        INSTALL_COMMAND ""
+    )
+    if (NOT tinyply_POPULATED)
+    FetchContent_Populate(tinyply)
+    endif()
 endif()
 
 FetchContent_Declare(spectra
