@@ -76,6 +76,32 @@ Number of correspondences: 1889
 Number of outliers: 1700
 Time taken (s): 0.786677
 ```
+
+### Choose a pose across several noise bounds
+
+Use `solver.solve(src, dst, noise_bound)` to override the configured bound for
+paired 3-by-N point matrices. Pass a scalar to solve once, or a list of bounds
+to score the candidate poses against the supplied point sets. The multi-bound
+path computes TIMs once and reuses fixed-scale compatibility calculations
+across bounds. On nested compatibility graphs, the previous clique helps
+certify when the current PMC search can finish early with the same result.
+This overload is available in C++ and Python.
+
+In Python, pass `noise_bound="auto"` to try one, two and four times the median
+nearest-neighbor spacing of the matched target points. In C++, use
+`teaser::RobustRegistrationSolver::NoiseBoundMode::AUTO`. A scalar or one-element
+sequence uses the original single-solve path and skips pose verification.
+
+For several bounds and for auto, the scorer uses the matched points by default
+without downsampling. To score against separate point clouds, pass two 3-by-N
+arrays with `verification_clouds=(verify_src, verify_dst)` in Python, or
+`solver.solve(src, dst, noise_bound, verify_src, verify_dst)` in C++. Each of
+these clouds can have a different point count and is voxel-downsampled using
+twice its own estimated median nearest-neighbor spacing. The verification
+clouds affect pose selection only. After the call, `solver.getParams().noise_bound`
+gives the selected bound. The [C++ example](examples/teaser_cpp_multibound)
+shows both verification paths with PLY files.
+
 ### Minimal C++ example for MacOS with brew:
 Run the following script to show a minimal C++ example:
 ```shell script

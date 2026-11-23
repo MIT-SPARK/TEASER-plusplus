@@ -27,6 +27,7 @@ PYBIND11_MODULE(_teaserpp, m) {
 
   // Python bound for teaser::RegistrationSolution
   py::class_<teaser::RegistrationSolution>(m, "RegistrationSolution")
+      .def_readwrite("valid", &teaser::RegistrationSolution::valid)
       .def_readwrite("scale", &teaser::RegistrationSolution::scale)
       .def_readwrite("translation", &teaser::RegistrationSolution::translation)
       .def_readwrite("rotation", &teaser::RegistrationSolution::rotation)
@@ -77,6 +78,7 @@ PYBIND11_MODULE(_teaserpp, m) {
   py::class_<teaser::RobustRegistrationSolver> solver(
       m, "RobustRegistrationSolver", py::dynamic_attr()
   );
+  using Points = Eigen::Matrix<double, 3, Eigen::Dynamic>;
 
   // Python bound for teaser::RobustRegistrationSolver functions
   solver.def(py::init<const teaser::RobustRegistrationSolver::Params&>())
@@ -105,9 +107,38 @@ PYBIND11_MODULE(_teaserpp, m) {
            py::arg("max_clique_time_limit") = 3000,
            py::arg("max_clique_num_threads") = omp_get_max_threads())
       .def("getParams", &teaser::RobustRegistrationSolver::getParams)
-      .def("solve", py::overload_cast<const Eigen::Matrix<double, 3, Eigen::Dynamic>&,
-                                      const Eigen::Matrix<double, 3, Eigen::Dynamic>&>(
-                        &teaser::RobustRegistrationSolver::solve))
+      .def("solve", py::overload_cast<const Points&, const Points&>(
+                        &teaser::RobustRegistrationSolver::solve),
+           py::arg("src"), py::arg("dst"))
+      .def("solve", [](teaser::RobustRegistrationSolver& solver, const Points& src,
+                       const Points& dst, double noise_bound, const py::object&) {
+        return solver.solve(src, dst, noise_bound);
+      }, py::arg("src"), py::arg("dst"), py::arg("noise_bound"), py::kw_only(),
+         py::arg("verification_clouds") = py::none())
+      .def("solve", [](teaser::RobustRegistrationSolver& solver, const Points& src,
+                       const Points& dst, const std::vector<double>& noise_bound,
+                       const py::object& verification_clouds) {
+        if (noise_bound.size() <= 1 || verification_clouds.is_none()) {
+          return solver.solve(src, dst, noise_bound);
+        }
+        const auto clouds = verification_clouds.cast<std::pair<Points, Points>>();
+        return solver.solve(src, dst, noise_bound, clouds.first, clouds.second);
+      }, py::arg("src"), py::arg("dst"), py::arg("noise_bound"), py::kw_only(),
+         py::arg("verification_clouds") = py::none())
+      .def("solve", [](teaser::RobustRegistrationSolver& solver, const Points& src,
+                       const Points& dst, const std::string& noise_bound,
+                       const py::object& verification_clouds) {
+        if (noise_bound != "auto") {
+          throw py::value_error("Expected 'auto' or positive noise bounds");
+        }
+        constexpr auto mode = teaser::RobustRegistrationSolver::NoiseBoundMode::AUTO;
+        if (verification_clouds.is_none()) {
+          return solver.solve(src, dst, mode);
+        }
+        const auto clouds = verification_clouds.cast<std::pair<Points, Points>>();
+        return solver.solve(src, dst, mode, clouds.first, clouds.second);
+      }, py::arg("src"), py::arg("dst"), py::arg("noise_bound"), py::kw_only(),
+         py::arg("verification_clouds") = py::none())
 
       .def_property_readonly("solution", &teaser::RobustRegistrationSolver::getSolution)
       .def("getSolution", &teaser::RobustRegistrationSolver::getSolution)

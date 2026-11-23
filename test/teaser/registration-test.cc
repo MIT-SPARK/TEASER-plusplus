@@ -10,13 +10,238 @@
 #include <iomanip>
 #include <chrono>
 #include <fstream>
+#include <limits>
 #include <random>
+#include <stdexcept>
 
 #include "gtest/gtest.h"
 
 #include "teaser/registration.h"
 #include "teaser/ply_io.h"
 #include "test_utils.h"
+
+TEST(RegistrationTest, ExplicitNoiseBoundKeepsSingleSolveBehavior) {
+  using Solver = teaser::RobustRegistrationSolver;
+  Eigen::Matrix<double, 3, Eigen::Dynamic> source(3, 5);
+  source << 0, 1, 0, 0, 3,
+            0, 0, 2, 0, 1,
+            0, 0, 0, 4, 2;
+  const auto rotation = Eigen::AngleAxisd(0.2, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> target =
+      (1.5 * rotation * source).colwise() + Eigen::Vector3d(1, 2, 3);
+  Solver::Params params;
+  params.noise_bound = 0.1;
+  params.max_clique_num_threads = 1;
+  const auto expected = Solver(params).solve(source, target);
+  ASSERT_TRUE(expected.valid);
+  Solver solver(params);
+  const auto scalar = solver.solve(source, target, 0.1);
+  const auto list = solver.solve(source, target, std::vector<double>{0.1});
+  const auto sweep = solver.solve(source, target, std::vector<double>{0.1, 0.05});
+  for (const auto& result : {scalar, list, sweep}) {
+    EXPECT_TRUE(result.valid);
+    EXPECT_DOUBLE_EQ(result.scale, expected.scale);
+    EXPECT_TRUE(result.rotation.isApprox(expected.rotation));
+    EXPECT_TRUE(result.translation.isApprox(expected.translation));
+  }
+  EXPECT_THROW(solver.solve(source, target, std::vector<double>{}), std::invalid_argument);
+  EXPECT_THROW(solver.solve(source, target, std::vector<double>{0.1, -1}), std::invalid_argument);
+  EXPECT_TRUE(solver.getSolution().translation.isApprox(expected.translation));
+}
+
+TEST(RegistrationTest, AutomaticNoiseBoundsUseTargetSpacing) {
+  using Solver = teaser::RobustRegistrationSolver;
+  Eigen::Matrix<double, 3, Eigen::Dynamic> source(3, 4);
+  source << 0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1;
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> target =
+      (2.0 * source).colwise() + Eigen::Vector3d(3, -2, 1);
+  Solver::Params params;
+  params.estimate_scaling = true;
+  params.max_clique_num_threads = 1;
+  const std::vector<double> bounds{2, 4, 8};
+  Solver manual(params), automatic(params);
+  const auto expected = manual.solve(source, target, bounds);
+  const auto actual = automatic.solve(source, target, Solver::NoiseBoundMode::AUTO);
+  ASSERT_TRUE(expected.valid);
+  ASSERT_TRUE(actual.valid);
+  EXPECT_DOUBLE_EQ(automatic.getParams().noise_bound, manual.getParams().noise_bound);
+  EXPECT_EQ(automatic.getInlierMaxClique(), manual.getInlierMaxClique());
+  EXPECT_EQ(actual.rotation, expected.rotation);
+  EXPECT_EQ(actual.translation, expected.translation);
+
+  teaser::PointCloud source_cloud, target_cloud;
+  std::vector<std::pair<int, int>> matches;
+  for (int i = 0; i < source.cols(); ++i) {
+    source_cloud.push_back({float(source(0, i)), float(source(1, i)), float(source(2, i))});
+    target_cloud.push_back({float(target(0, i)), float(target(1, i)), float(target(2, i))});
+    matches.emplace_back(i, i);
+  }
+  const auto cloud_pose = automatic.solve(source_cloud, target_cloud, matches,
+                                          Solver::NoiseBoundMode::AUTO);
+  ASSERT_TRUE(cloud_pose.valid);
+  EXPECT_DOUBLE_EQ(automatic.getParams().noise_bound, manual.getParams().noise_bound);
+  EXPECT_EQ(cloud_pose.rotation, expected.rotation);
+  EXPECT_EQ(cloud_pose.translation, expected.translation);
+
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> verification_target =
+      target.colwise() + Eigen::Vector3d(3e6, 0, 0);
+  const auto dense_pose = automatic.solve(source, target, Solver::NoiseBoundMode::AUTO,
+                                          source, verification_target);
+  ASSERT_TRUE(dense_pose.valid);
+  EXPECT_DOUBLE_EQ(automatic.getParams().noise_bound, manual.getParams().noise_bound);
+
+  // Only matched indices contribute when no verification clouds are passed.
+  target_cloud.push_back({std::numeric_limits<float>::quiet_NaN(), 0, 0});
+  EXPECT_TRUE(automatic.solve(source_cloud, target_cloud, matches, 0.5).valid);
+  EXPECT_TRUE(automatic.solve(source_cloud, target_cloud, matches, std::vector<double>{0.5}).valid);
+  EXPECT_TRUE(automatic.solve(source_cloud, target_cloud, matches, bounds).valid);
+  const auto invalid_cloud = teaser::test::teaserPointCloudToEigenMatrix<double>(target_cloud);
+  EXPECT_THROW(automatic.solve(source, target, bounds, source, invalid_cloud),
+               std::invalid_argument);
+}
+
+TEST(RegistrationTest, MultipleNoiseBoundsCanScoreSeparateVerificationClouds) {
+  using Solver = teaser::RobustRegistrationSolver;
+  std::mt19937 rng(13);
+  std::uniform_real_distribution<float> position(-5, 5);
+  std::uniform_real_distribution<float> jitter(-0.12, 0.12);
+  teaser::PointCloud source, target;
+  for (int i = 0; i < 256; ++i) {
+    const teaser::PointXYZ point{position(rng), position(rng), position(rng)};
+    source.push_back(point);
+    target.push_back({point.x + 1.25f, point.y - 2.5f, point.z + 0.75f});
+  }
+  std::vector<std::pair<int, int>> matches;
+  for (int i = 0; i < 16; ++i) {
+    matches.emplace_back(i, i);
+  }
+  for (int i = 0; i < 24; ++i) {
+    const auto& point = source[16 + i];
+    target.push_back({point.x + 25 + jitter(rng), point.y + jitter(rng), point.z + jitter(rng)});
+    matches.emplace_back(16 + i, 256 + i);
+  }
+  Solver::Params params;
+  params.estimate_scaling = false;
+  params.max_clique_num_threads = 1;
+  Solver tight_solver(params), solver(params);
+  const auto tight = tight_solver.solve(source, target, matches, 0.005);
+  const auto wide = solver.solve(source, target, matches, 0.2);
+  ASSERT_TRUE(tight.valid);
+  ASSERT_TRUE(wide.valid);
+  ASSERT_GT((tight.translation - wide.translation).norm(), 1);
+  const std::vector<double> bounds{0.005, 0.2};
+  Eigen::Matrix<double, 3, Eigen::Dynamic> src(3, matches.size()), dst(3, matches.size());
+  for (std::size_t i = 0; i < matches.size(); ++i) {
+    const auto& p = source[matches[i].first];
+    const auto& q = target[matches[i].second];
+    src.col(i) << p.x, p.y, p.z;
+    dst.col(i) << q.x, q.y, q.z;
+  }
+  const auto verify_src = teaser::test::teaserPointCloudToEigenMatrix<double>(source);
+  const auto verify_dst = teaser::test::teaserPointCloudToEigenMatrix<double>(target);
+  const auto indexed = solver.solve(source, target, matches, bounds);
+  const auto matched = solver.solve(src, dst, bounds);
+  ASSERT_TRUE(indexed.valid);
+  ASSERT_TRUE(matched.valid);
+  EXPECT_EQ(indexed.rotation, matched.rotation);
+  EXPECT_EQ(indexed.translation, matched.translation);
+
+  const auto selected = solver.solve(src, dst, bounds, verify_src, verify_dst);
+  ASSERT_TRUE(selected.valid);
+  EXPECT_DOUBLE_EQ(solver.getParams().noise_bound, 0.005);
+  EXPECT_TRUE(selected.rotation.isApprox(tight.rotation));
+  EXPECT_TRUE(selected.translation.isApprox(tight.translation));
+  EXPECT_TRUE(solver.getSolution().translation.isApprox(tight.translation));
+  EXPECT_EQ(solver.getScaleInliersMask(), tight_solver.getScaleInliersMask());
+  EXPECT_EQ(solver.getInlierMaxClique(), tight_solver.getInlierMaxClique());
+  EXPECT_EQ(solver.getInlierGraph(), tight_solver.getInlierGraph());
+  EXPECT_EQ(solver.getSrcTIMs(), tight_solver.getSrcTIMs());
+  EXPECT_EQ(solver.getDstTIMs(), tight_solver.getDstTIMs());
+  EXPECT_EQ(solver.getSrcTIMsMap(), tight_solver.getSrcTIMsMap());
+  EXPECT_EQ(solver.getDstTIMsMap(), tight_solver.getDstTIMsMap());
+  const auto descending =
+      solver.solve(src, dst, std::vector<double>{0.2, 0.005}, verify_src, verify_dst);
+  EXPECT_EQ(descending.rotation, selected.rotation);
+  EXPECT_EQ(descending.translation, selected.translation);
+  EXPECT_DOUBLE_EQ(solver.getParams().noise_bound, 0.005);
+
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> empty(3, 0);
+  EXPECT_THROW(solver.solve(src, dst, bounds, verify_src, empty), std::invalid_argument);
+  const auto single = solver.solve(src, dst, std::vector<double>{0.005}, empty, empty);
+  ASSERT_TRUE(single.valid);
+  EXPECT_EQ(single.rotation, tight.rotation);
+  EXPECT_EQ(single.translation, tight.translation);
+}
+
+TEST(RegistrationTest, MultipleNoiseBoundsPreserveInclusiveCompatibilityThreshold) {
+  using Solver = teaser::RobustRegistrationSolver;
+  Eigen::Matrix<double, 3, Eigen::Dynamic> src(3, 5);
+  src << 0, 0, 0, -4, 1,
+         0, 4, 0, 0, 0,
+         0, 0, 4, 0, 0;
+  Eigen::Matrix<double, 3, Eigen::Dynamic> dst = src.colwise() + Eigen::Vector3d(3, -2, 1);
+  dst(0, 4) += 1;
+  Solver::Params params;
+  params.estimate_scaling = false;
+  params.cbar2 = 4;
+  params.max_clique_num_threads = 1;
+  Solver solver(params);
+  ASSERT_TRUE(solver.solve(src, dst, std::vector<double>{0.25, 0.125, 0.25}).valid);
+  Solver independent(params);
+  const auto selected_bound = solver.getParams().noise_bound;
+  ASSERT_TRUE(independent.solve(src, dst, selected_bound).valid);
+  EXPECT_EQ(solver.getScaleInliersMask(), independent.getScaleInliersMask());
+  EXPECT_EQ(solver.getInlierGraph(), independent.getInlierGraph());
+  EXPECT_EQ(solver.getInlierMaxClique(), independent.getInlierMaxClique());
+  // Pair (0, 4) has length error 1, exactly the threshold for bound 0.25.
+  EXPECT_EQ(solver.getSrcTIMsMap().col(3), Eigen::Vector2i(0, 4));
+  EXPECT_EQ(solver.getScaleInliersMask()(3), selected_bound == 0.25);
+}
+
+TEST(RegistrationTest, PreviousCliqueDoesNotReplaceTheFreshTiedClique) {
+  using Solver = teaser::RobustRegistrationSolver;
+  const std::vector<teaser::PointXYZ> tetrahedron{{0, 0, 0}, {1, 0, 0}, {0, 2, 0}, {0, 0, 3}};
+  teaser::PointCloud source, target;
+  std::vector<std::pair<int, int>> matches;
+  for (const auto& p : tetrahedron) {
+    source.push_back(p);
+    target.push_back(p);
+  }
+  for (const auto& p : tetrahedron) {
+    source.push_back({20 + p.x, p.y, p.z});
+    target.push_back({40 + 1.05f * p.x, 1.05f * p.y, 1.05f * p.z});
+  }
+  for (int i = 0; i < 8; ++i) {
+    matches.emplace_back(i, i);
+  }
+  // The full clouds favor the pose from the second four-point clique.
+  for (int i = 0; i < 20; ++i) {
+    const teaser::PointXYZ p{19.f + 0.15f * i, 0.3f * (i % 5), 0.45f * (i / 4)};
+    source.push_back(p);
+    target.push_back({p.x + 20.0125f, p.y + 0.025f, p.z + 0.0375f});
+  }
+  Solver::Params params;
+  params.estimate_scaling = false;
+  params.max_clique_num_threads = 1;
+  Solver narrow(params), wide(params), sweep(params);
+  ASSERT_TRUE(narrow.solve(source, target, matches, 0.01).valid);
+  const auto expected = wide.solve(source, target, matches, 0.2);
+  ASSERT_TRUE(expected.valid);
+  ASSERT_EQ(narrow.getInlierMaxClique().size(), 4);
+  ASSERT_EQ(wide.getInlierMaxClique().size(), 4);
+  ASSERT_NE(narrow.getInlierMaxClique(), wide.getInlierMaxClique());
+  const auto verify_src = teaser::test::teaserPointCloudToEigenMatrix<double>(source);
+  const auto verify_dst = teaser::test::teaserPointCloudToEigenMatrix<double>(target);
+  const auto selected = sweep.solve(verify_src.leftCols(8), verify_dst.leftCols(8),
+                                   std::vector<double>{0.01, 0.2}, verify_src, verify_dst);
+  ASSERT_TRUE(selected.valid);
+  EXPECT_DOUBLE_EQ(sweep.getParams().noise_bound, 0.2);
+  EXPECT_EQ(sweep.getInlierMaxClique(), wide.getInlierMaxClique());
+  EXPECT_EQ(selected.rotation, expected.rotation);
+  EXPECT_EQ(selected.translation, expected.translation);
+}
 
 TEST(RegistrationTest, LargeModel) {
 
