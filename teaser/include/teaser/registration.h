@@ -569,6 +569,63 @@ public:
   RegistrationSolution solve(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst);
 
+  /** Solve once with an explicit noise bound using the built-in estimators in Params. */
+  RegistrationSolution solve(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                             const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
+                             double noise_bound);
+
+  /**
+   * Solve at each supplied bound and select a pose using the supplied point sets.
+   * Columns of src and dst remain paired correspondences. A single bound solves once.
+   * On success, getParams() and the solution diagnostics describe the selected solve.
+   */
+  RegistrationSolution solve(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                             const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
+                             const std::vector<double>& noise_bound);
+
+  /**
+   * Score candidates against separate 3-by-N source and target verification clouds.
+   * Only src and dst provide correspondences. Verification clouds may have different sizes.
+   * With one bound, solve once without using the verification clouds.
+   */
+  RegistrationSolution solve(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                             const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
+                             const std::vector<double>& noise_bound,
+                             const Eigen::Matrix<double, 3, Eigen::Dynamic>& verification_src,
+                             const Eigen::Matrix<double, 3, Eigen::Dynamic>& verification_dst);
+
+  /** Solve once with an explicit noise bound and indexed correspondences. */
+  RegistrationSolution solve(const teaser::PointCloud& src_cloud,
+                             const teaser::PointCloud& dst_cloud,
+                             const std::vector<std::pair<int, int>>& correspondences,
+                             double noise_bound);
+
+  /** Solve at each supplied bound and select the pose using the indexed matching points. */
+  RegistrationSolution solve(const teaser::PointCloud& src_cloud,
+                             const teaser::PointCloud& dst_cloud,
+                             const std::vector<std::pair<int, int>>& correspondences,
+                             const std::vector<double>& noise_bound);
+
+  enum class NoiseBoundMode { AUTO };
+
+  /** Try one, two and four times the matched target points' median nearest-neighbor spacing. */
+  RegistrationSolution solve(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                             const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
+                             NoiseBoundMode mode);
+
+  /** Infer bounds from dst and score candidates against separate verification clouds. */
+  RegistrationSolution solve(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+                             const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
+                             NoiseBoundMode mode,
+                             const Eigen::Matrix<double, 3, Eigen::Dynamic>& verification_src,
+                             const Eigen::Matrix<double, 3, Eigen::Dynamic>& verification_dst);
+
+  /** Infer bounds and score candidates using the indexed matching points. */
+  RegistrationSolution solve(const teaser::PointCloud& src_cloud,
+                             const teaser::PointCloud& dst_cloud,
+                             const std::vector<std::pair<int, int>>& correspondences,
+                             NoiseBoundMode mode);
+
   /**
    * Solve for scale. Assume v2 = s * R * v1, this function estimates s.
    * @param v1
@@ -890,6 +947,23 @@ public:
   Params getParams() { return params_; }
 
 private:
+  void handleDeprecatedInlierSelectionParams();
+  void buildMultiBoundInlierGraph(Eigen::Index point_count,
+                                  const Eigen::Matrix<int, 2, Eigen::Dynamic>& tims_map);
+  RegistrationSolution solveWithInlierGraph(
+      const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+      const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
+      bool multi_bound = false,
+      const std::vector<int>* previous_clique = nullptr,
+      detail::PmcHeuristic* heuristic = nullptr);
+
+  RegistrationSolution solveWithBounds(
+      const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
+      const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
+      std::vector<double> noise_bound, bool automatic = false,
+      const Eigen::Matrix<double, 3, Eigen::Dynamic>* verification_src = nullptr,
+      const Eigen::Matrix<double, 3, Eigen::Dynamic>* verification_dst = nullptr);
+
   Params params_;
   RegistrationSolution solution_;
 

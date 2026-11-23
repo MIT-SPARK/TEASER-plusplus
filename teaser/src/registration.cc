@@ -7,18 +7,78 @@
  */
 
 #include "teaser/registration.h"
+#include "pmc_heuristic.h"
 
 #include <cmath>
 #include <functional>
 #include <iostream>
 #include <limits>
 #include <iterator>
+#include <stdexcept>
 
 #include <omp.h>
 
 #include "teaser/utils.h"
 #include "teaser/graph.h"
 #include "teaser/macros.h"
+#include "pose_scoring.h"
+
+namespace {
+
+using Points = Eigen::Matrix<double, 3, Eigen::Dynamic>;
+using Correspondences = std::vector<std::pair<int, int>>;
+using TIMMap = Eigen::Matrix<int, 2, Eigen::Dynamic>;
+
+struct PairedTIMs {
+  Points source;
+  Points target;
+  TIMMap map;
+};
+
+PairedTIMs computePairedTIMs(const Points& src, const Points& dst) {
+  const Eigen::Index n = src.cols();
+  const Eigen::Index count = n * (n - 1) / 2;
+  PairedTIMs tims{Points(3, count), Points(3, count), TIMMap(2, count)};
+#pragma omp parallel for
+  for (Eigen::Index i = 0; i < n - 1; ++i) {
+    const Eigen::Index start = i * n - i * (i + 1) / 2;
+    const Eigen::Index length = n - 1 - i;
+    // Compute only the upper-triangle segment, using one map for both clouds.
+    tims.source.middleCols(start, length) = src.rightCols(length).colwise() - src.col(i);
+    tims.target.middleCols(start, length) = dst.rightCols(length).colwise() - dst.col(i);
+    for (Eigen::Index j = 0; j < length; ++j) {
+      tims.map(0, start + j) = i;
+      tims.map(1, start + j) = i + 1 + j;
+    }
+  }
+  return tims;
+}
+
+Points matchedPoints(const teaser::PointCloud& cloud, const Correspondences& correspondences,
+                     bool source) {
+  Points points(3, correspondences.size());
+  for (std::size_t i = 0; i < correspondences.size(); ++i) {
+    const auto pair = correspondences[i];
+    const auto& p = cloud.at(source ? pair.first : pair.second);
+    points.col(i) << p.x, p.y, p.z;
+  }
+  return points;
+}
+
+void checkNoiseBound(double bound) {
+  if (!std::isfinite(bound) || bound <= 0) {
+    throw std::invalid_argument("Noise bounds must be positive and finite");
+  }
+}
+
+void checkMatches(const Points& src, const Points& dst, bool estimate_scaling) {
+  const Eigen::Index minimum = estimate_scaling ? 3 : 2;
+  if (src.cols() != dst.cols() || src.cols() < minimum || !src.allFinite() || !dst.allFinite()) {
+    throw std::invalid_argument("Expected matching finite point columns with enough correspondences");
+  }
+}
+
+} // namespace
 
 int teaser::teaser_default_max_threads() {
  return omp_get_max_threads();
@@ -571,22 +631,169 @@ teaser::RobustRegistrationSolver::solve(const teaser::PointCloud& src_cloud,
   return solve(src, dst);
 }
 
+teaser::RegistrationSolution teaser::RobustRegistrationSolver::solve(const Points& src,
+                                                                      const Points& dst,
+                                                                      double noise_bound) {
+  checkNoiseBound(noise_bound);
+  checkMatches(src, dst, params_.estimate_scaling);
+  auto params = params_;
+  params.noise_bound = noise_bound;
+  RobustRegistrationSolver solver(params);
+  solver.solution_ = {false, 1, Eigen::Vector3d::Zero(), Eigen::Matrix3d::Identity()};
+  solver.solve(src, dst);
+  *this = std::move(solver);
+  return solution_;
+}
+
+teaser::RegistrationSolution
+teaser::RobustRegistrationSolver::solve(const Points& src, const Points& dst,
+                                        const std::vector<double>& noise_bound) {
+  if (noise_bound.size() == 1) {
+    return solve(src, dst, noise_bound.front());
+  }
+  return solveWithBounds(src, dst, noise_bound);
+}
+
+teaser::RegistrationSolution teaser::RobustRegistrationSolver::solve(
+    const Points& src, const Points& dst, const std::vector<double>& noise_bound,
+    const Points& verification_src, const Points& verification_dst) {
+  if (noise_bound.size() == 1) {
+    return solve(src, dst, noise_bound.front());
+  }
+  return solveWithBounds(src, dst, noise_bound, false, &verification_src, &verification_dst);
+}
+
+teaser::RegistrationSolution
+teaser::RobustRegistrationSolver::solve(const teaser::PointCloud& src_cloud,
+                                        const teaser::PointCloud& dst_cloud,
+                                        const Correspondences& correspondences, double noise_bound) {
+  return solve(matchedPoints(src_cloud, correspondences, true),
+               matchedPoints(dst_cloud, correspondences, false), noise_bound);
+}
+
+teaser::RegistrationSolution
+teaser::RobustRegistrationSolver::solve(const teaser::PointCloud& src_cloud,
+                                        const teaser::PointCloud& dst_cloud,
+                                        const Correspondences& correspondences,
+                                        const std::vector<double>& noise_bound) {
+  return solve(matchedPoints(src_cloud, correspondences, true),
+               matchedPoints(dst_cloud, correspondences, false), noise_bound);
+}
+
+teaser::RegistrationSolution
+teaser::RobustRegistrationSolver::solve(const Points& src, const Points& dst, NoiseBoundMode) {
+  return solveWithBounds(src, dst, {}, true);
+}
+
+teaser::RegistrationSolution teaser::RobustRegistrationSolver::solve(
+    const Points& src, const Points& dst, NoiseBoundMode, const Points& verification_src,
+    const Points& verification_dst) {
+  return solveWithBounds(src, dst, {}, true, &verification_src, &verification_dst);
+}
+
+teaser::RegistrationSolution
+teaser::RobustRegistrationSolver::solve(const teaser::PointCloud& src_cloud,
+                                        const teaser::PointCloud& dst_cloud,
+                                        const Correspondences& correspondences, NoiseBoundMode mode) {
+  return solve(matchedPoints(src_cloud, correspondences, true),
+               matchedPoints(dst_cloud, correspondences, false), mode);
+}
+
+teaser::RegistrationSolution teaser::RobustRegistrationSolver::solveWithBounds(
+    const Points& src, const Points& dst, std::vector<double> noise_bound, bool automatic,
+    const Points* verification_src, const Points* verification_dst) {
+  if (noise_bound.empty() && !automatic) {
+    throw std::invalid_argument("At least one noise bound is required");
+  }
+  for (double bound : noise_bound) {
+    checkNoiseBound(bound);
+  }
+  checkMatches(src, dst, params_.estimate_scaling);
+  const auto make_scorer = [&] {
+    if (!verification_src) {
+      return detail::PoseScorer::forMatches(src, dst);
+    }
+    if (!verification_src->allFinite() || !verification_dst->allFinite()) {
+      throw std::invalid_argument("Verification points must be finite");
+    }
+    return detail::PoseScorer::forVerification(*verification_src, *verification_dst);
+  };
+  auto scorer = make_scorer();
+  if (automatic) {
+    // Use the same candidate bounds regardless of which clouds are used for verification.
+    const double spacing = verification_dst ? detail::PoseScorer::matchSpacing(dst)
+                                            : scorer.targetSpacing();
+    noise_bound = {spacing, 2 * spacing, 4 * spacing};
+  }
+  auto tims = computePairedTIMs(src, dst);
+
+  // With fixed scale, only the cutoff depends on the bound. Keep the residuals
+  // in TIM order so each graph can use a vectorized cutoff and preserve edge order.
+  Eigen::RowVectorXd distance_errors;
+  const bool shared_errors = !params_.estimate_scaling && std::isfinite(params_.cbar2) &&
+                             params_.cbar2 > 0;
+  const double root_cbar2 = shared_errors ? std::sqrt(params_.cbar2) : 0;
+  if (shared_errors) {
+    const Eigen::RowVectorXd src_lengths = tims.source.array().square().colwise().sum().sqrt();
+    const Eigen::RowVectorXd dst_lengths = tims.target.array().square().colwise().sum().sqrt();
+    distance_errors = (src_lengths - dst_lengths).cwiseAbs();
+  }
+
+  auto params = params_;
+  std::unique_ptr<RobustRegistrationSolver> best;
+  double best_score = -std::numeric_limits<double>::infinity();
+  std::vector<int> previous_clique;
+  detail::PmcHeuristic heuristic;
+  double previous_bound = 0;
+  for (double bound : noise_bound) {
+    params.noise_bound = bound;
+    auto candidate = std::make_unique<RobustRegistrationSolver>(params);
+    candidate->solution_ = {false, 1, Eigen::Vector3d::Zero(), Eigen::Matrix3d::Identity()};
+    candidate->handleDeprecatedInlierSelectionParams();
+    if (shared_errors) {
+      candidate->scale_inliers_mask_ = distance_errors.array() <= 2 * bound * root_cbar2;
+      candidate->solution_.scale = 1;
+    } else {
+      candidate->solveForScale(tims.source, tims.target);
+    }
+    candidate->buildMultiBoundInlierGraph(src.cols(), tims.map);
+    const bool exact_nested = shared_errors &&
+                              candidate->params_.inlier_selection_mode ==
+                                  INLIER_SELECTION_MODE::PMC_EXACT;
+    // A clique from a narrower cutoff remains a feasible clique at this cutoff.
+    const bool reuse_clique = exact_nested && bound >= previous_bound &&
+                              previous_clique.size() >= 2;
+    const auto pose = candidate->solveWithInlierGraph(
+        src, dst, true, reuse_clique ? &previous_clique : nullptr,
+        exact_nested && params.max_clique_num_threads == 1 ? &heuristic : nullptr);
+    if (exact_nested) {
+      previous_clique = candidate->max_clique_;
+      previous_bound = bound;
+    }
+    const bool valid = pose.valid && std::isfinite(pose.scale) && pose.scale > 0 &&
+                       pose.rotation.allFinite() && pose.translation.allFinite();
+    candidate->solution_.valid = valid;
+    const double score = valid ? scorer.score(pose.scale, pose.rotation, pose.translation,
+                                               best_score)
+                               : -std::numeric_limits<double>::infinity();
+    if (!best || score > best_score || (score == best_score && bound > best->params_.noise_bound)) {
+      best = std::move(candidate);
+      best_score = score;
+    }
+  }
+  best->src_tims_ = std::move(tims.source);
+  best->dst_tims_ = std::move(tims.target);
+  best->dst_tims_map_ = tims.map;
+  best->src_tims_map_ = std::move(tims.map);
+  *this = std::move(*best);
+  return solution_;
+}
+
 teaser::RegistrationSolution
 teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
                                         const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst) {
   assert(scale_solver_ && rotation_solver_ && translation_solver_);
-
-  // Handle deprecated params
-  if (!params_.use_max_clique) {
-    TEASER_DEBUG_INFO_MSG(
-        "Using deprecated param field use_max_clique. Switch to inlier_selection_mode instead.");
-    params_.inlier_selection_mode = INLIER_SELECTION_MODE::NONE;
-  }
-  if (!params_.max_clique_exact_solution) {
-    TEASER_DEBUG_INFO_MSG("Using deprecated param field max_clique_exact_solution. Switch to "
-                          "inlier_selection_mode instead.");
-    params_.inlier_selection_mode = INLIER_SELECTION_MODE::PMC_HEU;
-  }
+  handleDeprecatedInlierSelectionParams();
 
   /**
    * Steps to estimate T/R/s
@@ -608,21 +815,52 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
       "Starting scale solver (only selecting inliers if scale estimation has been disabled).");
   solveForScale(src_tims_, dst_tims_);
   TEASER_DEBUG_INFO_MSG("Scale estimation complete.");
-
-  // Calculate Maximum Clique
-  // Note: the max_clique_ vector holds the indices of original measurements that are within the
-  // max clique of the built inlier graph.
   if (params_.inlier_selection_mode != INLIER_SELECTION_MODE::NONE) {
-
-    // Create inlier graph: A graph with (indices of) original measurements as vertices, and edges
-    // only when the TIM between two measurements are inliers. Note: src_tims_map_ is the same as
-    // dst_tim_map_
+    // The original measurements are vertices. Only inlier TIMs become edges.
     inlier_graph_.populateVertices(src.cols());
     for (size_t i = 0; i < scale_inliers_mask_.cols(); ++i) {
       if (scale_inliers_mask_(0, i)) {
         inlier_graph_.addEdge(src_tims_map_(0, i), src_tims_map_(1, i));
       }
     }
+  }
+  return solveWithInlierGraph(src, dst);
+}
+
+void teaser::RobustRegistrationSolver::handleDeprecatedInlierSelectionParams() {
+  if (!params_.use_max_clique) {
+    TEASER_DEBUG_INFO_MSG(
+        "Using deprecated param field use_max_clique. Switch to inlier_selection_mode instead.");
+    params_.inlier_selection_mode = INLIER_SELECTION_MODE::NONE;
+  }
+  if (!params_.max_clique_exact_solution) {
+    TEASER_DEBUG_INFO_MSG("Using deprecated param field max_clique_exact_solution. Switch to "
+                          "inlier_selection_mode instead.");
+    params_.inlier_selection_mode = INLIER_SELECTION_MODE::PMC_HEU;
+  }
+}
+
+void teaser::RobustRegistrationSolver::buildMultiBoundInlierGraph(
+    Eigen::Index point_count, const Eigen::Matrix<int, 2, Eigen::Dynamic>& tims_map) {
+  if (params_.inlier_selection_mode == INLIER_SELECTION_MODE::NONE) {
+    return;
+  }
+  inlier_graph_.populateVertices(point_count);
+  for (Eigen::Index i = 0; i < scale_inliers_mask_.cols(); ++i) {
+    if (scale_inliers_mask_(i)) {
+      inlier_graph_.addUniqueEdge(tims_map(0, i), tims_map(1, i));
+    }
+  }
+}
+
+teaser::RegistrationSolution teaser::RobustRegistrationSolver::solveWithInlierGraph(
+    const Points& src, const Points& dst, bool multi_bound, const std::vector<int>* previous_clique,
+    detail::PmcHeuristic* heuristic) {
+
+  // Calculate Maximum Clique
+  // Note: the max_clique_ vector holds the indices of original measurements that are within the
+  // max clique of the built inlier graph.
+  if (params_.inlier_selection_mode != INLIER_SELECTION_MODE::NONE) {
 
     teaser::MaxCliqueSolver::Params clique_params;
 
@@ -638,7 +876,9 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
     clique_params.num_threads = params_.max_clique_num_threads;
 
     teaser::MaxCliqueSolver clique_solver(clique_params);
-    max_clique_ = clique_solver.findMaxClique(inlier_graph_);
+    max_clique_ = multi_bound
+                      ? clique_solver.findMaxCliqueImpl(inlier_graph_, previous_clique, heuristic)
+                      : clique_solver.findMaxClique(inlier_graph_);
     std::sort(max_clique_.begin(), max_clique_.end());
     TEASER_DEBUG_INFO_MSG("Max Clique of scale estimation inliers: ");
 #ifndef NDEBUG

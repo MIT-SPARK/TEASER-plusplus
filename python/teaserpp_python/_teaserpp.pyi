@@ -1,14 +1,15 @@
 from enum import Enum
-from typing import List, overload
+from typing import List, Optional, Sequence, Tuple, Union, overload
 
 import numpy as np
-from typing_extensions import Final
+from typing_extensions import Final, Literal
 
 from . import RobustRegistrationSolverParams
 
 OMP_MAX_THREADS: Final[int]
 
 class RegistrationSolution:
+    valid: bool
     scale: float
     translation: np.ndarray
     rotation: np.ndarray
@@ -212,11 +213,19 @@ class RobustRegistrationSolver:
     def params(self) -> RobustRegistrationSolverParams: ...
     def getParams(self) -> Params: ...
     def reset(self) -> None: ...
-    def solve(self, src: np.ndarray, dst: np.ndarray) -> None:
+    @overload
+    def solve(self, src: np.ndarray, dst: np.ndarray) -> RegistrationSolution:
         """
         Solve for scale, translation and rotation from src to dst.
         """
         ...
+
+    @overload
+    def solve(
+        self, src: np.ndarray, dst: np.ndarray,
+        noise_bound: Union[float, Sequence[float], Literal["auto"]], *,
+        verification_clouds: Optional[Tuple[np.ndarray, np.ndarray]] = None,
+    ) -> RegistrationSolution: ...
 
     @property
     def solution(self) -> RegistrationSolution: ...

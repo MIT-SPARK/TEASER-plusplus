@@ -18,6 +18,10 @@
 
 namespace teaser {
 
+namespace detail {
+class PmcHeuristic;
+}
+
 /**
  * A simple undirected graph class
  *
@@ -202,6 +206,15 @@ public:
   }
 
 private:
+  friend class RobustRegistrationSolver;
+
+  // The TIM map visits each unordered pair once in a newly created graph.
+  void addUniqueEdge(int vertex_1, int vertex_2) {
+    adj_list_[vertex_1].push_back(vertex_2);
+    adj_list_[vertex_2].push_back(vertex_1);
+    ++num_edges_;
+  }
+
   std::vector<std::vector<int>> adj_list_;
   size_t num_edges_;
 };
@@ -274,6 +287,11 @@ public:
   std::vector<int> findMaxClique(Graph graph);
 
 private:
+  friend class RobustRegistrationSolver;
+  std::vector<int> findMaxCliqueImpl(const Graph& graph,
+                                     const std::vector<int>* previous_clique,
+                                     detail::PmcHeuristic* heuristic);
+
   Graph graph_;
   Params params_;
 };

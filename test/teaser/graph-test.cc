@@ -14,6 +14,7 @@
 
 #include "pmc/pmc.h"
 #include "pmc/pmc_input.h"
+#include "pmc_heuristic.h"
 #include "teaser/graph.h"
 #include "test_utils.h"
 
@@ -40,6 +41,40 @@ pmc::input generateMockInput() {
   in.heu_strat = "kcore";
   in.vertex_search_order = "deg";
   return in;
+}
+
+TEST(PMCTest, BitsetHeuristicMatchesStockCliqueOrder) {
+  constexpr int vertex_count = 137;
+  teaser::detail::PmcHeuristic heuristic;
+  for (int cutoff : {4, 22, 22, 57, 14, 76, 96}) {
+    std::vector<long long> offsets{0};
+    std::vector<int> edges;
+    for (int u = 0; u < vertex_count; ++u) {
+      for (int v = 0; v < vertex_count; ++v) {
+        if (u == v) {
+          continue;
+        }
+        // The last vertices acquire their first edges at a higher cutoff.
+        const int first = std::min(u, v), second = std::max(u, v);
+        const int score = (first * 29 + second * 71 + first * second * 17) % 100;
+        if (score + (second >= 125 ? 30 : 0) < cutoff) {
+          edges.push_back(v);
+        }
+      }
+      offsets.push_back(edges.size());
+    }
+    pmc::pmc_graph graph(std::move(offsets), std::move(edges));
+    graph.compute_cores();
+    auto input = generateMockInput();
+    input.threads = 1;
+    input.ub = graph.get_max_core() + 1;
+    pmc::pmc_heu stock(graph, input);
+    std::vector<int> expected, actual;
+    const int size = stock.search(graph, expected);
+    heuristic.prepare(graph);
+    EXPECT_EQ(heuristic.search(graph, stock, actual), size) << cutoff;
+    EXPECT_EQ(actual, expected) << cutoff;
+  }
 }
 
 /**
